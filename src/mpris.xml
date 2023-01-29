@@ -1,0 +1,79 @@
+<node name="/org/mpris/MediaPlayer2">
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg name="xml_data" direction="out" type="s" />
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" direction="in" type="s" />
+      <arg name="property_name" direction="in" type="s" />
+      <arg name="value" direction="out" type="v" />
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" direction="in" type="s" />
+      <arg name="props" direction="out" type="a{sv}" />
+    </method>
+    <method name="Set">
+      <arg name="interface_name" direction="in" type="s" />
+      <arg name="property_name" direction="in" type="s" />
+      <arg name="value" direction="in" type="v" />
+    </method>
+    <signal name="PropertiesChanged">
+      <arg type="s" name="interface_name"/>
+      <arg type="a{sv}" name="changed_properties"/>
+      <arg type="as" name="invalidated_properties"/>
+    </signal>
+  </interface>
+  <interface name="org.mpris.MediaPlayer2">
+    <method name="Quit" />
+    <method name="Raise" />
+    <property name="CanQuit" type="b" access="read" />
+    <property name="CanRaise" type="b" access="read" />
+    <property name="CanSetFullscreen" type="b" access="read" />
+    <property name="DesktopEntry" type="s" access="read" />
+    <property name="Fullscreen" type="b" access="readwrite" />
+    <property name="HasTrackList" type="b" access="read" />
+    <property name="Identity" type="s" access="read" />
+    <property name="SupportedMimeTypes" type="as" access="read" />
+    <property name="SupportedUriSchemes" type="as" access="read" />
+  </interface>
+  <interface name="org.mpris.MediaPlayer2.Player">
+    <method name="Next" />
+    <method name="OpenUri">
+      <arg name="Uri" direction="in" type="s" />
+    </method>
+    <method name="Pause" />
+    <method name="Play" />
+    <method name="PlayPause" />
+    <method name="Previous" />
+    <method name="Seek">
+      <arg name="Offset" direction="in" type="x" />
+    </method>
+    <method name="SetPosition">
+      <arg name="TrackId" direction="in" type="o" />
+      <arg name="Position" direction="in" type="x" />
+    </method>
+    <method name="Stop" />
+    <signal name="Seeked">
+      <arg name="Position" direction="out" type="x" />
+    </signal>
+    <property name="CanControl" type="b" access="read" />
+    <property name="CanGoNext" type="b" access="read" />
+    <property name="CanGoPrevious" type="b" access="read" />
+    <property name="CanPause" type="b" access="read" />
+    <property name="CanPlay" type="b" access="read" />
+    <property name="CanSeek" type="b" access="read" />
+    <property name="LoopStatus" type="s" access="readwrite" />
+    <property name="MaximumRate" type="d" access="read" />
+    <property name="Metadata" type="a{sv}" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="MinimumRate" type="d" access="read" />
+    <property name="PlaybackStatus" type="s" access="read" />
+    <property name="Position" type="x" access="read" />
+    <property name="Rate" type="d" access="readwrite" />
+    <property name="Shuffle" type="b" access="readwrite" />
+    <property name="Volume" type="d" access="readwrite" />
+  </interface>
+</node>
