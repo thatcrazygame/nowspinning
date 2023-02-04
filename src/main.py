@@ -1,5 +1,7 @@
 import sys
 import os
+import time
+from datetime import datetime
 import xml.etree.ElementTree as ET
 from dbus_next.aio import MessageBus
 import asyncio
@@ -19,6 +21,7 @@ class Data:
     """Class to share data between async functions"""
 
     def __init__(self):
+        self.music_last_updated = None
         self.artist = None
         self.title = None
         self.album = None
@@ -30,6 +33,8 @@ class Data:
         self.raw_gas = None
 
     def refresh_music_data(self, metadata, height, width):
+        if metadata:
+            self.music_last_updated = time.time()
         if 'xesam:artist' in metadata:
             self.artist = metadata['xesam:artist'].value
         if 'xesam:title' in metadata:
@@ -46,41 +51,80 @@ class Data:
 
     @property
     def temperature_f(self):
-        return (self.temperature * 1.8) + 32.0
+        if self.temperature is None:
+            return None
+        else:
+            return (self.temperature * 1.8) + 32.0
 
 
 async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
-    font = graphics.Font()
-    font.LoadFont('../fonts/5x8.bdf')
-    textColor = graphics.Color(255, 255, 255)
+    font_5x8 = graphics.Font()
+    font_5x8.LoadFont('../fonts/5x8.bdf')
+    
+    font_8x13 = graphics.Font()
+    font_8x13.LoadFont('../fonts/8x13.bdf')
+    
+    white_text = graphics.Color(255, 255, 255)
 
     margin = 2
     linespace = 1
-    max_chars = ((matrix.width / 2) - margin) // font.CharacterWidth(ord('A'))
+    char_width = font_5x8.CharacterWidth(ord('A'))
+    max_chars = ((matrix.width / 2) - margin) // char_width
 
     while bus.connected:
         canvas.Clear()
-        if data.image is not None:
-            canvas.SetImage(data.image)
+        
+        music_timeout = 30
+        last_updated = data.music_last_updated
+        if (last_updated is not None 
+                and time.time() - last_updated  < music_timeout):
+            if data.image is not None:
+                canvas.SetImage(data.image)
 
-        offset = font.height + margin
-        song_info = ''
-        if data.title is not None and data.artist is not None:
-            song_info = f'{data.title} - {", ".join(data.artist)}'
+            offset = font_5x8.height + margin
+            song_info = ''
+            if data.title is not None and data.artist is not None:
+                song_info = f'{data.title} - {", ".join(data.artist)}'
 
-        for line in textwrap.wrap(song_info, max_chars):
-            x = (matrix.width / 2) + margin
-            y = offset
-            len = graphics.DrawText(canvas, font, x, y, textColor, line)
-            offset += font.height + linespace
-
-        #text_image = Image.new("RGB", (64,64))
-        #draw = ImageDraw.Draw(text_image)
-        #font = ImageFont.load('4x6.bdf')
-        # draw.text((1,1), song_info, font=font, fill='#ffffff')
-        #canvas.SetImage(text_image, 64, 0)
+            for line in textwrap.wrap(song_info, max_chars):
+                x = (matrix.width / 2) + margin
+                y = offset
+                len = graphics.DrawText(canvas, font_5x8, x, y,
+                                        white_text, line)
+                offset += font_5x8.height + linespace            
+        else:
+            now = datetime.now()
+            x = margin
+            y = font_8x13.height + margin
+            graphics.DrawText(canvas, font_8x13, 0, y, white_text,
+                              now.strftime('%I:%M:%S'))
+            
+            y = y + font_8x13.height + margin
+            graphics.DrawText(canvas, font_5x8, x, y, white_text,
+                              now.strftime('%d/%m/%Y'))
+            
+            y = font_8x13.height + margin
+            if data.temperature_f is not None:
+                x = (matrix.width / 2) + margin
+                graphics.DrawText(canvas, font_8x13, x, y, white_text,
+                                f'{data.temperature_f:.1f}°F')
+            
+            if data.humidity is not None:
+                y = y + font_5x8.height + margin
+                graphics.DrawText(canvas, font_5x8, x, y, white_text,
+                                f'Hum: {data.humidity:.1f}%')
+            
+            if data.CO2 is not None:
+                y = y + font_5x8.height + margin
+                graphics.DrawText(canvas, font_5x8, x, y, white_text,
+                                f'CO2: {int(data.CO2)}ppm')
+            
+            if data.VOC is not None:
+                y = y + font_5x8.height + margin
+                graphics.DrawText(canvas, font_5x8, x, y, white_text,
+                                f'VOC: {data.VOC}')
 
         canvas = matrix.SwapOnVSync(canvas)
         await asyncio.sleep(.2)
@@ -106,11 +150,11 @@ async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
             data.raw_gas = sgp.measure_raw(data.temperature, data.humidity)
 
             # for testing
-            print(f'T: {data.temperature_f:.2f}')
-            print(f'H: {data.humidity:.2f}')
-            print(f'C: {data.CO2:.2f}')
-            print(f'V: {data.VOC:.2f}')
-            print('--------------')
+            # print(f'T: {data.temperature_f:.2f}')
+            # print(f'H: {data.humidity:.2f}')
+            # print(f'C: {data.CO2:.2f}')
+            # print(f'V: {data.VOC:.2f}')
+            # print('--------------')
 
         # The voc algorithm expects a 1Hz sampling rate
         await asyncio.sleep(1)
