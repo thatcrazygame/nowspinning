@@ -1,21 +1,27 @@
-import sys
-import os
-import time
-from datetime import datetime
-import xml.etree.ElementTree as ET
-from dbus_next.aio import MessageBus
 import asyncio
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
-from PIL import Image, ImageDraw, ImageFont
-from io import BytesIO
 from base64 import b64decode
+from datetime import datetime
+from io import BytesIO
+import os
+import sys
 import textwrap
-import board
+import time
+import xml.etree.ElementTree as ET
+
 from adafruit_sgp40 import SGP40
 from adafruit_scd30 import SCD30
+from board import I2C
+from dbus_next.aio import MessageBus
+from PIL import Image, ImageDraw, ImageFont
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 
+PANEL_WIDTH = 64
+PANEL_HEIGHT = 64
+LEFT = -1
+RIGHT = 1
+SCROLL_SPEED = 1
 
 class Data:
     """Class to share data between async functions"""
@@ -71,35 +77,82 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     margin = 2
     linespace = 1
     char_width = font_5x8.CharacterWidth(ord('A'))
-    max_chars = ((matrix.width / 2) - margin) // char_width
+    max_chars = (PANEL_WIDTH - margin) // char_width
 
+
+    offset = font_8x13.height + margin
+    x = PANEL_WIDTH + margin
+    y = offset
+    
+    title_x = x
+    title_y = y
+    title_dir = LEFT
+    
+    artist_x = x
+    artist_y = y + font_8x13.height + linespace
+    artist_dir = LEFT
     while bus.connected:
         canvas.Clear()
         
         music_timeout = 30
         last_updated = data.music_last_updated
-        if (last_updated is not None 
+        if (True or last_updated is not None 
                 and time.time() - last_updated  < music_timeout):
+            
+            
+            
+
+            # offset = font_5x8.height + margin
+            # song_info = ''
+            # if data.title is not None and data.artist is not None:
+            #     song_info = f'{data.title} - {", ".join(data.artist)}'
+
+            # for line in textwrap.wrap(song_info, max_chars):
+            #     x = (matrix.width / 2) + margin
+            #     y = offset
+            #     len = graphics.DrawText(canvas, font_5x8, x, y,
+            #                             white_text, line)
+            #     offset += font_5x8.height + linespace       
+            
+            
+            if data.title is not None and data.artist is not None:
+                
+                title_len = graphics.DrawText(canvas, font_8x13,
+                                              title_x, title_y, 
+                                              white_text, data.title)
+                
+                artist_len = graphics.DrawText(canvas, font_8x13,
+                                               artist_x, artist_y,
+                                               white_text, 
+                                               ", ".join(data.artist))
+                
+                title_len_diff = PANEL_WIDTH - title_len
+                if title_len_diff < 0:
+                    title_x = title_x + (title_dir * SCROLL_SPEED)
+                    if title_x - PANEL_WIDTH <= title_len_diff:
+                        title_dir = RIGHT
+                        
+                    if title_x >= PANEL_WIDTH + margin:
+                        title_dir = LEFT
+                
+                artist_len_diff = PANEL_WIDTH - artist_len
+                if artist_len_diff < 0:    
+                    artist_x = artist_x + (artist_dir * SCROLL_SPEED)
+                    if artist_x - PANEL_WIDTH <= artist_len_diff:
+                        artist_dir = RIGHT
+                    
+                    if artist_x >= PANEL_WIDTH + margin:
+                        artist_dir = LEFT
+                        
             if data.image is not None:
                 canvas.SetImage(data.image)
-
-            offset = font_5x8.height + margin
-            song_info = ''
-            if data.title is not None and data.artist is not None:
-                song_info = f'{data.title} - {", ".join(data.artist)}'
-
-            for line in textwrap.wrap(song_info, max_chars):
-                x = (matrix.width / 2) + margin
-                y = offset
-                len = graphics.DrawText(canvas, font_5x8, x, y,
-                                        white_text, line)
-                offset += font_5x8.height + linespace            
+                
         else:
             now = datetime.now()
             x = margin
             y = font_8x13.height + margin
             graphics.DrawText(canvas, font_8x13, 0, y, white_text,
-                              now.strftime('%I:%M:%S'))
+                              now.strftime('%I:%M'))
             
             y = y + font_8x13.height + margin
             graphics.DrawText(canvas, font_5x8, x, y, white_text,
@@ -127,11 +180,11 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                                 f'VOC: {data.VOC}')
 
         canvas = matrix.SwapOnVSync(canvas)
-        await asyncio.sleep(.2)
+        await asyncio.sleep(0.05)
 
 
 async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
-                   i2c=board.I2C()):
+                   i2c=I2C()):
     # I don't know why, but defining i2c within the function doesn't work
     # Better than a global I guess?
     sgp = SGP40(i2c)
@@ -162,8 +215,8 @@ async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
 
 def init_matrix():
     options = RGBMatrixOptions()
-    options.rows = 64
-    options.cols = 64
+    options.rows = PANEL_WIDTH
+    options.cols = PANEL_HEIGHT
     options.chain_length = 2
     options.parallel = 1
     options.hardware_mapping = 'adafruit-hat-pwm'
