@@ -5,7 +5,6 @@ from io import BytesIO
 import os
 import RPi.GPIO as GPIO
 import sys
-import textwrap
 import time
 import xml.etree.ElementTree as ET
 
@@ -105,50 +104,39 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         if (last_updated is not None 
                 and time.time() - last_updated  < music_timeout):
             
-            
-            
-
-            # offset = font_5x8.height + margin
-            # song_info = ''
-            # if data.title is not None and data.artist is not None:
-            #     song_info = f'{data.title} - {", ".join(data.artist)}'
-
-            # for line in textwrap.wrap(song_info, max_chars):
-            #     x = (matrix.width / 2) + margin
-            #     y = offset
-            #     len = graphics.DrawText(canvas, font_5x8, x, y,
-            #                             white_text, line)
-            #     offset += font_5x8.height + linespace       
-            
-            
-            if data.title is not None and data.artist is not None:
-                
+            title = data.title
+            artist = data.artist
+            if title is not None and artist is not None:
+                artists = ", ".join(artist)
                 title_len = graphics.DrawText(canvas, font_8x13,
                                               title_x, title_y, 
-                                              white_text, data.title)
+                                              white_text, title)
                 
                 artist_len = graphics.DrawText(canvas, font_8x13,
                                                artist_x, artist_y,
-                                               white_text, 
-                                               ", ".join(data.artist))
+                                               white_text, artists)
                 
                 title_len_diff = PANEL_WIDTH - title_len
                 if title_len_diff < 0:
-                    title_x = title_x + (title_dir * SCROLL_SPEED)
-                    if title_x - PANEL_WIDTH <= title_len_diff:
-                        title_dir = RIGHT
-                        
-                    if title_x >= PANEL_WIDTH + margin:
-                        title_dir = LEFT
-                
-                artist_len_diff = PANEL_WIDTH - artist_len
-                if artist_len_diff < 0:    
-                    artist_x = artist_x + (artist_dir * SCROLL_SPEED)
-                    if artist_x - PANEL_WIDTH <= artist_len_diff:
-                        artist_dir = RIGHT
+                    title_len_2 = graphics.DrawText(canvas, font_8x13,
+                                                    title_x + title_len,
+                                                    title_y, white_text,
+                                                    f" {title}")
                     
-                    if artist_x >= PANEL_WIDTH + margin:
-                        artist_dir = LEFT
+                    title_x = title_x + (title_dir * SCROLL_SPEED)
+                    if title_x - x + title_len_2 <= 0:
+                        title_x = x
+
+                artist_len_diff = PANEL_WIDTH - artist_len
+                if artist_len_diff < 0:
+                    artists_len_2 = graphics.DrawText(canvas, font_8x13,
+                                                      artist_x + artist_len,
+                                                      artist_y, white_text,
+                                                      f" {artists}")
+                    
+                    artist_x = artist_x + (artist_dir * SCROLL_SPEED)
+                    if artist_x - x + artists_len_2 <= 0:
+                        artist_x = x
                         
             if data.image is not None:
                 canvas.SetImage(data.image)
@@ -212,13 +200,6 @@ async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
             data.VOC = await voc
             data.raw_gas = await gas
 
-            # for testing
-            # print(f'T: {data.temperature_f:.2f}')
-            # print(f'H: {data.humidity:.2f}')
-            # print(f'C: {data.CO2:.2f}')
-            # print(f'V: {data.VOC:.2f}')
-            # print('--------------')
-
         # The voc algorithm expects a 1Hz sampling rate
         await asyncio.sleep(1)
 
@@ -274,8 +255,9 @@ async def main():
     properties.on_properties_changed(on_prop_change)
 
     fan=GPIO.PWM(FAN_PIN, PWM_FREQ)
-    fan.start(0)
-    fan.ChangeDutyCycle(100)
+    fan_speed = 70
+    fan.start(fan_speed)
+    # fan.ChangeDutyCycle(100)
 
     await asyncio.gather(matrix_loop(bus, matrix, data),
                          air_loop(bus, matrix, data))
