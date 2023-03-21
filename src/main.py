@@ -3,6 +3,7 @@ from base64 import b64decode
 from datetime import datetime
 from io import BytesIO
 import os
+import RPi.GPIO as GPIO
 import sys
 import textwrap
 import time
@@ -22,6 +23,11 @@ PANEL_HEIGHT = 64
 LEFT = -1
 RIGHT = 1
 SCROLL_SPEED = 1
+
+FAN_PIN = 25
+PWM_FREQ = 100
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
 
 class Data:
     """Class to share data between async functions"""
@@ -96,7 +102,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         
         music_timeout = 30
         last_updated = data.music_last_updated
-        if (True or last_updated is not None 
+        if (last_updated is not None 
                 and time.time() - last_updated  < music_timeout):
             
             
@@ -156,7 +162,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             
             y = y + font_8x13.height + margin
             graphics.DrawText(canvas, font_5x8, x, y, white_text,
-                              now.strftime('%d/%m/%Y'))
+                              now.strftime('%m/%d/%Y'))
             
             y = font_8x13.height + margin
             if data.temperature_f is not None:
@@ -199,8 +205,12 @@ async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
             data.CO2 = scd.CO2
 
         if data.temperature is not None and data.humidity is not None:
-            data.VOC = sgp.measure_index(data.temperature, data.humidity)
-            data.raw_gas = sgp.measure_raw(data.temperature, data.humidity)
+            voc = asyncio.to_thread(sgp.measure_index,
+                                    data.temperature, data.humidity)
+            gas = asyncio.to_thread(sgp.measure_raw,
+                                    data.temperature, data.humidity)
+            data.VOC = await voc
+            data.raw_gas = await gas
 
             # for testing
             # print(f'T: {data.temperature_f:.2f}')
@@ -262,6 +272,10 @@ async def main():
                 data.refresh_music_data(metadata, matrix.height, matrix.height)
 
     properties.on_properties_changed(on_prop_change)
+
+    fan=GPIO.PWM(FAN_PIN, PWM_FREQ)
+    fan.start(0)
+    fan.ChangeDutyCycle(100)
 
     await asyncio.gather(matrix_loop(bus, matrix, data),
                          air_loop(bus, matrix, data))
