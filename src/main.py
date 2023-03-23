@@ -13,16 +13,21 @@ from adafruit_scd30 import SCD30
 from board import I2C
 from dbus_next.aio import MessageBus
 from PIL import Image, ImageDraw, ImageFont
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
+from rgbmatrix.graphics import Color, DrawText, Font
+
+from scrollingtext import ScrollingText
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
+
 LEFT = -1
 RIGHT = 1
 SCROLL_SPEED = 1
 
+I2C = I2C()
 FAN_PIN = 25
 PWM_FREQ = 100
 GPIO.setmode(GPIO.BCM)
@@ -71,31 +76,29 @@ class Data:
 async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
-    font_5x8 = graphics.Font()
+    font_5x8 = Font()
     font_5x8.LoadFont('../fonts/5x8.bdf')
     
-    font_8x13 = graphics.Font()
+    font_8x13 = Font()
     font_8x13.LoadFont('../fonts/8x13.bdf')
     
-    white_text = graphics.Color(255, 255, 255)
+    white_text = Color(255, 255, 255)
 
     margin = 2
     linespace = 1
-    char_width = font_5x8.CharacterWidth(ord('A'))
-    max_chars = (PANEL_WIDTH - margin) // char_width
-
 
     offset = font_8x13.height + margin
     x = PANEL_WIDTH + margin
     y = offset
     
-    title_x = x
     title_y = y
-    title_dir = LEFT
-    
-    artist_x = x
     artist_y = y + font_8x13.height + linespace
-    artist_dir = LEFT
+    
+    title_scroll = ScrollingText(font_8x13, white_text, LEFT, SCROLL_SPEED,
+                                 PANEL_WIDTH, PANEL_WIDTH*2, x, title_y)
+    
+    artist_scroll = ScrollingText(font_8x13, white_text, LEFT, SCROLL_SPEED,
+                                  PANEL_WIDTH, PANEL_WIDTH*2, x, artist_y)
     while bus.connected:
         canvas.Clear()
         
@@ -108,36 +111,13 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             artist = data.artist
             if title is not None and artist is not None:
                 artists = ", ".join(artist)
-                title_len = graphics.DrawText(canvas, font_8x13,
-                                              title_x, title_y, 
-                                              white_text, title)
-                
-                artist_len = graphics.DrawText(canvas, font_8x13,
-                                               artist_x, artist_y,
-                                               white_text, artists)
-                
-                title_len_diff = PANEL_WIDTH - title_len
-                if title_len_diff < 0:
-                    title_len_2 = graphics.DrawText(canvas, font_8x13,
-                                                    title_x + title_len,
-                                                    title_y, white_text,
-                                                    f" {title}")
-                    
-                    title_x = title_x + (title_dir * SCROLL_SPEED)
-                    if title_x - x + title_len_2 <= 0:
-                        title_x = x
 
-                artist_len_diff = PANEL_WIDTH - artist_len
-                if artist_len_diff < 0:
-                    artists_len_2 = graphics.DrawText(canvas, font_8x13,
-                                                      artist_x + artist_len,
-                                                      artist_y, white_text,
-                                                      f" {artists}")
-                    
-                    artist_x = artist_x + (artist_dir * SCROLL_SPEED)
-                    if artist_x - x + artists_len_2 <= 0:
-                        artist_x = x
-                        
+                title_scroll.update_text(title)
+                title_scroll.draw(canvas)
+                
+                artist_scroll.update_text(artists)
+                artist_scroll.draw(canvas)
+            
             if data.image is not None:
                 canvas.SetImage(data.image)
                 
@@ -145,44 +125,41 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             now = datetime.now()
             x = margin
             y = font_8x13.height + margin
-            graphics.DrawText(canvas, font_8x13, 0, y, white_text,
-                              now.strftime('%I:%M'))
+            DrawText(canvas, font_8x13, 0, y, white_text,
+                     now.strftime('%I:%M'))
             
             y = y + font_8x13.height + margin
-            graphics.DrawText(canvas, font_5x8, x, y, white_text,
-                              now.strftime('%m/%d/%Y'))
+            DrawText(canvas, font_5x8, x, y, white_text,
+                     now.strftime('%m/%d/%Y'))
             
             y = font_8x13.height + margin
             if data.temperature_f is not None:
                 x = (matrix.width / 2) + margin
-                graphics.DrawText(canvas, font_8x13, x, y, white_text,
-                                f'{data.temperature_f:.1f}°F')
+                DrawText(canvas, font_8x13, x, y, white_text,
+                         f'{data.temperature_f:.1f}°F')
             
             if data.humidity is not None:
                 y = y + font_5x8.height + margin
-                graphics.DrawText(canvas, font_5x8, x, y, white_text,
-                                f'Hum: {data.humidity:.1f}%')
+                DrawText(canvas, font_5x8, x, y, white_text,
+                         f'Hum: {data.humidity:.1f}%')
             
             if data.CO2 is not None:
                 y = y + font_5x8.height + margin
-                graphics.DrawText(canvas, font_5x8, x, y, white_text,
-                                f'CO2: {int(data.CO2)}ppm')
+                DrawText(canvas, font_5x8, x, y, white_text,
+                         f'CO2: {int(data.CO2)}ppm')
             
             if data.VOC is not None:
                 y = y + font_5x8.height + margin
-                graphics.DrawText(canvas, font_5x8, x, y, white_text,
-                                f'VOC: {data.VOC}')
+                DrawText(canvas, font_5x8, x, y, white_text, 
+                         f'VOC: {data.VOC}')
 
         canvas = matrix.SwapOnVSync(canvas)
         await asyncio.sleep(0.05)
 
 
-async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
-                   i2c=I2C()):
-    # I don't know why, but defining i2c within the function doesn't work
-    # Better than a global I guess?
-    sgp = SGP40(i2c)
-    scd = SCD30(i2c)
+async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
+    sgp = SGP40(I2C)
+    scd = SCD30(I2C)
     while bus.connected:
         # since the measurement interval is long (2+ seconds)
         # we check for new data before reading
@@ -257,11 +234,11 @@ async def main():
     fan=GPIO.PWM(FAN_PIN, PWM_FREQ)
     fan_speed = 70
     fan.start(fan_speed)
-    # fan.ChangeDutyCycle(100)
 
     await asyncio.gather(matrix_loop(bus, matrix, data),
                          air_loop(bus, matrix, data))
+    
     await bus.wait_for_disconnect()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+if __name__ == "__main__":
+    asyncio.run(main())
