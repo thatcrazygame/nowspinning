@@ -1,16 +1,17 @@
 import asyncio
 from base64 import b64decode
 from datetime import datetime
+from gpiozero import PWMOutputDevice
 from io import BytesIO
 import os
-import RPi.GPIO as GPIO
 import sys
 import time
 import xml.etree.ElementTree as ET
 
 from adafruit_sgp40 import SGP40
 from adafruit_scd30 import SCD30
-from board import I2C
+from board import SCL, SDA
+from busio import I2C
 from dbus_next.aio import MessageBus
 from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
@@ -27,11 +28,13 @@ LEFT = -1
 RIGHT = 1
 SCROLL_SPEED = 1
 
-I2C = I2C()
+# SCD-30 has tempremental I2C with clock stretching, datasheet recommends
+# starting at 50KHz
+I2C = I2C(SCL, SDA, frequency=50000)
+
 FAN_PIN = 25
-PWM_FREQ = 100
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
+fan = PWMOutputDevice(FAN_PIN)
+fan.value = 0.7
 
 class Data:
     """Class to share data between async functions"""
@@ -230,10 +233,6 @@ async def main():
                 data.refresh_music_data(metadata, matrix.height, matrix.height)
 
     properties.on_properties_changed(on_prop_change)
-
-    fan=GPIO.PWM(FAN_PIN, PWM_FREQ)
-    fan_speed = 70
-    fan.start(fan_speed)
 
     await asyncio.gather(matrix_loop(bus, matrix, data),
                          air_loop(bus, matrix, data))
