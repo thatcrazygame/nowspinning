@@ -23,18 +23,10 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
-
-LEFT = -1
-RIGHT = 1
-SCROLL_SPEED = 1
-
 # SCD-30 has tempremental I2C with clock stretching, datasheet recommends
 # starting at 50KHz
 I2C = I2C(SCL, SDA, frequency=50000)
-
 FAN_PIN = 25
-fan = PWMOutputDevice(FAN_PIN)
-fan.value = 0.7
 
 class Data:
     """Class to share data between async functions"""
@@ -51,7 +43,7 @@ class Data:
         self.VOC = None
         self.raw_gas = None
 
-    def refresh_music_data(self, metadata, height, width):
+    def refresh_music_data(self, metadata, width, height):
         if metadata:
             self.music_last_updated = time.time()
         if 'xesam:artist' in metadata:
@@ -97,11 +89,11 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     title_y = y
     artist_y = y + font_8x13.height + linespace
     
-    title_scroll = ScrollingText(font_8x13, white_text, LEFT, SCROLL_SPEED,
-                                 PANEL_WIDTH, PANEL_WIDTH*2, x, title_y)
+    title_scroll = ScrollingText(font_8x13, white_text, x, title_y, 
+                                 PANEL_WIDTH, PANEL_WIDTH*2)
     
-    artist_scroll = ScrollingText(font_8x13, white_text, LEFT, SCROLL_SPEED,
-                                  PANEL_WIDTH, PANEL_WIDTH*2, x, artist_y)
+    artist_scroll = ScrollingText(font_8x13, white_text, x, artist_y,
+                                  PANEL_WIDTH, PANEL_WIDTH*2)
     while bus.connected:
         canvas.Clear()
         
@@ -223,14 +215,14 @@ async def main():
 
     data = Data()
     metadata = await player.get_metadata()
-    data.refresh_music_data(metadata, matrix.height, matrix.height)
+    data.refresh_music_data(metadata, PANEL_WIDTH, PANEL_HEIGHT)
 
     async def on_prop_change(interface_name, changed_properties,
                              invalidated_properties):
-        for changed, variant in changed_properties.items():
-            if changed == 'Metadata':
-                metadata = await player.get_metadata()
-                data.refresh_music_data(metadata, matrix.height, matrix.height)
+        if "Metadata" in changed_properties:
+            metadata = await player.get_metadata()
+            data.refresh_music_data(metadata, PANEL_WIDTH, PANEL_HEIGHT)
+           
 
     properties.on_properties_changed(on_prop_change)
 
@@ -240,4 +232,6 @@ async def main():
     await bus.wait_for_disconnect()
 
 if __name__ == "__main__":
+    fan = PWMOutputDevice(FAN_PIN)
+    fan.value = 0.7
     asyncio.run(main())
