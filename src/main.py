@@ -15,6 +15,7 @@ from adafruit_scd30 import SCD30
 from board import SCL, SDA
 from busio import I2C
 from dbus_next.aio import MessageBus
+from dotenv import load_dotenv
 from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo, Subscriber
 from paho.mqtt.client import Client, MQTTMessage
 from PIL import Image, ImageDraw, ImageFont
@@ -35,6 +36,8 @@ I2C = I2C(SCL, SDA, frequency=50000)
 FAN_PIN = 25
 
 LOGO_SIZE = 40
+
+load_dotenv()
 
 class Data(object):
     """Class to share data between async functions"""
@@ -250,7 +253,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
 
     mqtt_settings = Settings.MQTT(host="172.16.1.2",
                                   username="nowspinning",
-                                  password="C#@Q4Pbe8yvzvTvK")
+                                  password=password)
     
     device_info = DeviceInfo(name="nowspinning",
                              identifiers=mac,
