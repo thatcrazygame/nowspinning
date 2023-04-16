@@ -1,0 +1,22 @@
+alias: MQTT Sport Updates
+description: Publish Team Tracker attributes as JSON
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.teamtracker_latest_update
+    enabled: true
+condition: []
+action:
+  - service: mqtt.publish
+    data:
+      qos: 0
+      topic_template: >-
+        team-tracker/{{state_attr(trigger.to_state.state,
+        'league')}}/{{state_attr(trigger.to_state.state, 'team_abbr')}}
+      payload_template: |-
+        { 
+            "state": "{{ states(trigger.to_state.state) }}",
+            "attributes": {{ trigger.to_state.attributes.attributes|to_json() }} 
+        }
+mode: queued
+max: 20

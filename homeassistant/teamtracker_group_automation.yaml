@@ -1,0 +1,18 @@
+alias: Update Teamtracker Group
+description: ""
+trigger:
+  - platform: event
+    event_type: entity_registry_updated
+    event_data: {}
+condition:
+  - condition: template
+    value_template: "{{ state_attr(trigger.event.data[\"entity_id\"], \"sport\") != None }}"
+action:
+  - service: group.set
+    data:
+      object_id: teamtracker_teams
+      name: Teamtracker Teams
+      entities: "{{ integration_entities('teamtracker')| join(',') }}"
+  - service: group.reload
+    data: {}
+mode: single

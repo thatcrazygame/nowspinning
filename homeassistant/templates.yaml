@@ -1,0 +1,12 @@
+  - sensor:
+      - name: "Teamtracker Latest Update"
+        state: >
+          {% set x = expand('group.teamtracker_teams') | sort(attribute='attributes.last_update', reverse=true) | list %}
+          {{ x[0].entity_id }}
+        attributes:
+          state: >
+            {% set x = expand('group.teamtracker_teams') | sort(attribute='attributes.last_update', reverse=true) | list %}
+            {{ states(x[0].entity_id) }}
+          attributes: >
+            {% set x = expand('group.teamtracker_teams') | sort(attribute='attributes.last_update', reverse=true) | list %}
+            {{ x[0].attributes }}
