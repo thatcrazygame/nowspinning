@@ -307,21 +307,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         sensor.write_config()
     
     def sports_callback(client: Client, user_data, message: MQTTMessage):
-        
         payload = json.loads(str(message.payload.decode('UTF-8')))
-
-        from_attr = payload['from_state']['attributes']
-        to_attr = payload['to_state']['attributes']
-        
-        for attr in from_attr:
-            if type(from_attr[attr]) is list:
-                from_attr[attr] = tuple(from_attr[attr])
-            
-        for attr in to_attr:
-            if type(to_attr[attr]) is list:
-                to_attr[attr] = tuple(to_attr[attr])    
-        
-        diff = dict(set(to_attr.items()) - set(from_attr.items()))
         
         topic = message.topic.replace('team-tracker/', '').split("/")
         league_abbr = topic[0]
@@ -329,11 +315,28 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         
         if league_abbr not in data.sports:
             data.sports[league_abbr] = League(league_abbr)
-
-        data.selected_team = data.sports[league_abbr].team(team_abbr, to_attr,
-                                                           diff)
-
+              
+        state = ""
+        new_attr = {}
+        if "state" in payload:
+            state = payload["state"]
+        if "attributes" in payload:
+            new_attr = payload["attributes"]
         
+        for attr in new_attr:
+            if type(new_attr[attr]) is list:
+                new_attr[attr] = tuple(new_attr[attr])
+            
+        team = data.sports[league_abbr].team(team_abbr)
+        prev_attr = team.attributes
+        
+        diff = dict(set(new_attr.items()) - set(prev_attr.items()))
+
+        data.selected_team = data.sports[league_abbr].team(team_abbr, 
+                                                           attributes=new_attr,
+                                                           changes=diff,
+                                                           game_state=state)
+
     et = EntityInfo(name="Sports Sub", unique_id="nowspinning_sports_sub",
                     component="sensor", device=device_info)
     settings = Settings(mqtt=mqtt_settings, entity=et)

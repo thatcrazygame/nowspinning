@@ -28,6 +28,7 @@ class Team(SportBase):
         self.attributes = {}
         self.last_changes = {}
         self.league = league
+        self.game_state = ""
         self._logo_url = f"https://a.espncdn.com/i/teamlogos/{league}/500/scoreboard/{abbr}.png"
         
 
@@ -38,8 +39,8 @@ class League(SportBase):
         self._logo_url = f'https://a.espncdn.com/i/teamlogos/leagues/500/{abbr}.png'
         self.teams: dict[str, Team] = {}
         
-    def team(self, team_abbr:str, attributes:dict=None,
-             changes:dict=None) -> Team:
+    def team(self, team_abbr:str, attributes:dict=None, changes:dict=None,
+             game_state:str=None) -> Team:
         if team_abbr not in self.teams:
             team = Team(team_abbr, self.abbr)
             self.teams[team_abbr] = team
@@ -48,6 +49,8 @@ class League(SportBase):
             self.teams[team_abbr].attributes = attributes
         if changes:
             self.teams[team_abbr].last_changes = changes
+        if game_state:
+            self.teams[team_abbr].game_state = game_state
             
         return self.teams[team_abbr]
             
