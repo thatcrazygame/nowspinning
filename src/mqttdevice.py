@@ -9,7 +9,10 @@ from ha_mqtt_discoverable.sensors import (
     ButtonInfo, Button
 )
 
-from customdiscoverable import SharedSensorInfo, SharedSensor
+from customdiscoverable import (
+    SelectInfo, Select,
+    SharedSensorInfo, SharedSensor
+)
 
 class MQTTDevice(object):
     def __init__(self, mqtt_settings:Settings, device_info:DeviceInfo,
@@ -88,9 +91,19 @@ class MQTTDevice(object):
         sensor.state_topic = self.shared_sensor_topic
         return sensor
     
+    
     def add_button(self, callback, user_data=None, manual_availability=None,
                    **entity_info) -> Button:
         return self._add_entity(Button,
+                                manual_availability,
+                                callback,
+                                user_data,
+                                **entity_info)
+        
+    
+    def add_select(self, callback, user_data=None, manual_availability=None,
+                   **entity_info) -> Select:
+        return self._add_entity(Select,
                                 manual_availability,
                                 callback,
                                 user_data,

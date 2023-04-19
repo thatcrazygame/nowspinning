@@ -54,3 +54,13 @@ class League(SportBase):
             
         return self.teams[team_abbr]
             
+    @property
+    def friendly_team_names(self) -> list[str]:
+        team_names = []
+        if self.teams:
+             team_names = [team.attributes["team_name"]
+                           for team in self.teams.values()
+                           if "team_name" in team.attributes
+                           and team.attributes["team_name"] is not None
+                           and team.attributes["team_name"] != ""]
+        return team_names

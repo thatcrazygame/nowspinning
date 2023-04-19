@@ -1,6 +1,7 @@
 import asyncio
 from base64 import b64decode
 from datetime import datetime
+from enum import Enum
 from gpiozero import PWMOutputDevice
 from io import BytesIO
 import json
@@ -39,6 +40,11 @@ LOGO_SIZE = 40
 
 load_dotenv()
 
+class Mode(Enum):
+    DASHBOARD = 1
+    MUSIC = 2
+    SPORTS = 3
+
 class Data(object):
     """Class to share data between async functions"""
 
@@ -53,7 +59,9 @@ class Data(object):
         self.co2 = None
         self.voc = None
         self.raw_gas = None
+        self.mode: Mode = Mode.DASHBOARD
         self.sports: dict[str, League] = {}
+        self.selected_league: League = None
         self.selected_team: Team = None
 
     @property
@@ -118,12 +126,13 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     while bus.connected:
         canvas.Clear()
         
-        mode = "sports" # For testing
+        mode = data.mode
         
-        music_timeout = 5
-        last_updated = data.music_last_updated
-        if (last_updated is not None 
-                and time.time() - last_updated  < music_timeout):
+        # music_timeout = 5
+        # last_updated = data.music_last_updated
+        # if (last_updated is not None 
+        #         and time.time() - last_updated  < music_timeout):
+        if mode is Mode.MUSIC:
             
             title = data.title
             artist = data.artist
@@ -138,7 +147,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             
             if data.image is not None:
                 canvas.SetImage(data.image)
-        elif mode == "sports":
+        elif mode is Mode.SPORTS:
             team = data.selected_team
             if team:
                 sport = data.sports[team.league]
@@ -184,7 +193,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                     x = int(PANEL_WIDTH + score_space/2 - score_width/2)
                     y = 25
                     DrawText(canvas, font_10x20, x, y, white_text, oppo_score)
-        else:
+        elif mode is Mode.DASHBOARD:
             now = datetime.now()
             x = margin
             y = font_8x13.height + margin
@@ -215,6 +224,8 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                 y = y + font_5x8.height + margin
                 DrawText(canvas, font_5x8, x, y, white_text, 
                          f'VOC: {data.voc}')
+        else:
+            data.mode = Mode.DASHBOARD
 
         canvas = matrix.SwapOnVSync(canvas)
         await asyncio.sleep(0.05)
@@ -300,21 +311,69 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                            value_template="{{ value_json.title }}",
                            icon="mdi:music-circle")
     
-    # shared_state_topic = "hmd/sensor/nowspinning/state"
+    def update_mode(client: Client, user_data, message: MQTTMessage):
+        mode = str(message.payload.decode("UTF-8")).upper()
+        data.mode = Mode[mode]
+    
+    modes = [mode.name.capitalize() for mode in Mode]
+    mqtt.add_select(name="Mode",
+                    callback=update_mode,
+                    unique_id="nowspinning_mode",
+                    options=modes)
+
+    
+    def update_team(client: Client, user_data, message: MQTTMessage):
+        selected_name = str(message.payload.decode("UTF-8"))
+        for team in data.selected_league.teams.values():
+            team_name = team.attributes.get("team_name")
+            if team_name and team_name == selected_name:
+                data.selected_team = team
+                break
+            
+    team_opts = []
+    if data.selected_league:
+        team_opts = data.selected_league.friendly_team_names
+    mqtt.add_select(name="Team",
+                    callback=update_team,
+                    unique_id="nowspinning_team",
+                    options=team_opts)
+
+
+    def update_league(client: Client, user_data, message: MQTTMessage):
+        league_abbr = str(message.payload.decode("UTF-8"))
+        
+        if league_abbr in data.sports:
+            data.selected_league = data.sports[league_abbr]
+            data.selected_team = list(data.sports[league_abbr].teams.values())[0]
+            team_select = mqtt.entities["Team"]
+            teams = data.selected_league.friendly_team_names
+            team_select.update_options(teams)
+    
+    league_opts = []
+    if data.sports:
+        league_opts = list(data.sports.keys())
+    mqtt.add_select(name="League",
+                    callback=update_league,
+                    unique_id="nowspinning_league",
+                    options=league_opts)
+    
     mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
 
     for sensor in mqtt.entities.values():
         sensor.write_config()
     
-    def sports_callback(client: Client, user_data, message: MQTTMessage):
+    def teamtracker(client: Client, user_data, message: MQTTMessage):
         payload = json.loads(str(message.payload.decode('UTF-8')))
         
         topic = message.topic.replace('team-tracker/', '').split("/")
         league_abbr = topic[0]
         team_abbr = topic[1]
-        
+
         if league_abbr not in data.sports:
             data.sports[league_abbr] = League(league_abbr)
+            league_select = mqtt.entities["League"]
+            league_opts = list(data.sports.keys())
+            league_select.update_options(league_opts)
               
         state = ""
         new_attr = {}
@@ -331,16 +390,19 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         prev_attr = team.attributes
         
         diff = dict(set(new_attr.items()) - set(prev_attr.items()))
-
-        data.selected_team = data.sports[league_abbr].team(team_abbr, 
-                                                           attributes=new_attr,
-                                                           changes=diff,
-                                                           game_state=state)
+        
+        data.sports[league_abbr].team(team_abbr, attributes=new_attr, 
+                                      changes=diff, game_state=state)
+        
+        if data.selected_league and league_abbr == data.selected_league.abbr:
+            team_select = mqtt.entities["Team"]
+            teams = data.sports[league_abbr].friendly_team_names
+            team_select.update_options(teams)
 
     et = EntityInfo(name="Sports Sub", unique_id="nowspinning_sports_sub",
                     component="sensor", device=device_info)
     settings = Settings(mqtt=mqtt_settings, entity=et)
-    sub = Subscriber(settings, sports_callback, None)
+    sub = Subscriber(settings, teamtracker, None)
     
     sub.mqtt_client.subscribe('team-tracker/#')
 
@@ -363,6 +425,25 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         
         first = list(mqtt.entities.values())[0]
         first.set_state(json.dumps(payload))
+        
+        mode_select = mqtt.entities["Mode"]
+        mode_select.set_selection(data.mode.name.capitalize())
+        
+        league_select = mqtt.entities["League"]
+        if data.selected_league:
+            league_select.set_selection(data.selected_league.abbr)
+        
+        team_select = mqtt.entities["Team"]
+        if data.selected_team:
+            team_name = data.selected_team.attributes["team_name"]
+            team_select.set_selection(team_name)
+            
+        # for league in data.sports.values():
+        #     print(league.abbr)
+        #     for team in league.teams.values():
+        #         team_name = team.attributes.get("team_name")
+        #         print(f"{team.abbr} - {team_name}")
+                
         
         await asyncio.sleep(1)
 
