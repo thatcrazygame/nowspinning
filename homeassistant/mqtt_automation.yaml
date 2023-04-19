@@ -5,18 +5,26 @@ trigger:
     entity_id:
       - sensor.teamtracker_latest_update
     enabled: true
+  - platform: mqtt
+    topic: teamtracker/start
 condition: []
 action:
   - service: mqtt.publish
     data:
       qos: 0
-      topic_template: >-
-        team-tracker/{{state_attr(trigger.to_state.state,
-        'league')}}/{{state_attr(trigger.to_state.state, 'team_abbr')}}
+      topic: teamtracker/all
       payload_template: |-
-        { 
-            "state": "{{ states(trigger.to_state.state) }}",
-            "attributes": {{ trigger.to_state.attributes.attributes|to_json() }} 
+        {
+          "teams": [
+          {%- for team in expand("group.teamtracker_teams") %}
+          {
+            "team_abbr": "{{ state_attr(team.entity_id, 'team_abbr') }}",
+            "league": "{{ state_attr(team.entity_id, 'league') }}",
+            "state": "{{ states(team.entity_id) }}",
+            "attributes": {{ team.attributes|to_json() }} 
+          }{% if not loop.last %},{% endif %}
+          {%- endfor %}
+          ]
         }
 mode: queued
 max: 20

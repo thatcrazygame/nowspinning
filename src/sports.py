@@ -8,16 +8,20 @@ class SportBase(object):
         self.abbr = abbr
         self._logo_img:Image.Image = None
         self._logo_url = ""
+
         
     def get_logo(self, size:tuple) -> Image.Image:
         if not self._logo_img and self._logo_url != "":
             background = Image.new('RGBA', size, (0,0,0))
-            response = requests.get(self._logo_url)
-            img = Image.open(BytesIO(response.content))
-            img.thumbnail(size, Image.Resampling.LANCZOS)
-            img = Image.alpha_composite(background, img)
-            img = img.convert('RGB')
-            self._logo_img = img
+            response = requests.get(self._logo_url.lower())
+            if response.status_code == requests.codes.ok:
+                img = Image.open(BytesIO(response.content))
+                img.thumbnail(size, Image.Resampling.LANCZOS)
+                img = Image.alpha_composite(background, img)
+                img = img.convert('RGB')
+                self._logo_img = img
+            # else:
+            #     print(vars(response))
             
         return self._logo_img
 
@@ -29,8 +33,20 @@ class Team(SportBase):
         self.last_changes = {}
         self.league = league
         self.game_state = ""
-        self._logo_url = f"https://a.espncdn.com/i/teamlogos/{league}/500/scoreboard/{abbr}.png"
+        self._logo_url = f"https://a.espncdn.com/i/teamlogos/{league}/500/scoreboard/{abbr}.png?nocache=12312312412414214"
+    
+    
+    @property
+    def friendly_name(self) -> str:
+        friendly_name = ""
+        if self.game_state != "":
+            team_name = self.attributes.get("team_name")
+            if team_name:
+                friendly_name = f"{self.abbr} - {team_name}"
+            else:
+                friendly_name = f"{self.abbr} - {self.league}"
         
+        return friendly_name
 
 class League(SportBase):
     def __init__(self, abbr:str):
@@ -58,9 +74,7 @@ class League(SportBase):
     def friendly_team_names(self) -> list[str]:
         team_names = []
         if self.teams:
-             team_names = [team.attributes["team_name"]
-                           for team in self.teams.values()
-                           if "team_name" in team.attributes
-                           and team.attributes["team_name"] is not None
-                           and team.attributes["team_name"] != ""]
+            team_names = [team.friendly_name
+                          for team in self.teams.values()
+                          if team.friendly_name != ""]
         return team_names

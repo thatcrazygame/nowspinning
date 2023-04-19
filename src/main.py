@@ -26,6 +26,7 @@ from rgbmatrix.graphics import Color, DrawText, Font
 from scrollingtext import ScrollingText
 from mqttdevice import MQTTDevice
 from sports import League, Team
+from customdiscoverable import Select, SharedSensor
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 
@@ -59,10 +60,10 @@ class Data(object):
         self.co2 = None
         self.voc = None
         self.raw_gas = None
-        self.mode: Mode = Mode.DASHBOARD
+        self.mode: Mode = Mode.SPORTS
         self.sports: dict[str, League] = {}
-        self.selected_league: League = None
-        self.selected_team: Team = None
+        self.selected_league_abbr: str = None
+        self.selected_team_abbr: str = None
 
     @property
     def temperature_f(self):
@@ -133,7 +134,6 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         # if (last_updated is not None 
         #         and time.time() - last_updated  < music_timeout):
         if mode is Mode.MUSIC:
-            
             title = data.title
             artist = data.artist
             if title is not None and artist is not None:
@@ -148,9 +148,16 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             if data.image is not None:
                 canvas.SetImage(data.image)
         elif mode is Mode.SPORTS:
-            team = data.selected_team
-            if team:
-                sport = data.sports[team.league]
+            league: League = None
+            team: Team = None
+            
+            if data.selected_league_abbr in data.sports:
+                league = data.sports[data.selected_league_abbr]
+            
+            if league is not None and data.selected_team_abbr in league.teams:
+                team = league.team(data.selected_team_abbr)
+                
+            if team is not None:
                 attr = team.attributes 
 
                 clock = attr.get("clock")
@@ -169,12 +176,12 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                 
                 oppo_abbr = attr.get("opponent_abbr")
                 if oppo_abbr:
-                    oppo = data.sports[sport.abbr].team(oppo_abbr)
+                    oppo = data.sports[league.abbr].team(oppo_abbr)
                     oppo_img = oppo.get_logo(logo_size)
                     oppo_img_x = PANEL_WIDTH*2-LOGO_SIZE
                     canvas.SetImage(oppo_img, oppo_img_x)
                 else:
-                    league_img = sport.get_logo(logo_size)
+                    league_img = league.get_logo(logo_size)
                     canvas.SetImage(league_img, PANEL_WIDTH*2-league_img.width)    
                 
                 score_space = PANEL_WIDTH - LOGO_SIZE
@@ -324,15 +331,19 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     
     def update_team(client: Client, user_data, message: MQTTMessage):
         selected_name = str(message.payload.decode("UTF-8"))
-        for team in data.selected_league.teams.values():
-            team_name = team.attributes.get("team_name")
-            if team_name and team_name == selected_name:
-                data.selected_team = team
-                break
+        if selected_name and data.selected_league_abbr:
+            league = data.sports[data.selected_league_abbr]
+            for team in league.teams.values():
+                team_name = team.friendly_name
+                if team_name and team_name == selected_name:
+                    data.selected_team_abbr = team.abbr
+                    break
             
     team_opts = []
-    if data.selected_league:
-        team_opts = data.selected_league.friendly_team_names
+    if data.selected_league_abbr:
+        league = data.sports[data.selected_league_abbr]
+        team_opts = league.friendly_team_names
+        
     mqtt.add_select(name="Team",
                     callback=update_team,
                     unique_id="nowspinning_team",
@@ -342,20 +353,28 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     def update_league(client: Client, user_data, message: MQTTMessage):
         league_abbr = str(message.payload.decode("UTF-8"))
         
-        if league_abbr in data.sports:
-            data.selected_league = data.sports[league_abbr]
-            data.selected_team = list(data.sports[league_abbr].teams.values())[0]
-            team_select = mqtt.entities["Team"]
-            teams = data.selected_league.friendly_team_names
-            team_select.update_options(teams)
+        diff_league = data.selected_league_abbr != league_abbr
+        if league_abbr in data.sports and diff_league:
+            data.selected_league_abbr = league_abbr
+            league = data.sports[league_abbr]
+            if league.teams:
+                first_team = list(league.teams.values())[0]
+                data.selected_team_abbr = first_team.abbr
+                team_select = mqtt.entities["Team"]
+                team_names = league.friendly_team_names
+                team_select.update_options(team_names)
+                team_select.set_selection(None) # Maybe helps reset?
+    
     
     league_opts = []
     if data.sports:
         league_opts = list(data.sports.keys())
+    
     mqtt.add_select(name="League",
                     callback=update_league,
                     unique_id="nowspinning_league",
                     options=league_opts)
+    
     
     mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
 
@@ -364,52 +383,47 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     
     def teamtracker(client: Client, user_data, message: MQTTMessage):
         payload = json.loads(str(message.payload.decode('UTF-8')))
+        if "teams" not in payload: return
         
-        topic = message.topic.replace('team-tracker/', '').split("/")
-        league_abbr = topic[0]
-        team_abbr = topic[1]
+        for team in payload["teams"]:
+            league_abbr = team["league"]
+            team_abbr = team["team_abbr"]
 
-        if league_abbr not in data.sports:
-            data.sports[league_abbr] = League(league_abbr)
-            league_select = mqtt.entities["League"]
-            league_opts = list(data.sports.keys())
-            league_select.update_options(league_opts)
-              
-        state = ""
-        new_attr = {}
-        if "state" in payload:
-            state = payload["state"]
-        if "attributes" in payload:
-            new_attr = payload["attributes"]
-        
-        for attr in new_attr:
-            if type(new_attr[attr]) is list:
-                new_attr[attr] = tuple(new_attr[attr])
+            if league_abbr not in data.sports:
+                data.sports[league_abbr] = League(league_abbr)
             
-        team = data.sports[league_abbr].team(team_abbr)
-        prev_attr = team.attributes
+            state: str = team["state"]
+            new_attr: dict = team["attributes"]
+            
+            for attr in new_attr:
+                if type(new_attr[attr]) is list:
+                    new_attr[attr] = tuple(new_attr[attr])
+              
+            team = data.sports[league_abbr].team(team_abbr)
+            prev_attr = team.attributes
         
-        diff = dict(set(new_attr.items()) - set(prev_attr.items()))
+            diff = dict(set(new_attr.items()) - set(prev_attr.items()))
         
-        data.sports[league_abbr].team(team_abbr, attributes=new_attr, 
-                                      changes=diff, game_state=state)
-        
-        if data.selected_league and league_abbr == data.selected_league.abbr:
-            team_select = mqtt.entities["Team"]
-            teams = data.sports[league_abbr].friendly_team_names
-            team_select.update_options(teams)
+            data.sports[league_abbr].team(team_abbr, attributes=new_attr,
+                                          changes=diff, game_state=state)
+
 
     et = EntityInfo(name="Sports Sub", unique_id="nowspinning_sports_sub",
                     component="sensor", device=device_info)
     settings = Settings(mqtt=mqtt_settings, entity=et)
     sub = Subscriber(settings, teamtracker, None)
     
-    sub.mqtt_client.subscribe('team-tracker/#')
+    sub.mqtt_client.subscribe("teamtracker/all")
+    sub.mqtt_client.publish("teamtracker/start", "start")
+    
+    mqtt.entities["League"].write_config()
+    mqtt.entities["Team"].write_config()
 
     while bus.connected:
-        sensor: Discoverable
-        for sensor in mqtt.entities.values():
-            sensor.set_availability(True)
+        entity: Discoverable
+        for name, entity in mqtt.entities.items():
+            if name not in ["League", "Team"]:
+                entity.set_availability(True)
         
         payload = {}
         payload['temperature'] = f'{data.temperature_f:.1f}'
@@ -429,22 +443,34 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         mode_select = mqtt.entities["Mode"]
         mode_select.set_selection(data.mode.name.capitalize())
         
-        league_select = mqtt.entities["League"]
-        if data.selected_league:
-            league_select.set_selection(data.selected_league.abbr)
-        
         team_select = mqtt.entities["Team"]
-        if data.selected_team:
-            team_name = data.selected_team.attributes["team_name"]
-            team_select.set_selection(team_name)
-            
-        # for league in data.sports.values():
-        #     print(league.abbr)
-        #     for team in league.teams.values():
-        #         team_name = team.attributes.get("team_name")
-        #         print(f"{team.abbr} - {team_name}")
-                
         
+        league_select = mqtt.entities["League"]
+        league_opts = list(data.sports.keys())
+        
+        if set(league_opts) != set(league_select._entity.options):
+            league_select.update_options(league_opts)
+                                
+        league_select.set_selection(data.selected_league_abbr)
+        if data.selected_league_abbr:
+            league = data.sports[data.selected_league_abbr]
+        
+            team_opts = league.friendly_team_names
+            if set(team_opts) != set(team_select._entity.options):
+                team_select.update_options(team_opts)
+                
+            team_name = None
+            if data.selected_team_abbr:
+                team = league.team(data.selected_team_abbr)
+                team_name = team.friendly_name
+            
+            team_select.set_selection(team_name)
+                
+        has_league_opts =  bool(league_select._entity.options)
+        has_team_opts = bool(team_select._entity.options)
+        league_select.set_availability(has_league_opts)
+        team_select.set_availability(has_team_opts)
+
         await asyncio.sleep(1)
 
 

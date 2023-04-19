@@ -20,14 +20,16 @@ class Select(Subscriber[SelectInfo]):
     """Implements an MQTT select:
     https://www.home-assistant.io/integrations/select.mqtt
     """
-    def update_options(self, options: list[str]):
+    def update_options(self, options: list[str]) -> None:
         self._entity.options = options
         self.write_config()
 
 
     def set_selection(self, option: str) -> None:
         if option in self._entity.options:
-            self._state_helper(str(option))    
+            # Not sure if both are needed
+            self._state_helper(str(option), topic=self._command_topic)
+            self._state_helper(str(option))
 
 
     
