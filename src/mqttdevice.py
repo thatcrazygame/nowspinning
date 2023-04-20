@@ -5,8 +5,9 @@ from paho.mqtt.client import Client, MQTTMessage
 from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo
 from ha_mqtt_discoverable.sensors import (
     BinarySensorInfo, BinarySensor,
-    SensorInfo, Sensor, 
-    ButtonInfo, Button
+    ButtonInfo, Button,
+    SensorInfo, Sensor,
+    SwitchInfo, Switch 
 )
 
 from customdiscoverable import (
@@ -104,6 +105,15 @@ class MQTTDevice(object):
     def add_select(self, callback, user_data=None, manual_availability=None,
                    **entity_info) -> Select:
         return self._add_entity(Select,
+                                manual_availability,
+                                callback,
+                                user_data,
+                                **entity_info)
+        
+    
+    def add_switch(self, callback, user_data=None, manual_availability=None,
+                   **entity_info) -> Switch:
+        return self._add_entity(Switch,
                                 manual_availability,
                                 callback,
                                 user_data,

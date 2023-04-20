@@ -64,6 +64,7 @@ class Data(object):
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
+        self.switch_to_music: bool = False
 
     @property
     def temperature_f(self):
@@ -74,6 +75,9 @@ class Data(object):
         
 
     def refresh_music_data(self, metadata, width, height):
+        if self.switch_to_music:
+            self.mode = Mode.MUSIC
+            
         if metadata:
             self.music_last_updated = time.time()
         if 'xesam:artist' in metadata:
@@ -375,11 +379,14 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                     unique_id="nowspinning_league",
                     options=league_opts)
     
+    def music_switch(client: Client, user_data, message: MQTTMessage):
+        state = str(message.payload.decode("UTF-8"))
+        data.switch_to_music = (state == "ON")
     
-    mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
+    mqtt.add_switch(name="Switch to Music",
+                    callback=music_switch,
+                    unique_id="nowspinning_music_switch")
 
-    for sensor in mqtt.entities.values():
-        sensor.write_config()
     
     def teamtracker(client: Client, user_data, message: MQTTMessage):
         payload = json.loads(str(message.payload.decode('UTF-8')))
@@ -416,9 +423,11 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     sub.mqtt_client.subscribe("teamtracker/all")
     sub.mqtt_client.publish("teamtracker/start", "start")
     
-    mqtt.entities["League"].write_config()
-    mqtt.entities["Team"].write_config()
+    mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
 
+    for entitiy in mqtt.entities.values():
+        entitiy.write_config()
+        
     while bus.connected:
         entity: Discoverable
         for name, entity in mqtt.entities.items():
@@ -470,6 +479,12 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         has_team_opts = bool(team_select._entity.options)
         league_select.set_availability(has_league_opts)
         team_select.set_availability(has_team_opts)
+        
+        music_switch = mqtt.entities["Switch to Music"]
+        if data.switch_to_music:
+            music_switch.on()
+        else:
+            music_switch.off()
 
         await asyncio.sleep(1)
 

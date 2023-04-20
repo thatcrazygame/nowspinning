@@ -27,8 +27,6 @@ class Select(Subscriber[SelectInfo]):
 
     def set_selection(self, option: str) -> None:
         if option in self._entity.options:
-            # Not sure if both are needed
-            self._state_helper(str(option), topic=self._command_topic)
             self._state_helper(str(option))
 
 
