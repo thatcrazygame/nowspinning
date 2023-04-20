@@ -9,7 +9,8 @@ class Direction(Enum):
 class ScrollingText(object):
     def __init__(self, font: Font, color: Color, starting_x: int, y: int,
                  left_bound: int, right_bound: int, scroll_speed: int=1, 
-                 scroll_dir: Direction=Direction.LEFT, text: str="") -> None:
+                 scroll_dir: Direction=Direction.LEFT, text: str="",
+                 num_spaces: int=1) -> None:
         self._font = font
         self._color = color
         self._scroll_dir = scroll_dir.value
@@ -17,6 +18,7 @@ class ScrollingText(object):
         self._left_bound = left_bound
         self._right_bound = right_bound
         self._starting_x = starting_x
+        self._num_spaces = num_spaces
         
         self.x = starting_x
         self.y = y
@@ -25,7 +27,7 @@ class ScrollingText(object):
 
     @property
     def __space_width(self) -> int:
-        return self._font.CharacterWidth(ord(" "))
+        return self._font.CharacterWidth(ord(" ")) * self._num_spaces
  
   
     def _is_out_of_bounds(self) -> bool:
