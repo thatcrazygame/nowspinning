@@ -4,9 +4,21 @@ trigger:
   - platform: event
     event_type: entity_registry_updated
     event_data: {}
+    id: team_added
+  - platform: homeassistant
+    event: start
+    id: ha_start
 condition:
-  - condition: template
-    value_template: "{{ state_attr(trigger.event.data[\"entity_id\"], \"sport\") != None }}"
+  - condition: or
+    conditions:
+      - condition: trigger
+        id: ha_start
+      - condition: and
+        conditions:
+          - condition: trigger
+            id: team_added
+          - condition: template
+            value_template: "{{ state_attr(trigger.event.data[\"entity_id\"], \"sport\") != None }}"
 action:
   - service: group.set
     data:
