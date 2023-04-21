@@ -60,7 +60,7 @@ class Data(object):
         self.co2 = None
         self.voc = None
         self.raw_gas = None
-        self.mode: Mode = Mode.SPORTS
+        self.mode: Mode = Mode.DASHBOARD
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
@@ -418,12 +418,13 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     def music_switch(client: Client, user_data, message: MQTTMessage):
         state = str(message.payload.decode("UTF-8"))
         data.switch_to_music = (state == "ON")
+
     
     mqtt.add_switch(name="Switch to Music",
                     callback=music_switch,
-                    unique_id="nowspinning_music_switch")
+                    unique_id="nowspinning_music_switch",
+                    icon="mdi:music-box-multiple")
 
-    
     def teamtracker(client: Client, user_data, message: MQTTMessage):
         payload = json.loads(str(message.payload.decode('UTF-8')))
         if "teams" not in payload: return
@@ -501,6 +502,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             league = data.sports[data.selected_league_abbr]
         
             team_opts = league.friendly_team_names
+            
             if set(team_opts) != set(team_select._entity.options):
                 team_select.update_options(team_opts)
                 

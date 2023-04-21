@@ -23,10 +23,13 @@ class MQTTDevice(object):
         self.manual_availability = manual_availability
         self.entities: dict[Discoverable] = {}
         self._shared_sensor_topic = None
+ 
+    T = TypeVar("T")    
         
     @property
     def shared_sensor_topic(self):
         return self._shared_sensor_topic
+    
     
     @shared_sensor_topic.setter
     def shared_sensor_topic(self, value):
@@ -35,11 +38,10 @@ class MQTTDevice(object):
                    if type(s) is SharedSensor]
         for sensor in sensors:
             sensor.state_topic = self._shared_sensor_topic
-        
-    T = TypeVar("T")
+
     
     def _add_entity(self, EntityType:Type[Discoverable],
-                    manual_availability=None,
+                    InfoType:Type[EntityInfo], manual_availability=None,
                     callback: Callable[[Client, T, MQTTMessage], Any] =
                         lambda c, t, m: None,
                     user_data=None, **entity_info):
@@ -52,14 +54,13 @@ class MQTTDevice(object):
         entity_signature = inspect.signature(EntityType)
 
         # TODO find a better way to get this type
-        info_type = f"{EntityType.__name__}Info"
-        InfoType = globals()[info_type]
+        # info_type = f"{EntityType.__name__}Info"
+        # InfoType = globals()[info_type]
         info = InfoType(**entity_info)
         settings = Settings(mqtt=self.mqtt_settings,
                             entity=info,
                             manual_availability=manual_availability)
         
-             
         kwargs = {"settings": settings}
         if "command_callback" in entity_signature.parameters:
             kwargs["command_callback"] = callback
@@ -74,19 +75,20 @@ class MQTTDevice(object):
     def add_binary_sensor(self, manual_availability=None,
                           **entity_info) -> BinarySensor:
         return self._add_entity(BinarySensor,
+                                BinarySensorInfo,
                                 manual_availability,
                                 **entity_info)
  
         
     def add_sensor(self, manual_availability=None, **entity_info) -> Sensor:
-        return self._add_entity(Sensor,
-                                manual_availability,
+        return self._add_entity(Sensor, SensorInfo, manual_availability,
                                 **entity_info)
 
 
     def add_shared_sensor(self, manual_availability=None,
                           **entity_info) -> SharedSensor:
         sensor = self._add_entity(SharedSensor,
+                                  SharedSensorInfo, 
                                   manual_availability,
                                   **entity_info)
         sensor.state_topic = self.shared_sensor_topic
@@ -96,6 +98,7 @@ class MQTTDevice(object):
     def add_button(self, callback, user_data=None, manual_availability=None,
                    **entity_info) -> Button:
         return self._add_entity(Button,
+                                ButtonInfo,
                                 manual_availability,
                                 callback,
                                 user_data,
@@ -105,6 +108,7 @@ class MQTTDevice(object):
     def add_select(self, callback, user_data=None, manual_availability=None,
                    **entity_info) -> Select:
         return self._add_entity(Select,
+                                SelectInfo,
                                 manual_availability,
                                 callback,
                                 user_data,
@@ -113,7 +117,8 @@ class MQTTDevice(object):
     
     def add_switch(self, callback, user_data=None, manual_availability=None,
                    **entity_info) -> Switch:
-        return self._add_entity(Switch,
+        return self._add_entity(Switch, 
+                                SwitchInfo,
                                 manual_availability,
                                 callback,
                                 user_data,
