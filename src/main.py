@@ -21,7 +21,7 @@ from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo,
 from paho.mqtt.client import Client, MQTTMessage
 from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
-from rgbmatrix.graphics import Color, DrawText, Font
+from rgbmatrix.graphics import Color, DrawCircle, DrawText, Font
 
 from scrollingtext import ScrollingText
 from mqttdevice import MQTTDevice
@@ -175,20 +175,21 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                     DrawText(canvas, font_5x8, x, y, white_text, clock)
                 
                 logo_size = (LOGO_SIZE, LOGO_SIZE)
-                
+                logo_y = font_5x8.height + 2
                 team_img = team.get_logo(logo_size)
                 if team_img:
-                    canvas.SetImage(team_img, 0, font_5x8.height + 2)
+                    canvas.SetImage(team_img, 0, logo_y)
                 
                 oppo_abbr = attr.get("opponent_abbr")
                 if oppo_abbr:
                     oppo = data.sports[league.abbr].team(oppo_abbr)
                     oppo_img = oppo.get_logo(logo_size)
                     oppo_img_x = PANEL_WIDTH*2-LOGO_SIZE
-                    canvas.SetImage(oppo_img, oppo_img_x, font_5x8.height + 2)
+                    canvas.SetImage(oppo_img, oppo_img_x, logo_y)
                 else:
                     league_img = league.get_logo(logo_size)
-                    canvas.SetImage(league_img, PANEL_WIDTH*2-league_img.width)    
+                    canvas.SetImage(league_img, PANEL_WIDTH*2-league_img.width,
+                                    logo_y)
                 
                 score_space = PANEL_WIDTH - LOGO_SIZE
                 team_score = attr.get("team_score")
@@ -231,6 +232,49 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                         y = 45
                         DrawText(canvas, font_5x8, x, y, white_text, oppo_shots)
                         
+                if sport == "baseball":
+                    on_first = attr.get("on_first") or False
+                    on_second = attr.get("on_second") or False
+                    on_third = attr.get("on_third") or False
+                    outs = attr.get("outs") or 0
+                    balls = attr.get("balls") or 0
+                    strikes = attr.get("strikes") or 0
+                    
+                    bases_bin = f"{int(on_third)}{int(on_second)}{int(on_first)}"
+                    bases_img_file = f"../img/bases/bases_{bases_bin}.png"
+                    bases_img = Image.open(bases_img_file)
+                    bases_img = bases_img.convert("RGB")
+                    
+                    if bases_img:
+                        bases_x = LOGO_SIZE + 2
+                        bases_y = 30
+                        canvas.SetImage(bases_img, bases_x, bases_y)
+                        
+                    # if balls and strikes:
+                    x = PANEL_WIDTH + 3
+                    y = 36
+                    count = f"{balls}-{strikes}"
+                    # count = "1-2"
+                    DrawText(canvas, font_5x8, x, y, white_text, count)
+                    
+                    MAX_OUTS = 3
+                    # outs = 2
+                    radius = 3
+                    out_space = 2
+                    x = PANEL_WIDTH + out_space
+                    y = 36 + radius
+                    for o in range(MAX_OUTS):
+                        out_size = radius*2
+                        out = Image.new("RGB", (out_size,out_size))
+                        draw = ImageDraw.Draw(out)
+                        fill = (0,0,0)
+                        if outs >= o+1:
+                            fill = (255,255,255)
+                        draw.ellipse((0,0,out_size-1,out_size-1), fill=fill,
+                                     outline=(255,255,255))
+                        canvas.SetImage(out, x, y)
+                        x += out.width + out_space
+                    
                 last_play = attr.get("last_play")
                 if last_play:
                     char_width = 8
