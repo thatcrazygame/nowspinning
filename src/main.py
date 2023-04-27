@@ -41,7 +41,7 @@ LOGO_SIZE = 40
 
 load_dotenv()
 
-class Mode(Enum):
+class View(Enum):
     DASHBOARD = 1
     MUSIC = 2
     SPORTS = 3
@@ -60,7 +60,7 @@ class Data(object):
         self.co2 = None
         self.voc = None
         self.raw_gas = None
-        self.mode: Mode = Mode.DASHBOARD
+        self.view: View = View.DASHBOARD
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
@@ -76,7 +76,7 @@ class Data(object):
 
     def refresh_music_data(self, metadata, width, height):
         if self.switch_to_music:
-            self.mode = Mode.MUSIC
+            self.view = View.MUSIC
             
         if metadata:
             self.music_last_updated = time.time()
@@ -132,13 +132,13 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     while bus.connected:
         canvas.Clear()
         
-        mode = data.mode
+        view = data.view
         
         # music_timeout = 5
         # last_updated = data.music_last_updated
         # if (last_updated is not None 
         #         and time.time() - last_updated  < music_timeout):
-        if mode is Mode.MUSIC:
+        if view is View.MUSIC:
             title = data.title
             artist = data.artist
             if title is not None and artist is not None:
@@ -152,7 +152,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             
             if data.image is not None:
                 canvas.SetImage(data.image)
-        elif mode is Mode.SPORTS:
+        elif view is View.SPORTS:
             league: League = None
             team: Team = None
             
@@ -240,7 +240,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                     play_scroll.update_text(last_play)
                     play_scroll.draw(canvas)
                     
-        elif mode is Mode.DASHBOARD:
+        elif view is View.DASHBOARD:
             now = datetime.now()
             x = margin
             y = font_8x13.height + margin
@@ -272,7 +272,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                 DrawText(canvas, font_5x8, x, y, white_text, 
                          f"VOC: {data.voc}")
         else:
-            data.mode = Mode.DASHBOARD
+            data.view = View.DASHBOARD
 
         canvas = matrix.SwapOnVSync(canvas)
         await asyncio.sleep(0.05)
@@ -316,7 +316,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     device_info = DeviceInfo(name="nowspinning",
                              identifiers=mac,
                              manufacturer="Raspberry Pi Foundation",
-                             model="Raspberry Pi 3B+")
+                             viewl="Raspberry Pi 3B+")
     
     mqtt = MQTTDevice(mqtt_settings, device_info)
 
@@ -358,15 +358,15 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                            value_template="{{ value_json.title }}",
                            icon="mdi:music-circle")
     
-    def update_mode(client: Client, user_data, message: MQTTMessage):
-        mode = str(message.payload.decode("UTF-8")).upper()
-        data.mode = Mode[mode]
+    def update_view(client: Client, user_data, message: MQTTMessage):
+        view = str(message.payload.decode("UTF-8")).upper()
+        data.view = View[view]
     
-    modes = [mode.name.capitalize() for mode in Mode]
-    mqtt.add_select(name="Mode",
-                    callback=update_mode,
-                    unique_id="nowspinning_mode",
-                    options=modes)
+    views = [view.name.capitalize() for view in View]
+    mqtt.add_select(name="View",
+                    callback=update_view,
+                    unique_id="nowspinning_view",
+                    options=views)
 
     
     def update_team(client: Client, user_data, message: MQTTMessage):
@@ -486,8 +486,8 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         first = list(mqtt.entities.values())[0]
         first.set_state(json.dumps(payload))
         
-        mode_select = mqtt.entities["Mode"]
-        mode_select.set_selection(data.mode.name.capitalize())
+        view_select = mqtt.entities["View"]
+        view_select.set_selection(data.view.name.capitalize())
         
         team_select = mqtt.entities["Team"]
         
