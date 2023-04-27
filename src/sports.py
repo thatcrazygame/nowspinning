@@ -12,13 +12,13 @@ class SportBase(object):
         
     def get_logo(self, size:tuple) -> Image.Image:
         if not self._logo_img and self._logo_url != "":
-            background = Image.new('RGBA', size, (0,0,0))
+            background = Image.new("RGBA", size, (0,0,0))
             response = requests.get(self._logo_url.lower())
             if response.status_code == requests.codes.ok:
                 img = Image.open(BytesIO(response.content))
                 img.thumbnail(size, Image.Resampling.LANCZOS)
                 img = Image.alpha_composite(background, img)
-                img = img.convert('RGB')
+                img = img.convert("RGB")
                 self._logo_img = img
             # else:
             #     print(vars(response))
@@ -52,7 +52,7 @@ class League(SportBase):
     def __init__(self, abbr:str):
         super().__init__(abbr)
         self.sport = ""
-        self._logo_url = f'https://a.espncdn.com/i/teamlogos/leagues/500/{abbr}.png'
+        self._logo_url = f"https://a.espncdn.com/i/teamlogos/leagues/500/{abbr}.png"
         self.teams: dict[str, Team] = {}
         
     def team(self, team_abbr:str, attributes:dict=None, changes:dict=None,

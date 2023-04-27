@@ -28,7 +28,7 @@ from mqttdevice import MQTTDevice
 from sports import League, Team
 from customdiscoverable import Select, SharedSensor
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
@@ -80,15 +80,15 @@ class Data(object):
             
         if metadata:
             self.music_last_updated = time.time()
-        if 'xesam:artist' in metadata:
-            self.artist = metadata['xesam:artist'].value
-        if 'xesam:title' in metadata:
-            self.title = metadata['xesam:title'].value
-        if 'xesam:album' in metadata:
-            self.album = metadata['xesam:album'].value
-        if 'mpris:artUrl' in metadata:
-            art_str = metadata['mpris:artUrl'].value
-            art_str = art_str.replace('data:image/jpeg;base64,', '')
+        if "xesam:artist" in metadata:
+            self.artist = metadata["xesam:artist"].value
+        if "xesam:title" in metadata:
+            self.title = metadata["xesam:title"].value
+        if "xesam:album" in metadata:
+            self.album = metadata["xesam:album"].value
+        if "mpris:artUrl" in metadata:
+            art_str = metadata["mpris:artUrl"].value
+            art_str = art_str.replace("data:image/jpeg;base64,", "")
             art_base64 = BytesIO(b64decode(art_str))
             art_image = Image.open(art_base64)
             art_image.thumbnail((width, height), Image.Resampling.LANCZOS)
@@ -99,13 +99,13 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
     font_5x8 = Font()
-    font_5x8.LoadFont('../fonts/5x8.bdf')
+    font_5x8.LoadFont("../fonts/5x8.bdf")
     
     font_8x13 = Font()
-    font_8x13.LoadFont('../fonts/8x13.bdf')
+    font_8x13.LoadFont("../fonts/8x13.bdf")
     
     font_10x20 = Font()
-    font_10x20.LoadFont('../fonts/10x20.bdf')
+    font_10x20.LoadFont("../fonts/10x20.bdf")
     
     white_text = Color(255, 255, 255)
 
@@ -245,32 +245,32 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             x = margin
             y = font_8x13.height + margin
             DrawText(canvas, font_8x13, 0, y, white_text,
-                     now.strftime('%I:%M'))
+                     now.strftime("%I:%M"))
             
             y = y + font_8x13.height + margin
             DrawText(canvas, font_5x8, x, y, white_text,
-                     now.strftime('%m/%d/%Y'))
+                     now.strftime("%m/%d/%Y"))
             
             y = font_8x13.height + margin
             if data.temperature_f is not None:
                 x = (matrix.width / 2) + margin
                 DrawText(canvas, font_8x13, x, y, white_text,
-                         f'{data.temperature_f:.1f}°F')
+                         f"{data.temperature_f:.1f}°F")
             
             if data.humidity is not None:
                 y = y + font_5x8.height + margin
                 DrawText(canvas, font_5x8, x, y, white_text,
-                         f'Hum: {data.humidity:.1f}%')
+                         f"Hum: {data.humidity:.1f}%")
             
             if data.co2 is not None:
                 y = y + font_5x8.height + margin
                 DrawText(canvas, font_5x8, x, y, white_text,
-                         f'CO2: {int(data.co2)}ppm')
+                         f"CO2: {int(data.co2)}ppm")
             
             if data.voc is not None:
                 y = y + font_5x8.height + margin
                 DrawText(canvas, font_5x8, x, y, white_text, 
-                         f'VOC: {data.voc}')
+                         f"VOC: {data.voc}")
         else:
             data.mode = Mode.DASHBOARD
 
@@ -307,7 +307,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     address.wait()
     mac = address.stdout.read().strip()
 
-    password = os.environ.get('MQTT_PASSWORD')
+    password = os.environ.get("MQTT_PASSWORD")
 
     mqtt_settings = Settings.MQTT(host="172.16.1.2",
                                   username="nowspinning",
@@ -426,7 +426,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                     icon="mdi:music-box-multiple")
 
     def teamtracker(client: Client, user_data, message: MQTTMessage):
-        payload = json.loads(str(message.payload.decode('UTF-8')))
+        payload = json.loads(str(message.payload.decode("UTF-8")))
         if "teams" not in payload: return
         
         for team in payload["teams"]:
@@ -472,16 +472,16 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                 entity.set_availability(True)
         
         payload = {}
-        payload['temperature'] = f'{data.temperature_f:.1f}'
-        payload['humidity'] = f'{data.humidity:.1f}'
-        payload['co2'] = f'{int(data.co2)}'
-        payload['voc'] = f'{data.voc}'
+        payload["temperature"] = f"{data.temperature_f:.1f}"
+        payload["humidity"] = f"{data.humidity:.1f}"
+        payload["co2"] = f"{int(data.co2)}"
+        payload["voc"] = f"{data.voc}"
         artists = ""
         if data.artist is not None:
-            artists = f'{", ".join(data.artist)}'
-        payload['artist'] = artists
-        payload['album'] = f'{data.album}'
-        payload['title'] = f'{data.title}'
+            artists = f"{','.join(data.artist)}"
+        payload["artist"] = artists
+        payload["album"] = f"{data.album}"
+        payload["title"] = f"{data.title}"
         
         first = list(mqtt.entities.values())[0]
         first.set_state(json.dumps(payload))
@@ -533,7 +533,7 @@ def init_matrix():
     options.cols = PANEL_HEIGHT
     options.chain_length = 2
     options.parallel = 1
-    options.hardware_mapping = 'adafruit-hat-pwm'
+    options.hardware_mapping = "adafruit-hat-pwm"
     options.gpio_slowdown = 2
     #options.pwm_lsb_nanoseconds = 50
     #options.brightness = 50
@@ -548,17 +548,17 @@ async def init_mpris():
     # The matrix has to run as root
     # but the songrec mpris only updates on session
     # So manually set it here
-    os.environ['DBUS_SESSION_BUS_ADDRESS'] = 'unix:path=/run/user/1000/bus'
+    os.environ["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/run/user/1000/bus"
     bus = await MessageBus().connect()
 
-    tree = ET.parse('mpris.xml')
+    tree = ET.parse("mpris.xml")
 
-    obj = bus.get_proxy_object('org.mpris.MediaPlayer2.SongRec',
-                               '/org/mpris/MediaPlayer2',
+    obj = bus.get_proxy_object("org.mpris.MediaPlayer2.SongRec",
+                               "/org/mpris/MediaPlayer2",
                                tree.getroot())
 
-    player = obj.get_interface('org.mpris.MediaPlayer2.Player')
-    properties = obj.get_interface('org.freedesktop.DBus.Properties')
+    player = obj.get_interface("org.mpris.MediaPlayer2.Player")
+    properties = obj.get_interface("org.freedesktop.DBus.Properties")
 
     return bus, player, properties
 
