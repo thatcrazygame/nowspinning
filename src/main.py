@@ -95,6 +95,30 @@ class Data(object):
             self.image = art_image
 
 
+def get_logo_x(homeaway: str) -> int:
+    if homeaway == "home":
+        return PANEL_WIDTH*2-LOGO_SIZE
+    else:
+        return 0
+
+
+def get_score_x(homeaway: str, score: int, char_width:int=10) -> int:
+    score_space = PANEL_WIDTH - LOGO_SIZE
+    score_width = len(score) * char_width
+    if homeaway == "home":
+        return int(PANEL_WIDTH + score_space/2 - score_width/2)
+    else:
+        return int(LOGO_SIZE + score_space/2 - score_width/2)
+
+
+def get_shots_x(homeaway: str, shots: str, char_width:int=5) -> int:
+    if homeaway == "home":
+        shots_width = len(shots) * char_width
+        return int(PANEL_WIDTH*2-LOGO_SIZE-char_width-shots_width)
+    else:
+        return int(LOGO_SIZE + char_width)
+
+
 async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
@@ -165,6 +189,8 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             if team is not None:
                 attr = team.attributes
                 sport = attr.get("sport")
+                team_homeaway = attr.get("team_homeaway") or "home"
+                oppo_homeaway = attr.get("opponent_homeaway") or "away"
 
                 clock = attr.get("clock")
                 if clock:
@@ -178,33 +204,29 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                 logo_y = font_5x8.height + 2
                 team_img = team.get_logo(logo_size)
                 if team_img:
-                    canvas.SetImage(team_img, 0, logo_y)
+                    team_img_x = get_logo_x(team_homeaway)
+                    canvas.SetImage(team_img, team_img_x, logo_y)
                 
                 oppo_abbr = attr.get("opponent_abbr")
                 if oppo_abbr:
                     oppo = data.sports[league.abbr].team(oppo_abbr)
                     oppo_img = oppo.get_logo(logo_size)
-                    oppo_img_x = PANEL_WIDTH*2-LOGO_SIZE
+                    oppo_img_x = get_logo_x(oppo_homeaway)
                     canvas.SetImage(oppo_img, oppo_img_x, logo_y)
                 else:
                     league_img = league.get_logo(logo_size)
-                    canvas.SetImage(league_img, PANEL_WIDTH*2-league_img.width,
-                                    logo_y)
+                    league_img_x = get_logo_x("away")
+                    canvas.SetImage(league_img, league_img_x, logo_y)
                 
-                score_space = PANEL_WIDTH - LOGO_SIZE
                 team_score = attr.get("team_score")
                 if team_score:
-                    char_width = 10
-                    score_width = len(team_score) * char_width
-                    x = int(LOGO_SIZE + score_space/2 - score_width/2)
+                    x = get_score_x(team_homeaway, team_score)
                     y = 25
                     DrawText(canvas, font_10x20, x, y, white_text, team_score)
                         
                 oppo_score = attr.get("opponent_score")
                 if oppo_score:
-                    char_width = 10
-                    score_width = len(oppo_score) * char_width
-                    x = int(PANEL_WIDTH + score_space/2 - score_width/2)
+                    x = get_score_x(oppo_homeaway, oppo_score)
                     y = 25
                     DrawText(canvas, font_10x20, x, y, white_text, oppo_score)
                     
@@ -221,14 +243,12 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                         DrawText(canvas, font_5x8, x, y, white_text, shots)
                     
                     if team_shots:
-                        shots_width = len(team_shots) * char_width
-                        x = int(LOGO_SIZE + char_width)
+                        x = get_shots_x(team_homeaway, team_shots)
                         y = 45
                         DrawText(canvas, font_5x8, x, y, white_text, team_shots)
                             
                     if oppo_shots:
-                        shots_width = len(oppo_shots) * char_width
-                        x = int(PANEL_WIDTH*2-LOGO_SIZE-char_width-shots_width)
+                        x = get_shots_x(oppo_homeaway, oppo_shots)
                         y = 45
                         DrawText(canvas, font_5x8, x, y, white_text, oppo_shots)
                         
@@ -250,15 +270,12 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                         bases_y = 30
                         canvas.SetImage(bases_img, bases_x, bases_y)
                         
-                    # if balls and strikes:
                     x = PANEL_WIDTH + 3
                     y = 36
                     count = f"{balls}-{strikes}"
-                    # count = "1-2"
                     DrawText(canvas, font_5x8, x, y, white_text, count)
                     
                     MAX_OUTS = 3
-                    # outs = 2
                     radius = 3
                     out_space = 2
                     x = PANEL_WIDTH + out_space
