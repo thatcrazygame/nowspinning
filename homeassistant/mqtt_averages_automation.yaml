@@ -3,30 +3,48 @@ description: ""
 trigger:
   - platform: time_pattern
     minutes: "*"
+  - platform: mqtt
+    topic: sensor-averages/start
 condition: []
 action:
   - service: mqtt.publish
     data:
       qos: 0
       retain: false
-      topic: sensor-averages
+      topic: sensor-averages/all
       payload_template: |-
         {
           "averages": {
-              "temperature": [{%- for i in range(0,24) -%}
+              "temperature": [{%- for i in range(23,-1,-1) -%}
+                              {% if states("sensor.ns_avg_temp_" ~ i) not in ("unavailable", "unknown") -%}
                               {{ states("sensor.ns_avg_temp_" ~ i) }}
+                              {%- else -%}
+                              null
+                              {%- endif %}
                               {%-if not loop.last %},{% endif -%}
                               {% endfor -%}],
-              "humidity": [{%- for i in range(0,24) -%}
+              "humidity": [{%- for i in range(23,-1,-1) -%}
+                           {% if states("sensor.ns_avg_humidity_" ~ i) not in ("unavailable", "unknown") -%}
                            {{ states("sensor.ns_avg_humidity_" ~ i) }}
+                           {%- else -%}
+                           null
+                           {%- endif %}
                            {%-if not loop.last %},{% endif -%}
                            {% endfor -%}],
-              "co2": [{%- for i in range(0,24) -%}
+              "co2": [{%- for i in range(23,-1,-1) -%}
+                      {% if states("sensor.ns_avg_co2_" ~ i) not in ("unavailable", "unknown") -%}
                       {{ states("sensor.ns_avg_co2_" ~ i) }}
+                      {%- else -%}
+                      null
+                      {%- endif %}
                       {%-if not loop.last %},{% endif -%}
                       {% endfor -%}],
-              "voc": [{%- for i in range(0,24) -%}
+              "voc": [{%- for i in range(23,-1,-1) -%}
+                      {% if states("sensor.ns_avg_voc_" ~ i) not in ("unavailable", "unknown") -%}
                       {{ states("sensor.ns_avg_voc_" ~ i) }}
+                      {%- else -%}
+                      null
+                      {%- endif %}
                       {%-if not loop.last %},{% endif -%}
                       {% endfor -%}]
           }

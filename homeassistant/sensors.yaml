@@ -1,0 +1,674 @@
+  - platform: average
+    name: 'NS Avg Temp 23'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 23) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 22'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 22) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 21'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 21) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 20'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 20) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 19'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 19) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 18'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 18) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 17'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 17) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 16'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 16) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 15'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 15) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 14'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 14) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 13'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 13) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 12'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 12) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 11'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 11) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 10'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 10) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 9'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 9) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 8'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 8) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 7'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 7) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 6'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 6) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 5'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 5) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 4'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 4) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 3'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 3) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 2'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 2) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 1'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 1) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.temperature
+  - platform: average
+    name: 'NS Avg Temp 0'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) }}'
+    end: '{{ now() }}'
+    entities:
+      - sensor.temperature
+
+
+  - platform: average
+    name: 'NS Avg Humidity 23'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 23) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 22'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 22) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 21'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 21) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 20'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 20) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 19'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 19) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 18'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 18) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 17'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 17) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 16'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 16) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 15'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 15) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 14'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 14) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 13'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 13) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 12'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 12) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 11'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 11) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 10'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 10) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 9'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 9) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 8'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 8) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 7'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 7) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 6'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 6) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 5'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 5) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 4'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 4) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 3'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 3) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 2'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 2) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 1'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 1) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.humidity
+  - platform: average
+    name: 'NS Avg Humidity 0'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) }}'
+    end: '{{ now() }}'
+    entities:
+      - sensor.humidity
+      
+
+  - platform: average
+    name: 'NS Avg CO2 23'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 23) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 22'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 22) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 21'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 21) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 20'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 20) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 19'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 19) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 18'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 18) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 17'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 17) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 16'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 16) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 15'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 15) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 14'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 14) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 13'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 13) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 12'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 12) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 11'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 11) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 10'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 10) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 9'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 9) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 8'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 8) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 7'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 7) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 6'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 6) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 5'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 5) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 4'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 4) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 3'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 3) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 2'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 2) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 1'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 1) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.co2
+  - platform: average
+    name: 'NS Avg CO2 0'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) }}'
+    end: '{{ now() }}'
+    entities:
+      - sensor.co2
+      
+      
+  - platform: average
+    name: 'NS Avg VOC 23'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 23) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 22'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 22) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 21'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 21) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 20'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 20) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 19'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 19) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 18'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 18) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 17'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 17) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 16'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 16) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 15'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 15) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 14'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 14) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 13'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 13) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 12'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 12) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 11'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 11) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 10'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 10) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 9'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 9) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 8'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 8) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 7'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 7) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 6'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 6) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 5'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 5) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 4'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 4) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 3'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 3) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 2'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 2) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 1'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) - timedelta(hours = 1) }}'
+    duration:
+      hours: 1
+    entities:
+      - sensor.voc
+  - platform: average
+    name: 'NS Avg VOC 0'
+    start: '{{ now().replace(minute=0).replace(second=0).replace(microsecond=0) }}'
+    end: '{{ now() }}'
+    entities:
+      - sensor.voc
