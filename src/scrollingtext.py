@@ -8,9 +8,9 @@ class Direction(Enum):
 
 class ScrollingText(object):
     def __init__(self, font: Font, color: Color, starting_x: int, y: int,
-                 left_bound: int, right_bound: int, scroll_speed: int=1, 
-                 scroll_dir: Direction=Direction.LEFT, text: str="",
-                 num_spaces: int=1) -> None:
+                 left_bound: int, right_bound: int, scroll_speed: int = 1, 
+                 scroll_dir: Direction = Direction.LEFT, text: str = "",
+                 num_spaces: int = 1) -> None:
         self._font = font
         self._color = color
         self._scroll_dir = scroll_dir.value

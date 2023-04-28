@@ -102,7 +102,7 @@ def get_logo_x(homeaway: str) -> int:
         return 0
 
 
-def get_score_x(homeaway: str, score: int, char_width:int=10) -> int:
+def get_score_x(homeaway: str, score: int, char_width: int = 10) -> int:
     score_space = PANEL_WIDTH - LOGO_SIZE
     score_width = len(score) * char_width
     if homeaway == "home":
@@ -111,7 +111,7 @@ def get_score_x(homeaway: str, score: int, char_width:int=10) -> int:
         return int(LOGO_SIZE + score_space/2 - score_width/2)
 
 
-def get_shots_x(homeaway: str, shots: str, char_width:int=5) -> int:
+def get_shots_x(homeaway: str, shots: str, char_width: int = 5) -> int:
     if homeaway == "home":
         shots_width = len(shots) * char_width
         return int(PANEL_WIDTH*2-LOGO_SIZE-char_width-shots_width)
