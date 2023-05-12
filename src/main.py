@@ -316,82 +316,45 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             DrawText(canvas, font_8x13, x, y, white_text, now_str)
             
             if data.averages:
-                graph_height = 12
-                graph_x = 0
-                char_width = 5
-
                 tmpr_avgs = data.averages.get("temperature").copy()
-                hum_avgs = data.averages.get("humidity").copy()
-                co2_avgs = data.averages.get("co2").copy()
-                voc_avgs = data.averages.get("voc").copy()
-                
-                # TODO clean this up
-                label = ""
-                txt_x = 0
-                txt_y = 0
-                fill = (51, 8, 0)
-                graph_y = PANEL_HEIGHT - graph_height * 4
-                tmpr_graph = LineGraph("Temp")
-                tmpr_graph.max_val = 90
-                tmpr_graph.min_val = 60
-                tmpr_graph.fill_color = fill
-                tmpr_graph.line_color = (191, 29, 0)
                 if data.temperature_f is not None:
-                    label = f"Temp: {data.temperature_f:.1f}°F"
-                    txt_y = graph_y + graph_height - 1
                     tmpr_avgs.append(round(data.temperature_f, 1))
-                tmpr_img = tmpr_graph.get_graph_img(tmpr_avgs)
-                txt_x = tmpr_img.width + 2
-                DrawText(canvas, font_4x6, txt_x, txt_y, white_text, label)
-                canvas.SetImage(tmpr_img, graph_x, graph_y)
-                
-                background = fill
-                fill = (0, 20, 51)
-                graph_y = PANEL_HEIGHT - graph_height * 3
-                hum_graph = LineGraph("Hum")
-                hum_graph.fill_color = fill
-                hum_graph.background = background
-                hum_graph.line_color = (0, 76, 191)
+                    
+                hum_avgs = data.averages.get("humidity").copy()
                 if data.humidity is not None:
-                    label = f"Hum:  {data.humidity:.1f}%"
-                    txt_y = graph_y + graph_height - 1
                     hum_avgs.append(round(data.humidity, 1))
-                hum_img = hum_graph.get_graph_img(hum_avgs)
-                DrawText(canvas, font_4x6, txt_x, txt_y, white_text, label)
-                canvas.SetImage(hum_img, graph_x, graph_y)
-                
-                background = fill
-                fill = (29, 51, 32)
-                graph_y = PANEL_HEIGHT - graph_height * 2
-                voc_graph = LineGraph("VOC")
-                voc_graph.max_val = 500
-                voc_graph.fill_color = fill
-                voc_graph.background = background
-                voc_graph.line_color = (109, 191, 119)
+                    
+                voc_avgs = data.averages.get("voc").copy()
                 if data.voc is not None:
-                    label = f"VOC:  {round(data.voc)}"
-                    txt_y = graph_y + graph_height - 1
                     voc_avgs.append(round(data.voc))
-                voc_img = voc_graph.get_graph_img(voc_avgs)
-                DrawText(canvas, font_4x6, txt_x, txt_y, white_text, label)
-                canvas.SetImage(voc_img, graph_x, graph_y)
-            
-                background = fill
-                fill = (50, 51, 46)
-                graph_y = PANEL_HEIGHT - graph_height
-                co2_graph = LineGraph("CO2")
-                co2_graph.max_val = 2500
-                co2_graph.min_val = 300
-                co2_graph.fill_color = fill
-                co2_graph.background = background
-                co2_graph.line_color = (187, 191, 172)
+                    
+                co2_avgs = data.averages.get("co2").copy()
                 if data.co2 is not None:
-                    label = f"CO2:  {round(data.co2)}ppm"
-                    txt_y = graph_y + graph_height - 1
                     co2_avgs.append(round(data.co2))
-                co2_img = co2_graph.get_graph_img(co2_avgs)
-                DrawText(canvas, font_4x6, txt_x, txt_y, white_text, label)
-                canvas.SetImage(co2_img, graph_x, graph_y)
+                
+                graphs = [
+                    LineGraph("Temp", tmpr_avgs, "°F", round=1, 
+                              line_color=(191, 29, 0),
+                              fill_color=(51, 8, 0)),
+                    LineGraph("Hum", hum_avgs, "%", round=1, 
+                              line_color=(0, 76, 191),
+                              fill_color=(0, 20, 51)),
+                    LineGraph("VOC", voc_avgs, 
+                              line_color=(109, 191, 119),
+                              fill_color=(29, 51, 32)),
+                    LineGraph("CO2", co2_avgs, "ppm", 
+                              line_color=(187, 191, 172),
+                              fill_color=(50, 51, 46))
+                ]
+                
+                graph_x = 0
+                background = (0, 0, 0)
+                graph: LineGraph
+                for i, graph in enumerate(graphs):
+                    graph.background = background
+                    graph_y = PANEL_HEIGHT - graph.height * (len(graphs)-i)
+                    graph.draw(canvas, font_4x6, graph_x, graph_y, white_text)
+                    background = graph.fill_color
         else:
             data.view = View.DASHBOARD
 
