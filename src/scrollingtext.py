@@ -1,4 +1,5 @@
 from enum import Enum
+from time import perf_counter
 
 from rgbmatrix.graphics import Color, DrawText, Font
 
@@ -10,7 +11,7 @@ class ScrollingText(object):
     def __init__(self, font: Font, color: Color, starting_x: int, y: int,
                  left_bound: int, right_bound: int, scroll_speed: int = 1, 
                  scroll_dir: Direction = Direction.LEFT, text: str = "",
-                 num_spaces: int = 1) -> None:
+                 num_spaces: int = 1, pause_dur: float = 0.0) -> None:
         self._font = font
         self._color = color
         self._scroll_dir = scroll_dir.value
@@ -19,6 +20,8 @@ class ScrollingText(object):
         self._right_bound = right_bound
         self._starting_x = starting_x
         self._num_spaces = num_spaces
+        self._pause_dur = pause_dur
+        self._pause_time: float = None
         
         self.x = starting_x
         self.y = y
@@ -35,13 +38,36 @@ class ScrollingText(object):
         return offset >= self.text_len + self.__space_width
  
         
-    def update_text(self, text: str):
+    def update_text(self, text: str) -> None:
         if text != self.text:
             self.x = self._starting_x
+            self.pause()
         self.text = text
  
+ 
+    def pause(self, pause_dur: float = None) -> None:
+       self._pause_time = perf_counter()
+       if pause_dur is not None:
+           self._pause_dur = pause_dur
+           
+    
+    def unpause(self) -> None:
+        self._pause_time = None
         
-    def draw(self, canvas):
+        
+    def is_paused(self) -> bool:
+        if self._pause_time is None:
+            return False
+        else:
+            dur_elapsed = (perf_counter() - self._pause_time > self._pause_dur)
+            if dur_elapsed:
+                self.unpause()
+            return not dur_elapsed
+        
+        
+    def draw(self, canvas, text: str) -> None:
+        self.update_text(text)
+        
         if self.text is not None and not self.text.isspace():
             self.text_len = DrawText(canvas, self._font, self.x, self.y,
                                      self._color, self.text)
@@ -55,7 +81,9 @@ class ScrollingText(object):
                 DrawText(canvas, self._font, x_2, self.y, self._color,
                          self.text)
                 
-                self.x += self._scroll_dir * self._scroll_speed
+                if not self.is_paused():
+                    self.x += self._scroll_dir * self._scroll_speed
 
                 if self._is_out_of_bounds():
                     self.x = self._left_bound
+                    self.pause()

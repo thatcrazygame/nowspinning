@@ -149,10 +149,12 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     artist_y = y + font_8x13.height + linespace
     
     title_scroll = ScrollingText(font_8x13, white_text, x, title_y, 
-                                 PANEL_WIDTH, PANEL_WIDTH*2, num_spaces=3)
+                                 PANEL_WIDTH, PANEL_WIDTH*2, num_spaces=3,
+                                 pause_dur=2.0)
     
     artist_scroll = ScrollingText(font_8x13, white_text, x, artist_y,
-                                  PANEL_WIDTH, PANEL_WIDTH*2, num_spaces=3)
+                                  PANEL_WIDTH, PANEL_WIDTH*2, num_spaces=3,
+                                  pause_dur=2.0)
     
     play_scroll = ScrollingText(font_8x13, white_text, 0, PANEL_HEIGHT-2,
                                 0, PANEL_WIDTH*2,
@@ -171,14 +173,9 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             title = data.title
             artist = data.artist
             if title is not None and artist is not None:
+                title_scroll.draw(canvas, title)
                 artists = ", ".join(artist)
-
-                title_scroll.update_text(title)
-                title_scroll.draw(canvas)
-                
-                artist_scroll.update_text(artists)
-                artist_scroll.draw(canvas)
-            
+                artist_scroll.draw(canvas, artists)
             if data.image is not None:
                 canvas.SetImage(data.image)
         elif view is View.SPORTS:
@@ -303,8 +300,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                     play_width = len(last_play) * char_width
                     play_x = PANEL_WIDTH - play_width / 2
                     play_scroll._starting_x = play_x
-                    play_scroll.update_text(last_play)
-                    play_scroll.draw(canvas)
+                    play_scroll.draw(canvas, last_play)
                     
         elif view is View.DASHBOARD:
             now = datetime.now()
@@ -446,6 +442,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         view = str(message.payload.decode("UTF-8")).upper()
         data.view = View[view]
     
+    
     views = [view.name.capitalize() for view in View]
     mqtt.add_select(name="View",
                     callback=update_view,
@@ -462,6 +459,7 @@ async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                 if team_name and team_name == selected_name:
                     data.selected_team_abbr = team.abbr
                     break
+    
             
     team_opts = []
     if data.selected_league_abbr:
