@@ -16,6 +16,7 @@ from adafruit_scd30 import SCD30
 from board import SCL, SDA
 from busio import I2C
 from dbus_next.aio import MessageBus
+from dbus_next.errors import DBusError
 from dotenv import load_dotenv
 from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo, Subscriber
 from paho.mqtt.client import Client, MQTTMessage
@@ -76,7 +77,14 @@ class Data(object):
             return (self.temperature * 1.8) + 32.0
         
 
-    def refresh_music_data(self, metadata, width, height):
+    async def refresh_music_data(self, player, width, height):
+        metadata = None
+        try:
+            metadata = await player.get_metadata()
+        except DBusError as e:
+            print(e.text)
+            return
+        
         if self.switch_to_music:
             self.view = View.MUSIC
             
@@ -668,14 +676,13 @@ async def main():
     matrix = init_matrix()
 
     data = Data()
-    metadata = await player.get_metadata()
-    data.refresh_music_data(metadata, PANEL_WIDTH, PANEL_HEIGHT)
+    
+    await data.refresh_music_data(player, PANEL_WIDTH, PANEL_HEIGHT)
 
     async def on_prop_change(interface_name, changed_properties,
                              invalidated_properties):
         if "Metadata" in changed_properties:
-            metadata = await player.get_metadata()
-            data.refresh_music_data(metadata, PANEL_WIDTH, PANEL_HEIGHT)
+            await data.refresh_music_data(player, PANEL_WIDTH, PANEL_HEIGHT)
            
 
     properties.on_properties_changed(on_prop_change)
