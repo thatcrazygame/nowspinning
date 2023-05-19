@@ -5,7 +5,7 @@ import requests
 
 URL_BASE = "https://a.espncdn.com/i/teamlogos"
 
-class SportBase(object):
+class SportsOrganization(object):
     def __init__(self, abbr: str) -> None:    
         self.abbr = abbr
         self._logo_img:Image.Image = None
@@ -28,7 +28,7 @@ class SportBase(object):
         return self._logo_img
 
 
-class Team(SportBase):
+class Team(SportsOrganization):
     def __init__(self, abbr: str, league: str):
         super().__init__(abbr)
         self.attributes = {}
@@ -41,16 +41,18 @@ class Team(SportBase):
     @property
     def friendly_name(self) -> str:
         friendly_name = ""
-        if self.game_state != "":
-            team_name = self.attributes.get("team_name")
-            if team_name:
-                friendly_name = f"{self.abbr} - {team_name}"
-            else:
-                friendly_name = f"{self.abbr} - {self.league}"
+        if self.game_state == "":
+            return friendly_name
+        
+        team_name = self.attributes.get("team_name")
+        if team_name:
+            friendly_name = f"{self.abbr} - {team_name}"
+        else:
+            friendly_name = f"{self.abbr} - {self.league}"
         
         return friendly_name
 
-class League(SportBase):
+class League(SportsOrganization):
     def __init__(self, abbr: str):
         super().__init__(abbr)
         self.sport = ""
