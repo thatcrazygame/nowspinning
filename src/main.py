@@ -22,13 +22,14 @@ from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo,
 from paho.mqtt.client import Client, MQTTMessage
 from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
-from rgbmatrix.graphics import Color, DrawCircle, DrawText, Font
+from rgbmatrix.graphics import Color, DrawText, Font
 
-from scrollingtext import ScrollingText
-from mqttdevice import MQTTDevice
-from sports import League, Team
 from customdiscoverable import Select, SharedSensor
+from eqstream import EQStream
 from linegraph import LineGraph
+from mqttdevice import MQTTDevice
+from scrollingtext import ScrollingText
+from sports import League, Team
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 
@@ -38,8 +39,8 @@ PANEL_HEIGHT = 64
 # starting at 50KHz
 I2C = I2C(SCL, SDA, frequency=50000)
 FAN_PIN = 25
-
 LOGO_SIZE = 40
+NUM_BARS = 16
 
 load_dotenv()
 
@@ -68,6 +69,7 @@ class Data(object):
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
         self.switch_to_music: bool = False
+    
 
     @property
     def temperature_f(self):
@@ -129,7 +131,8 @@ def get_shots_x(homeaway: str, shots: str, char_width: int = 5) -> int:
         return int(LOGO_SIZE + char_width)
 
 
-async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
+async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
+                      eq_stream: EQStream):
     canvas = matrix.CreateFrameCanvas()
 
     font_4x6 = Font()
@@ -186,6 +189,15 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
                 artist_scroll.draw(canvas, artists)
             if data.image is not None:
                 canvas.SetImage(data.image)
+                
+            if len(eq_stream.audio_data) > 0:
+                bar_height = 32
+                eq_stream.draw_eq(canvas, 
+                                  x=PANEL_WIDTH, 
+                                  y=PANEL_HEIGHT-bar_height,
+                                  num_bars=NUM_BARS, 
+                                  bar_width=4,
+                                  max_height=bar_height)
         elif view is View.SPORTS:
             league: League = None
             team: Team = None
@@ -366,7 +378,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         await asyncio.sleep(0.05)
 
 
-async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
+async def air_loop(bus: MessageBus, data: Data):
     sgp = SGP40(I2C)
     scd = SCD30(I2C)
     while bus.connected:
@@ -389,7 +401,7 @@ async def air_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         # The voc algorithm expects a 1Hz sampling rate
         await asyncio.sleep(1)
 
-async def mqtt_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
+async def mqtt_loop(bus: MessageBus, data: Data):
     address = subprocess.Popen(["cat","/sys/class/net/eth0/address"],
                                stdout=subprocess.PIPE, text=True)
     address.wait()
@@ -671,11 +683,9 @@ async def init_mpris():
     return bus, player, properties
 
 
-async def main():
+async def loops(data: Data, eq_stream: EQStream):
     bus, player, properties = await init_mpris()
     matrix = init_matrix()
-
-    data = Data()
     
     await data.refresh_music_data(player, PANEL_WIDTH, PANEL_HEIGHT)
 
@@ -687,13 +697,22 @@ async def main():
 
     properties.on_properties_changed(on_prop_change)
 
-    await asyncio.gather(matrix_loop(bus, matrix, data),
-                         air_loop(bus, matrix, data),
-                         mqtt_loop(bus, matrix, data))
+    await asyncio.gather(matrix_loop(bus, matrix, data, eq_stream),
+                         air_loop(bus, data),
+                         mqtt_loop(bus, data))
     
-    await bus.wait_for_disconnect()
+    # await bus.wait_for_disconnect()
 
-if __name__ == "__main__":
+
+def main():
+    data = Data()
+    eq_stream = EQStream()
     fan = PWMOutputDevice(FAN_PIN)
     fan.value = 0.7
-    asyncio.run(main())
+
+    asyncio.run(loops(data, eq_stream))
+    eq_stream.stop()
+
+     
+if __name__ == "__main__":
+    main()

@@ -89,7 +89,8 @@ class LineGraph(object):
         return img
     
     
-    def draw(self, canvas, font: Font, x: int, y: int, color: Color) -> None:
+    def draw(self, canvas, font: Font, x: int, y: int,
+             text_color: Color) -> None:
         graph_x = x
         graph_y = y
         img = self.get_graph_img()
@@ -99,7 +100,7 @@ class LineGraph(object):
         txt_y = graph_y + self.height - 1
         last_val = self.data[-1]
         label = f"{self.label}: {round(last_val, self.round)}{self.units}"
-        DrawText(canvas, font, txt_x, txt_y, color, label)
+        DrawText(canvas, font, txt_x, txt_y, text_color, label)
         
         
         
