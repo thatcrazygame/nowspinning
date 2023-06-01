@@ -64,7 +64,7 @@ class Data(object):
         self.voc = None
         self.raw_gas = None
         self.averages: dict[str, list[float]] = {}
-        self.view: View = View.DASHBOARD
+        self.view: View = View.MUSIC
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
@@ -190,13 +190,13 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
             if data.image is not None:
                 canvas.SetImage(data.image)
                 
-            if len(eq_stream.audio_data) > 0:
+            if eq_stream.frame_buffer.any():
                 bar_height = 32
                 eq_stream.draw_eq(canvas, 
                                   x=PANEL_WIDTH, 
                                   y=PANEL_HEIGHT-bar_height,
                                   num_bars=NUM_BARS, 
-                                  bar_width=4,
+                                  bar_width=int(PANEL_WIDTH/NUM_BARS),
                                   max_height=bar_height)
         elif view is View.SPORTS:
             league: League = None
