@@ -55,9 +55,9 @@ class Data(object):
     def __init__(self):
         self.music_last_updated = None
         self.artist = None
-        self.title = None
+        self.title = "Listening..."
         self.album = None
-        self.image = None
+        self.album_art = Image.open("../img/microphone.jpeg")
         self.temperature = None
         self.humidity = None
         self.co2 = None
@@ -84,14 +84,19 @@ class Data(object):
         try:
             metadata = await player.get_metadata()
         except DBusError as e:
-            print(e.text)
+            self.album_art = Image.open("../img/microphone-off.jpeg")
+            self.title = "Service unavailable"
+            # print(e.text)
+            return
+            
+        if not metadata:
             return
         
         if self.switch_to_music:
             self.view = View.MUSIC
             
-        if metadata:
-            self.music_last_updated = time.time()
+        self.music_last_updated = time.time()
+        
         if "xesam:artist" in metadata:
             self.artist = metadata["xesam:artist"].value
         if "xesam:title" in metadata:
@@ -104,7 +109,7 @@ class Data(object):
             art_base64 = BytesIO(b64decode(art_str))
             art_image = Image.open(art_base64)
             art_image.thumbnail((width, height), Image.Resampling.LANCZOS)
-            self.image = art_image
+            self.album_art = art_image
 
 
 def get_logo_x(homeaway: str) -> int:
@@ -183,13 +188,16 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
         if view is View.MUSIC:
             title = data.title
             artist = data.artist
-            if title is not None and artist is not None:
+            if title is not None:
                 title_scroll.draw(canvas, title)
+                
+            if artist is not None:
                 artists = ", ".join(artist)
                 artist_scroll.draw(canvas, artists)
-            if data.image is not None:
-                canvas.SetImage(data.image)
                 
+            if data.album_art is not None:
+                canvas.SetImage(data.album_art)
+
             if eq_stream.frame_buffer.any():
                 bar_height = 32
                 eq_stream.draw_eq(canvas, 
