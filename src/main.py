@@ -19,8 +19,9 @@ from dbus_next.aio import MessageBus
 from dbus_next.errors import DBusError
 from dotenv import load_dotenv
 from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo, Subscriber
+import numpy as np
 from paho.mqtt.client import Client, MQTTMessage
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from rgbmatrix.graphics import Color, DrawText, Font
 
@@ -58,6 +59,7 @@ class Data(object):
         self.title = "Listening..."
         self.album = None
         self.album_art = Image.open("../img/microphone.jpeg")
+        self.album_art_colors = None
         self.temperature = None
         self.humidity = None
         self.co2 = None
@@ -77,6 +79,24 @@ class Data(object):
             return None
         else:
             return (self.temperature * 1.8) + 32.0
+        
+    def get_dominant_colors(self, pil_img, palette_size=4):
+        # Resize image to speed up processing
+        img = pil_img.copy()
+        # Reduce colors (uses k-means internally)
+        paletted = img.convert('P', palette=Image.ADAPTIVE, 
+                               colors=palette_size)
+        # Find the color that occurs most often
+        palette = paletted.getpalette()
+        color_counts = sorted(paletted.getcolors(), reverse=True)
+
+        colors = np.reshape(palette, (-1, 3))[:palette_size]
+        colors = list(map(tuple, colors))
+        # color_counts is a list of tuples: (count, index of color)
+        # reorder colors to match the sorted counts
+        colors = [colors[count[1]] for count in color_counts]
+
+        return colors
         
 
     async def refresh_music_data(self, player, width, height):
@@ -109,8 +129,16 @@ class Data(object):
             art_base64 = BytesIO(b64decode(art_str))
             art_image = Image.open(art_base64)
             art_image.thumbnail((width, height), Image.Resampling.LANCZOS)
-            self.album_art = art_image
+            
+            diff = ImageChops.difference(art_image, self.album_art)
+            art_changed = diff.getbbox() is not None
 
+            self.album_art = art_image
+            
+            if art_changed or self.album_art_colors is None:
+                self.album_art_colors = self.get_dominant_colors(art_image)
+                print(self.album_art_colors)
+                
 
 def get_logo_x(homeaway: str) -> int:
     if homeaway == "home":
@@ -205,7 +233,8 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
                                   y=PANEL_HEIGHT-bar_height,
                                   num_bars=NUM_BARS, 
                                   bar_width=int(PANEL_WIDTH/NUM_BARS),
-                                  max_height=bar_height)
+                                  max_height=bar_height,
+                                  colors=data.album_art_colors)
         elif view is View.SPORTS:
             league: League = None
             team: Team = None

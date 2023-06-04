@@ -16,6 +16,8 @@ class EQStream(object):
         self.stream: Stream = None
         self.frame_buffer = None
         self.max_val = None
+        self.__gradient_img = None
+        self.__bar_colors = None
         self.listen()
 
     def __callback(self, in_data, frame_count, time_info, status):
@@ -74,30 +76,81 @@ class EQStream(object):
         # Convert to numpy array:
         bins = np.array(bins)
         # Normalize and round
-        bins = np.interp(bins, (bins.min(), max(MAX_VOL, bins.max())), (0, max_height))
+        min_val = bins.min()
+        max_val = max(MAX_VOL, bins.max())
+        bins = np.interp(bins, (min_val, max_val), (0, max_height))
         bins = np.round(bins)
 
         return bins
+    
+    
+    def __get_gradient_2d(self, start, stop, width, height, is_horizontal):
+        if is_horizontal:
+            return np.tile(np.linspace(start, stop, width), (height, 1))
+        else:
+            return np.tile(np.linspace(start, stop, height), (width, 1)).T
+    
+    
+    def __get_gradient_3d(self, width, height, start_list, stop_list, 
+                          is_horizontal_list):
+        result = np.zeros((height, width, len(start_list)), dtype=np.float64)
+        
+        gradient_components = enumerate(zip(start_list, stop_list, 
+                                            is_horizontal_list))
+        for i, (start, stop, is_horizontal) in gradient_components:
+            result[:, :, i] = self.__get_gradient_2d(start, stop, width, 
+                                                     height, is_horizontal)
+
+        return result
+    
+    
+    def __get_gradient_img(self, width, height, colors = None):
+        colors_changed = (self.__bar_colors is None or colors is None
+                          or set(colors) != set(self.__bar_colors))
+        self.__bar_colors = colors
+        
+        if self.__gradient_img is not None and not colors_changed:
+            return self.__gradient_img
+        
+        one_color = None
+        if type(colors) is list and len(colors) == 1:
+            colors = colors[0]
+            
+        if type(colors) is tuple and len(colors) == 3: 
+            one_color = colors
+            
+        if colors is None:
+            one_color = (255,255,255)
+            
+        if one_color is not None:
+            img = Image.new("RGB", (width, height), one_color)
+            self.__gradient_img = img
+            return self.__gradient_img
+        
+        gradient_array = self.__get_gradient_3d(width, height, colors[1],
+                                                colors[0], 
+                                                (False, False, False))
+        
+        img = Image.fromarray(np.uint8(gradient_array))
+
+        self.__gradient_img = img
+        return self.__gradient_img
 
 
     def draw_eq(self, canvas, x: int, y: int, bar_width: int,
-                max_height: int, num_bars: int):
+                max_height: int, num_bars: int, colors = None):
         width = num_bars * bar_width
-        background = (0, 0, 0)
-        img = Image.new("RGB", (width, max_height), background)
+        img = self.__get_gradient_img(width, max_height, colors).copy()
         draw = ImageDraw.Draw(img)
         
         bins = self.get_eq_bins(max_height, num_bars)
         
         bar_x = 0
         for bin_val in bins:
-            
-            draw.rectangle([(bar_x,0),(bar_x+bar_width-1, bin_val)], 
-                           fill=(255,255,255))
+            bar_height = max_height - bin_val
+            draw.rectangle([(bar_x,0),(bar_x+bar_width-1, bar_height)], 
+                           fill=(0,0,0))
             
             bar_x += bar_width
             
-        # y coordinates are top to bottom in PIL images
-        img = img.transpose(method=Image.Transpose.FLIP_TOP_BOTTOM)
-        
         canvas.SetImage(img, x, y)
