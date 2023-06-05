@@ -527,24 +527,20 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                     unique_id="nowspinning_music_switch",
                     icon="mdi:music-box-multiple")
 
-    sports_sub_info = EntityInfo(name="Sports Sub",
-                                 unique_id="nowspinning_sports_sub",
-                                 component="sensor", device=device_info)
-    sports_sub_settings = Settings(mqtt=mqtt_settings, entity=sports_sub_info)
-    sports_sub = Subscriber(sports_sub_settings, callbacks.teamtracker, data)
+    mqtt.add_subscriber_only(name="Sports Sub",
+                             unique_id="nowspinning_sports_sub",
+                             callback=callbacks.teamtracker,
+                             user_data=data,
+                             sub_topic="teamtracker/all",
+                             start_topic="teamtracker/start")
     
-    sports_sub.mqtt_client.subscribe("teamtracker/all")
-    sports_sub.mqtt_client.publish("teamtracker/start", "start")
-    
-    avg_sub_info = EntityInfo(name="Averages Sub",
-                              unique_id="nowspinning_avg_sub",
-                              component="sensor", device=device_info)
-    avg_sub_settings = Settings(mqtt=mqtt_settings, entity=avg_sub_info)
-    avg_sub = Subscriber(avg_sub_settings, callbacks.averages, data)
-    
-    avg_sub.mqtt_client.subscribe("sensor-averages/all")
-    avg_sub.mqtt_client.publish("sensor-averages/start", "start")
-    
+    mqtt.add_subscriber_only(name="Averages Sub",
+                             unique_id="nowspinning_avg_sub",
+                             callback=callbacks.averages,
+                             user_data=data,
+                             sub_topic="sensor-averages/all",
+                             start_topic="sensor-averages/start")
+
     mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
 
     for entitiy in mqtt.entities.values():
@@ -553,7 +549,7 @@ async def mqtt_loop(bus: MessageBus, data: Data):
     while bus.connected:
         entity: Discoverable
         for name, entity in mqtt.entities.items():
-            if name not in ["League", "Team"]:
+            if name not in ["League", "Team", "Sports Sub", "Averages Sub"]:
                 entity.set_availability(True)
         
         payload = {}

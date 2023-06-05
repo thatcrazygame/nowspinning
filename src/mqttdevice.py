@@ -2,7 +2,14 @@ from typing import Any, Callable, Type, TypeVar
 import inspect
 
 from paho.mqtt.client import Client, MQTTMessage
-from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo
+from ha_mqtt_discoverable import (
+    Settings,
+    DeviceInfo,
+    Discoverable,
+    EntityInfo,
+    Subscriber
+)
+
 from ha_mqtt_discoverable.sensors import (
     BinarySensorInfo, BinarySensor,
     ButtonInfo, Button,
@@ -123,3 +130,20 @@ class MQTTDevice(object):
                                 callback,
                                 user_data,
                                 **entity_info)
+        
+    
+    def add_subscriber_only(self, callback, user_data, sub_topic, start_topic,
+                            start_msg = "start", manual_availability=None,
+                            **entity_info) -> Subscriber:
+        entity_info["component"] = "subscriber"
+        sub = self._add_entity(Subscriber,
+                               EntityInfo,
+                               manual_availability,
+                               callback,
+                               user_data,
+                               **entity_info)
+        
+        sub.mqtt_client.subscribe(sub_topic)
+        sub.mqtt_client.publish(start_topic, start_msg)
+        
+        return sub
