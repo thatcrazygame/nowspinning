@@ -25,6 +25,8 @@ from PIL import Image, ImageChops, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from rgbmatrix.graphics import Color, DrawText, Font
 
+import callbacks
+from constants import View
 from customdiscoverable import Select, SharedSensor
 from eqstream import EQStream
 from linegraph import LineGraph
@@ -45,11 +47,6 @@ NUM_BARS = 16
 
 load_dotenv()
 
-class View(Enum):
-    DASHBOARD = 1
-    MUSIC = 2
-    SPORTS = 3
-
 class Data(object):
     """Class to share data between async functions"""
 
@@ -66,7 +63,7 @@ class Data(object):
         self.voc = None
         self.raw_gas = None
         self.averages: dict[str, list[float]] = {}
-        self.view: View = View.MUSIC
+        self.view: View = View.SPORTS
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
@@ -206,9 +203,8 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data,
     
     while bus.connected:
         canvas.Clear()
-        
         view = data.view
-        
+
         # music_timeout = 5
         # last_updated = data.music_last_updated
         # if (last_updated is not None 
@@ -438,6 +434,7 @@ async def air_loop(bus: MessageBus, data: Data):
         # The voc algorithm expects a 1Hz sampling rate
         await asyncio.sleep(1)
 
+
 async def mqtt_loop(bus: MessageBus, data: Data):
     address = subprocess.Popen(["cat","/sys/class/net/eth0/address"],
                                stdout=subprocess.PIPE, text=True)
@@ -473,21 +470,21 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                            unique_id="nowspinning_co2",
                            device_class="carbon_dioxide",
                            unit_of_measurement="ppm",
-                           value_template="{{ value_json.co2}}")
+                           value_template="{{ value_json.co2 }}")
     
     mqtt.add_shared_sensor(name="VOC",
                            unique_id="nowspinning_voc",
                            device_class="aqi",
-                           value_template="{{ value_json.voc}}")
+                           value_template="{{ value_json.voc }}")
     
     mqtt.add_shared_sensor(name="Artist",
                            unique_id="nowspinning_artist",
-                           value_template="{{ value_json.artist}}",
+                           value_template="{{ value_json.artist }}",
                            icon="mdi:account-music")
     
     mqtt.add_shared_sensor(name="Album",
                            unique_id="nowspinning_album",
-                           value_template="{{ value_json.album}}",
+                           value_template="{{ value_json.album }}",
                            icon="mdi:album")
     
     mqtt.add_shared_sensor(name="Title",
@@ -495,124 +492,55 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                            value_template="{{ value_json.title }}",
                            icon="mdi:music-circle")
     
-    def update_view(client: Client, user_data, message: MQTTMessage):
-        view = str(message.payload.decode("UTF-8")).upper()
-        data.view = View[view]
-    
-    
     views = [view.name.capitalize() for view in View]
     mqtt.add_select(name="View",
-                    callback=update_view,
+                    callback=callbacks.update_view,
+                    user_data=data,
                     unique_id="nowspinning_view",
                     options=views)
 
-    
-    def update_team(client: Client, user_data, message: MQTTMessage):
-        selected_name = str(message.payload.decode("UTF-8"))
-        if selected_name and data.selected_league_abbr:
-            league = data.sports[data.selected_league_abbr]
-            for team in league.teams.values():
-                team_name = team.friendly_name
-                if team_name and team_name == selected_name:
-                    data.selected_team_abbr = team.abbr
-                    break
-    
-            
     team_opts = []
     if data.selected_league_abbr:
         league = data.sports[data.selected_league_abbr]
         team_opts = league.friendly_team_names
         
     mqtt.add_select(name="Team",
-                    callback=update_team,
+                    callback=callbacks.update_team,
+                    user_data=data,
                     unique_id="nowspinning_team",
                     options=team_opts)
 
-
-    def update_league(client: Client, user_data, message: MQTTMessage):
-        league_abbr = str(message.payload.decode("UTF-8"))
-        
-        diff_league = data.selected_league_abbr != league_abbr
-        if league_abbr in data.sports and diff_league:
-            data.selected_league_abbr = league_abbr
-            league = data.sports[league_abbr]
-            if league.teams:
-                first_team = list(league.teams.values())[0]
-                data.selected_team_abbr = first_team.abbr
-                team_select = mqtt.entities["Team"]
-                team_names = league.friendly_team_names
-                team_select.update_options(team_names)
-                team_select.set_selection(None) # Maybe helps reset?
-    
-    
     league_opts = []
     if data.sports:
         league_opts = list(data.sports.keys())
     
     mqtt.add_select(name="League",
-                    callback=update_league,
+                    callback=callbacks.update_league,
+                    user_data={"data": data, 
+                               "team_select": mqtt.entities["Team"]},
                     unique_id="nowspinning_league",
                     options=league_opts)
-    
-    def music_switch(client: Client, user_data, message: MQTTMessage):
-        state = str(message.payload.decode("UTF-8"))
-        data.switch_to_music = (state == "ON")
 
-    
     mqtt.add_switch(name="Switch to Music",
-                    callback=music_switch,
+                    callback=callbacks.music_switch,
+                    user_data=data,
                     unique_id="nowspinning_music_switch",
                     icon="mdi:music-box-multiple")
-
-    def teamtracker(client: Client, user_data, message: MQTTMessage):
-        payload = json.loads(str(message.payload.decode("UTF-8")))
-        if "teams" not in payload: return
-        
-        for team in payload["teams"]:
-            league_abbr = team["league"]
-            team_abbr = team["team_abbr"]
-
-            if league_abbr not in data.sports:
-                data.sports[league_abbr] = League(league_abbr)
-            
-            state: str = team["state"]
-            new_attr: dict = team["attributes"]
-            
-            for attr in new_attr:
-                if type(new_attr[attr]) is list:
-                    new_attr[attr] = tuple(new_attr[attr])
-              
-            team = data.sports[league_abbr].team(team_abbr)
-            prev_attr = team.attributes
-        
-            diff = dict(set(new_attr.items()) - set(prev_attr.items()))
-        
-            data.sports[league_abbr].team(team_abbr, attributes=new_attr,
-                                          changes=diff, game_state=state)
-
 
     sports_sub_info = EntityInfo(name="Sports Sub",
                                  unique_id="nowspinning_sports_sub",
                                  component="sensor", device=device_info)
     sports_sub_settings = Settings(mqtt=mqtt_settings, entity=sports_sub_info)
-    sports_sub = Subscriber(sports_sub_settings, teamtracker, None)
+    sports_sub = Subscriber(sports_sub_settings, callbacks.teamtracker, data)
     
     sports_sub.mqtt_client.subscribe("teamtracker/all")
     sports_sub.mqtt_client.publish("teamtracker/start", "start")
     
-    
-    def averages(client: Client, user_data, message: MQTTMessage):
-        payload = json.loads(str(message.payload.decode("UTF-8")))
-        if "averages" not in payload: return
-        
-        data.averages = payload["averages"]
-        
-        
     avg_sub_info = EntityInfo(name="Averages Sub",
                               unique_id="nowspinning_avg_sub",
                               component="sensor", device=device_info)
     avg_sub_settings = Settings(mqtt=mqtt_settings, entity=avg_sub_info)
-    avg_sub = Subscriber(avg_sub_settings, averages, None)
+    avg_sub = Subscriber(avg_sub_settings, callbacks.averages, data)
     
     avg_sub.mqtt_client.subscribe("sensor-averages/all")
     avg_sub.mqtt_client.publish("sensor-averages/start", "start")
@@ -644,6 +572,7 @@ async def mqtt_loop(bus: MessageBus, data: Data):
         first.set_state(json.dumps(payload))
         
         view_select = mqtt.entities["View"]
+
         view_select.set_selection(data.view.name.capitalize())
         
         team_select = mqtt.entities["Team"]
