@@ -9,6 +9,8 @@ RATE = 44100  # Equivalent to Human Hearing at 40 kHz
 MAX_HZ = 20000  # Commonly referenced upper limit for "normal" audio range
 MAX_VOL = 200
 BUFFER_FRAMES = 4
+IS_HORIZONTAL = (True, True, True)
+IS_VERTICAL = (False, False, False)
 
 class EQStream(object):
     def __init__(self) -> None:
@@ -76,7 +78,7 @@ class EQStream(object):
         # Convert to numpy array:
         bins = np.array(bins)
         # Normalize and round
-        min_val = bins.min()
+        min_val = 0 # bins.min()
         max_val = max(MAX_VOL, bins.max())
         bins = np.interp(bins, (min_val, max_val), (0, max_height))
         bins = np.round(bins)
@@ -127,9 +129,20 @@ class EQStream(object):
             self.__gradient_img = img
             return self.__gradient_img
         
-        gradient_array = self.__get_gradient_3d(width, height, colors[1],
-                                                colors[0], 
-                                                (False, False, False))
+        num_gradients = len(colors) - 1
+        gradient_height, extra = divmod(height, num_gradients)
+        gradient_array = None
+        for i in range(num_gradients):
+            if i == num_gradients - 1:
+                gradient_height += extra
+
+            gradient = self.__get_gradient_3d(width, gradient_height, 
+                                              colors[i], colors[i+1],
+                                              IS_VERTICAL)
+            if gradient_array is None:
+                gradient_array = gradient
+            else:
+                gradient_array = np.concatenate((gradient_array, gradient))
         
         img = Image.fromarray(np.uint8(gradient_array))
 
