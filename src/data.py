@@ -1,4 +1,3 @@
-import asyncio
 from base64 import b64decode
 from io import BytesIO
 from time import perf_counter
@@ -8,6 +7,7 @@ import numpy as np
 from PIL import Image, ImageChops
 
 from constants import View
+from eqstream import EQStream
 from sports import League
 
 class Data(object):
@@ -31,6 +31,9 @@ class Data(object):
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
         self.switch_to_music: bool = False
+        self.eq_stream: EQStream = EQStream()
+        
+        self.eq_stream.listen()
     
 
     @property
@@ -39,8 +42,9 @@ class Data(object):
             return None
         else:
             return (self.temperature * 1.8) + 32.0
-        
-    def get_dominant_colors(self, pil_img: Image.Image, palette_size=4):
+    
+    
+    def get_dominant_colors(self, pil_img: Image.Image, palette_size=3):
         img = pil_img.copy()
         # Reduce colors (uses k-means internally)
         paletted = img.convert('P', palette=Image.ADAPTIVE, 
@@ -97,4 +101,4 @@ class Data(object):
             
             if art_changed or self.album_art_colors is None:
                 self.album_art_colors = self.get_dominant_colors(art_image)
-                print(self.album_art_colors)
+                # print(self.album_art_colors)

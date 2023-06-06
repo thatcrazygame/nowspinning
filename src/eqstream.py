@@ -20,7 +20,6 @@ class EQStream(object):
         self.max_val = None
         self.__gradient_img = None
         self.__bar_colors = None
-        self.listen()
 
     def __callback(self, in_data, frame_count, time_info, status):
         frame = np.frombuffer(in_data, dtype=np.int16).reshape((1,CHUNK))
@@ -137,12 +136,12 @@ class EQStream(object):
                 gradient_height += extra
 
             gradient = self.__get_gradient_3d(width, gradient_height, 
-                                              colors[i], colors[i+1],
+                                              colors[i+1], colors[i],
                                               IS_VERTICAL)
             if gradient_array is None:
                 gradient_array = gradient
             else:
-                gradient_array = np.concatenate((gradient_array, gradient))
+                gradient_array = np.concatenate((gradient, gradient_array))
         
         img = Image.fromarray(np.uint8(gradient_array))
 
