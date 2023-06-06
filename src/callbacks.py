@@ -1,11 +1,11 @@
 import json
 from typing import TypedDict
 
-from constants import View
+from constants import GameState, View
 from customdiscoverable import Select
 from data import Data
 from paho.mqtt.client import Client, MQTTMessage
-from sports import League
+from sports import League, Team
 
 def teamtracker(client: Client, data: Data, message: MQTTMessage):
     payload = json.loads(str(message.payload.decode("UTF-8")) )
@@ -18,7 +18,7 @@ def teamtracker(client: Client, data: Data, message: MQTTMessage):
         if league_abbr not in data.sports:
             data.sports[league_abbr] = League(league_abbr)
         
-        state: str = team["state"]
+        state: GameState = GameState[team["state"]]
         new_attr: dict = team["attributes"]
         
         for attr in new_attr:
@@ -59,7 +59,9 @@ def update_league(client: Client, user_data: __UserDataLeague,
         user_data["data"].selected_league_abbr = league_abbr
         league: League = user_data["data"].sports[league_abbr]
         if league.teams:
-            first_team = list(league.teams.values())[0]
+            teams = list(league.teams.values())
+            teams.sort(key=Team.by_game_state, reverse=True)
+            first_team = teams[0]
             user_data["data"].selected_team_abbr = first_team.abbr
             # team_select = mqtt.entities["Team"]
             team_names = league.friendly_team_names

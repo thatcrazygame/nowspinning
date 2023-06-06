@@ -19,6 +19,7 @@ import callbacks
 from constants import PANEL_WIDTH, PANEL_HEIGHT, View
 from data import Data
 from mqttdevice import MQTTDevice
+from sports import League, Team
 from viewdraw import ViewDrawer
 from viewdraw.dashboarddrawer import DashboardDrawer
 from viewdraw.musicdrawer import MusicDrawer
@@ -209,21 +210,28 @@ async def mqtt_loop(bus: MessageBus, data: Data):
         
         if set(league_opts) != set(league_select._entity.options):
             league_select.update_options(league_opts)
+            
+        if data.selected_league_abbr is None and league_opts:
+            data.selected_league_abbr = league_opts[0]
                                 
         league_select.set_selection(data.selected_league_abbr)
         if data.selected_league_abbr:
-            league = data.sports[data.selected_league_abbr]
-        
+            league: League = data.sports[data.selected_league_abbr]
+    
             team_opts = league.friendly_team_names
-            
             if set(team_opts) != set(team_select._entity.options):
                 team_select.update_options(team_opts)
                 
-            team_name = None
             if data.selected_team_abbr:
                 team = league.team(data.selected_team_abbr)
-                team_name = team.friendly_name
-            
+            else:
+                teams = list(league.teams.values())
+                teams.sort(key=Team.by_game_state, reverse=True)
+                
+                team = teams[0]
+                data.selected_team_abbr = team.abbr
+                
+            team_name = team.friendly_name
             team_select.set_selection(team_name)
                 
         has_league_opts =  bool(league_select._entity.options)

@@ -3,6 +3,8 @@ from io import BytesIO
 from PIL import Image
 import requests
 
+from constants import GameState
+
 URL_BASE = "https://a.espncdn.com/i/teamlogos"
 
 class SportsOrganization(object):
@@ -34,14 +36,14 @@ class Team(SportsOrganization):
         self.attributes = {}
         self.last_changes = {}
         self.league = league
-        self.game_state = ""
+        self.game_state: GameState = None
         self._logo_url = f"{URL_BASE}/{league}/500/scoreboard/{abbr}.png"
     
     
     @property
     def friendly_name(self) -> str:
         friendly_name = ""
-        if self.game_state == "":
+        if self.game_state is None:
             return friendly_name
         
         team_name = self.attributes.get("team_name")
@@ -51,6 +53,12 @@ class Team(SportsOrganization):
             friendly_name = f"{self.abbr} - {self.league}"
         
         return friendly_name
+    
+    
+    @classmethod
+    def by_game_state(cls, t):
+        team: cls = t
+        return team.game_state.value if team.game_state else 0
 
 class League(SportsOrganization):
     def __init__(self, abbr: str):
@@ -58,9 +66,10 @@ class League(SportsOrganization):
         self.sport = ""
         self._logo_url = f"{URL_BASE}/leagues/500/{abbr}.png"
         self.teams: dict[str, Team] = {}
+    
         
     def team(self, team_abbr: str, attributes: dict = None, 
-             changes: dict = None, game_state: str = None) -> Team:
+             changes: dict = None, game_state: GameState = None) -> Team:
         if team_abbr not in self.teams:
             team = Team(team_abbr, self.abbr)
             self.teams[team_abbr] = team
@@ -73,7 +82,8 @@ class League(SportsOrganization):
             self.teams[team_abbr].game_state = game_state
             
         return self.teams[team_abbr]
-            
+    
+    
     @property
     def friendly_team_names(self) -> list[str]:
         team_names = []
