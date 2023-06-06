@@ -17,7 +17,5 @@ class ViewDrawer(ABC):
     
     
     @abstractmethod
-    def draw(self, canvas, data):
+    async def draw(self, canvas, data):
         pass
-
-

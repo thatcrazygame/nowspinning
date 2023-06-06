@@ -22,7 +22,7 @@ class DashboardDrawer(ViewDrawer):
         
         self.white_text = Color(255, 255, 255)
     
-    def draw(self, canvas, data: Data):
+    async def draw(self, canvas, data: Data):
         self.update_last_drawn()
         
         font_4x6 = self.fonts["4x6"]

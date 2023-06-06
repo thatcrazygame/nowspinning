@@ -1,6 +1,7 @@
 from enum import Enum
 
 class View(Enum):
+    OFF = 0
     DASHBOARD = 1
     MUSIC = 2
     SPORTS = 3

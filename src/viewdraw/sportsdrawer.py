@@ -187,7 +187,7 @@ class SportsDrawer(ViewDrawer):
         self.play_scroll.draw(canvas, last_play)
 
     
-    def draw(self, canvas, data: Data):
+    async def draw(self, canvas, data: Data):
         self.update_last_drawn()
         
         league: League = None

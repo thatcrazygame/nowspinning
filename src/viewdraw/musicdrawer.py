@@ -32,7 +32,7 @@ class MusicDrawer(ViewDrawer):
                                            PANEL_WIDTH, PANEL_WIDTH*2,
                                            num_spaces=3, pause_dur=2.0)
     
-    def draw(self, canvas, data: Data):
+    async def draw(self, canvas, data: Data):
         self.update_last_drawn()
         
         title = data.title

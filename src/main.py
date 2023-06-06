@@ -22,6 +22,7 @@ from mqttdevice import MQTTDevice
 from viewdraw import ViewDrawer
 from viewdraw.dashboarddrawer import DashboardDrawer
 from viewdraw.musicdrawer import MusicDrawer
+from viewdraw.offdrawer import OffDrawer
 from viewdraw.sportsdrawer import SportsDrawer
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
@@ -37,6 +38,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
     views = {}
+    views[View.OFF] = OffDrawer()
     views[View.MUSIC] = MusicDrawer()
     views[View.SPORTS] = SportsDrawer()
     views[View.DASHBOARD] = DashboardDrawer()
@@ -46,7 +48,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
             data.view = View.DASHBOARD
             
         view: ViewDrawer = views[data.view]
-        view.draw(canvas, data)
+        await view.draw(canvas, data)
 
         canvas = matrix.SwapOnVSync(canvas)
         await asyncio.sleep(0.05)
