@@ -195,20 +195,8 @@ async def mqtt_loop(bus: MessageBus, data: Data):
             if name not in ["League", "Team", "Sports Sub", "Averages Sub"]:
                 entity.set_availability(True)
         
-        payload = {}
-        payload["temperature"] = f"{data.temperature_f:.1f}"
-        payload["humidity"] = f"{data.humidity:.1f}"
-        payload["co2"] = f"{int(data.co2)}"
-        payload["voc"] = f"{data.voc}"
-        artists = ""
-        if data.artist is not None:
-            artists = f"{','.join(data.artist)}"
-        payload["artist"] = artists
-        payload["album"] = f"{data.album}"
-        payload["title"] = f"{data.title}"
-        
         first = list(mqtt.entities.values())[0]
-        first.set_state(json.dumps(payload))
+        first.set_state(data.get_json())
         
         view_select = mqtt.entities["View"]
 

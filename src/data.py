@@ -1,5 +1,6 @@
 from base64 import b64decode
 from io import BytesIO
+import json
 from time import perf_counter
 
 from dbus_next.errors import DBusError
@@ -34,6 +35,14 @@ class Data(object):
         self.eq_stream: EQStream = EQStream()
         
         self.eq_stream.listen()
+        
+    
+    def _str(self, val, round_digits=None) -> str:
+        is_number = type(val) is int or type(val) is float
+        if is_number:
+            val = f"{round(val, round_digits)}"
+        
+        return str(val) if val is not None else ""
     
 
     @property
@@ -42,6 +51,23 @@ class Data(object):
             return None
         else:
             return (self.temperature * 1.8) + 32.0
+        
+
+    def get_json(self) -> dict:
+        payload = {}
+        payload["temperature"] = self._str(self.temperature_f, round_digits=1)
+        payload["humidity"] = self._str(self.humidity, round_digits=1)
+        payload["co2"] = self._str(self.co2)
+        payload["voc"] = self._str(self.voc)
+        
+        artists = ""
+        if self.artist is not None:
+            artists = f"{','.join(self.artist)}"
+        payload["artist"] = artists
+        payload["album"] = self._str(self.album) 
+        payload["title"] = self._str(self.title)
+        
+        return json.dumps(payload)
     
     
     def get_dominant_colors(self, pil_img: Image.Image, palette_size=3):
