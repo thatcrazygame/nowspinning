@@ -1,14 +1,11 @@
 import asyncio
 from base64 import b64decode
 from datetime import datetime
-from enum import Enum
 from gpiozero import PWMOutputDevice
-from io import BytesIO
 import json
 import os
 import subprocess
 import sys
-import time
 import xml.etree.ElementTree as ET
 
 from adafruit_sgp40 import SGP40
@@ -16,18 +13,15 @@ from adafruit_scd30 import SCD30
 from board import SCL, SDA
 from busio import I2C
 from dbus_next.aio import MessageBus
-from dbus_next.errors import DBusError
 from dotenv import load_dotenv
-from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable, EntityInfo, Subscriber
-import numpy as np
-from paho.mqtt.client import Client, MQTTMessage
-from PIL import Image, ImageChops, ImageDraw, ImageFont
+from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable
+from PIL import Image, ImageDraw
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from rgbmatrix.graphics import Color, DrawText, Font
 
 import callbacks
 from constants import View
-from customdiscoverable import Select, SharedSensor
+from data import Data
 from eqstream import EQStream
 from linegraph import LineGraph
 from mqttdevice import MQTTDevice
@@ -46,96 +40,6 @@ LOGO_SIZE = 40
 NUM_BARS = 16
 
 load_dotenv()
-
-class Data(object):
-    """Class to share data between async functions"""
-
-    def __init__(self):
-        self.music_last_updated = None
-        self.artist = None
-        self.title = "Listening..."
-        self.album = None
-        self.album_art = Image.open("../img/microphone.jpeg")
-        self.album_art_colors = None
-        self.temperature = None
-        self.humidity = None
-        self.co2 = None
-        self.voc = None
-        self.raw_gas = None
-        self.averages: dict[str, list[float]] = {}
-        self.view: View = View.SPORTS
-        self.sports: dict[str, League] = {}
-        self.selected_league_abbr: str = None
-        self.selected_team_abbr: str = None
-        self.switch_to_music: bool = False
-    
-
-    @property
-    def temperature_f(self):
-        if self.temperature is None:
-            return None
-        else:
-            return (self.temperature * 1.8) + 32.0
-        
-    def get_dominant_colors(self, pil_img, palette_size=4):
-        # Resize image to speed up processing
-        img = pil_img.copy()
-        # Reduce colors (uses k-means internally)
-        paletted = img.convert('P', palette=Image.ADAPTIVE, 
-                               colors=palette_size)
-        # Find the color that occurs most often
-        palette = paletted.getpalette()
-        color_counts = sorted(paletted.getcolors(), reverse=True)
-
-        colors = np.reshape(palette, (-1, 3))[:palette_size]
-        colors = list(map(tuple, colors))
-        # color_counts is a list of tuples: (count, index of color)
-        # reorder colors to match the sorted counts
-        colors = [colors[count[1]] for count in color_counts]
-
-        return colors
-        
-
-    async def refresh_music_data(self, player, width, height):
-        metadata = None
-        try:
-            metadata = await player.get_metadata()
-        except DBusError as e:
-            self.album_art = Image.open("../img/microphone-off.jpeg")
-            self.title = "Service unavailable"
-            # print(e.text)
-            return
-            
-        if not metadata:
-            return
-        
-        if self.switch_to_music:
-            self.view = View.MUSIC
-            
-        self.music_last_updated = time.time()
-        
-        if "xesam:artist" in metadata:
-            self.artist = metadata["xesam:artist"].value
-        if "xesam:title" in metadata:
-            self.title = metadata["xesam:title"].value
-        if "xesam:album" in metadata:
-            self.album = metadata["xesam:album"].value
-        if "mpris:artUrl" in metadata:
-            art_str = metadata["mpris:artUrl"].value
-            art_str = art_str.replace("data:image/jpeg;base64,", "")
-            art_base64 = BytesIO(b64decode(art_str))
-            art_image = Image.open(art_base64)
-            art_image.thumbnail((width, height), Image.Resampling.LANCZOS)
-            
-            diff = ImageChops.difference(art_image, self.album_art)
-            art_changed = diff.getbbox() is not None
-
-            self.album_art = art_image
-            
-            if art_changed or self.album_art_colors is None:
-                self.album_art_colors = self.get_dominant_colors(art_image)
-                print(self.album_art_colors)
-                
 
 def get_logo_x(homeaway: str) -> int:
     if homeaway == "home":

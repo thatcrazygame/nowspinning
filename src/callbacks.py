@@ -3,7 +3,7 @@ from typing import TypedDict
 
 from constants import View
 from customdiscoverable import Select
-from main import Data
+from data import Data
 from paho.mqtt.client import Client, MQTTMessage
 from sports import League
 
