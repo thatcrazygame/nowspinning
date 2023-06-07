@@ -25,6 +25,7 @@ from viewdraw.dashboarddrawer import DashboardDrawer
 from viewdraw.musicdrawer import MusicDrawer
 from viewdraw.offdrawer import OffDrawer
 from viewdraw.sportsdrawer import SportsDrawer
+from viewdraw.gameoflife import GameOfLife
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 
@@ -43,6 +44,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     views[View.MUSIC] = MusicDrawer()
     views[View.SPORTS] = SportsDrawer()
     views[View.DASHBOARD] = DashboardDrawer()
+    views[View.GAME_OF_LIFE] = GameOfLife()
     while bus.connected:
         canvas.Clear()
         if data.view not in views:
@@ -136,7 +138,7 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                            value_template="{{ value_json.title }}",
                            icon="mdi:music-circle")
     
-    views = [view.name.capitalize() for view in View]
+    views = [view.name.replace("_", " ").title() for view in View]
     mqtt.add_select(name="View",
                     callback=callbacks.update_view,
                     user_data=data,
@@ -186,6 +188,26 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                              start_topic="sensor-averages/start")
 
     mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
+    
+    mqtt.add_button(name="Game of Life Reset",
+                    unique_id="nowspinning_gol_reset",
+                    payload_press="RESET",
+                    callback=callbacks.game_of_life_buttons,
+                    user_data=data,
+                    icon="mdi:restart")
+    
+    mqtt.add_button(name="Game of Life Add Noise",
+                    unique_id="nowspinning_gol_add_noise",
+                    payload_press="ADD_NOISE",
+                    callback=callbacks.game_of_life_buttons,
+                    user_data=data,
+                    icon="mdi:view-grid-plus")
+    
+    mqtt.add_switch(name="Game of Life Show Gens",
+                    unique_id="nowspinning_gol_show_gens",
+                    callback=callbacks.game_of_life_gens_switch,
+                    user_data=data,
+                    icon="mdi:counter")
 
     for entitiy in mqtt.entities.values():
         entitiy.write_config()
@@ -201,7 +223,7 @@ async def mqtt_loop(bus: MessageBus, data: Data):
         
         view_select = mqtt.entities["View"]
 
-        view_select.set_selection(data.view.name.capitalize())
+        view_select.set_selection(data.view.name.replace("_", " ").title())
         
         team_select = mqtt.entities["Team"]
         
@@ -244,6 +266,12 @@ async def mqtt_loop(bus: MessageBus, data: Data):
             music_switch.on()
         else:
             music_switch.off()
+            
+        gol_switch = mqtt.entities["Game of Life Show Gens"]
+        if data.game_of_life_show_gens:
+            gol_switch.on()
+        else:
+            gol_switch.off()
 
         await asyncio.sleep(1)
 

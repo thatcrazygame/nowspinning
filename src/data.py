@@ -27,12 +27,14 @@ class Data(object):
         self.voc = None
         self.raw_gas = None
         self.averages: dict[str, list[float]] = {}
-        self.view: View = View.SPORTS
+        self.view: View = View.GAME_OF_LIFE
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
         self.switch_to_music: bool = False
         self.eq_stream: EQStream = EQStream()
+        self.game_of_life_commands = []
+        self.game_of_life_show_gens: bool = False
         
         self.eq_stream.listen()
         

@@ -70,7 +70,7 @@ def update_league(client: Client, user_data: __UserDataLeague,
             
             
 def update_view(client: Client, data: Data, message: MQTTMessage):
-    view = str(message.payload.decode("UTF-8")).upper()
+    view = str(message.payload.decode("UTF-8")).replace(" ", "_").upper()
     data.view = View[view]
     
 
@@ -86,3 +86,11 @@ def averages(client: Client, data: Data, message: MQTTMessage):
     data.averages = payload["averages"]
     
     
+def game_of_life_buttons(client: Client, data: Data, message: MQTTMessage):
+    payload = str(message.payload.decode("UTF-8"))
+    data.game_of_life_commands.insert(0, payload)
+    
+    
+def game_of_life_gens_switch(client: Client, data: Data, message: MQTTMessage):
+    state = str(message.payload.decode("UTF-8"))
+    data.game_of_life_show_gens = (state == "ON")

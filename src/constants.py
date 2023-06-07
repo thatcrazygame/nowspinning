@@ -5,6 +5,7 @@ class View(Enum):
     DASHBOARD = 1
     MUSIC = 2
     SPORTS = 3
+    GAME_OF_LIFE = 4
 
 
 class GameState(Enum):
