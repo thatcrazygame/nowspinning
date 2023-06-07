@@ -49,6 +49,7 @@ class MQTTDevice(object):
     
     def _add_entity(self, EntityType:Type[Discoverable],
                     InfoType:Type[EntityInfo], manual_availability=None,
+                    always_available=True,
                     callback: Callable[[Client, T, MQTTMessage], Any] =
                         lambda c, t, m: None,
                     user_data=None, **entity_info):
@@ -60,9 +61,6 @@ class MQTTDevice(object):
             
         entity_signature = inspect.signature(EntityType)
 
-        # TODO find a better way to get this type
-        # info_type = f"{EntityType.__name__}Info"
-        # InfoType = globals()[info_type]
         info = InfoType(**entity_info)
         settings = Settings(mqtt=self.mqtt_settings,
                             entity=info,
@@ -75,58 +73,67 @@ class MQTTDevice(object):
             kwargs["user_data"] = user_data
         
         entity = EntityType(**kwargs)
+        entity.always_available = always_available
         self.entities[info.name] = entity
         return entity
 
     
-    def add_binary_sensor(self, manual_availability=None,
+    def add_binary_sensor(self, manual_availability=None, 
+                          always_available=True,
                           **entity_info) -> BinarySensor:
         return self._add_entity(BinarySensor,
                                 BinarySensorInfo,
                                 manual_availability,
+                                always_available,
                                 **entity_info)
  
         
-    def add_sensor(self, manual_availability=None, **entity_info) -> Sensor:
+    def add_sensor(self, manual_availability=None, always_available=True,
+                   **entity_info) -> Sensor:
         return self._add_entity(Sensor, SensorInfo, manual_availability,
-                                **entity_info)
+                                always_available, **entity_info)
 
 
     def add_shared_sensor(self, manual_availability=None,
+                          always_available=True, 
                           **entity_info) -> SharedSensor:
         sensor = self._add_entity(SharedSensor,
                                   SharedSensorInfo, 
                                   manual_availability,
+                                  always_available,
                                   **entity_info)
         sensor.state_topic = self.shared_sensor_topic
         return sensor
     
     
     def add_button(self, callback, user_data=None, manual_availability=None,
-                   **entity_info) -> Button:
+                   always_available=True, **entity_info) -> Button:
         return self._add_entity(Button,
                                 ButtonInfo,
                                 manual_availability,
+                                always_available,
                                 callback,
                                 user_data,
                                 **entity_info)
         
     
     def add_select(self, callback, user_data=None, manual_availability=None,
-                   **entity_info) -> Select:
+                   always_available=True, **entity_info) -> Select:
         return self._add_entity(Select,
                                 SelectInfo,
                                 manual_availability,
+                                always_available,
                                 callback,
                                 user_data,
                                 **entity_info)
         
     
     def add_switch(self, callback, user_data=None, manual_availability=None,
-                   **entity_info) -> Switch:
+                   always_available=True, **entity_info) -> Switch:
         return self._add_entity(Switch, 
                                 SwitchInfo,
                                 manual_availability,
+                                always_available,
                                 callback,
                                 user_data,
                                 **entity_info)
@@ -134,11 +141,13 @@ class MQTTDevice(object):
     
     def add_subscriber_only(self, callback, user_data, sub_topic, start_topic,
                             start_msg = "start", manual_availability=None,
+                            always_available=True, 
                             **entity_info) -> Subscriber:
         entity_info["component"] = "subscriber"
         sub = self._add_entity(Subscriber,
                                EntityInfo,
                                manual_availability,
+                               always_available,
                                callback,
                                user_data,
                                **entity_info)

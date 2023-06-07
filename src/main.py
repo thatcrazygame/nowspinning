@@ -154,7 +154,8 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                     callback=callbacks.update_team,
                     user_data=data,
                     unique_id="nowspinning_team",
-                    options=team_opts)
+                    options=team_opts,
+                    always_available=False)
 
     league_opts = []
     if data.sports:
@@ -165,7 +166,8 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                     user_data={"data": data, 
                                "team_select": mqtt.entities["Team"]},
                     unique_id="nowspinning_league",
-                    options=league_opts)
+                    options=league_opts,
+                    always_available=False)
 
     mqtt.add_switch(name="Switch to Music",
                     callback=callbacks.music_switch,
@@ -178,14 +180,16 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                              callback=callbacks.teamtracker,
                              user_data=data,
                              sub_topic="teamtracker/all",
-                             start_topic="teamtracker/start")
+                             start_topic="teamtracker/start",
+                             always_available=False)
     
     mqtt.add_subscriber_only(name="Averages Sub",
                              unique_id="nowspinning_avg_sub",
                              callback=callbacks.averages,
                              user_data=data,
                              sub_topic="sensor-averages/all",
-                             start_topic="sensor-averages/start")
+                             start_topic="sensor-averages/start",
+                             always_available=False)
 
     mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
     
@@ -194,29 +198,36 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                     payload_press="RESET",
                     callback=callbacks.game_of_life_buttons,
                     user_data=data,
-                    icon="mdi:restart")
+                    icon="mdi:restart",
+                    always_available=False)
     
     mqtt.add_button(name="Game of Life Add Noise",
                     unique_id="nowspinning_gol_add_noise",
                     payload_press="ADD_NOISE",
                     callback=callbacks.game_of_life_buttons,
                     user_data=data,
-                    icon="mdi:view-grid-plus")
+                    icon="mdi:view-grid-plus",
+                    always_available=False)
     
     mqtt.add_switch(name="Game of Life Show Gens",
                     unique_id="nowspinning_gol_show_gens",
                     callback=callbacks.game_of_life_gens_switch,
                     user_data=data,
-                    icon="mdi:counter")
+                    icon="mdi:counter",
+                    always_available=False)
 
     for entitiy in mqtt.entities.values():
         entitiy.write_config()
         
     while bus.connected:
+        is_gol_view = data.view is View.GAME_OF_LIFE
         entity: Discoverable
         for name, entity in mqtt.entities.items():
-            if name not in ["League", "Team", "Sports Sub", "Averages Sub"]:
+            is_gol_entity = "Game of Life" in name
+            if entity.always_available:
                 entity.set_availability(True)
+            elif is_gol_entity:
+                entity.set_availability(is_gol_view)
         
         first = list(mqtt.entities.values())[0]
         first.set_state(data.get_json())
