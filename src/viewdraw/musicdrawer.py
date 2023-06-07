@@ -31,7 +31,8 @@ class MusicDrawer(ViewDrawer):
         self.artist_scroll = ScrollingText(font_8x13, white_text, x, artist_y,
                                            PANEL_WIDTH, PANEL_WIDTH*2,
                                            num_spaces=3, pause_dur=2.0)
-    
+        
+
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
         

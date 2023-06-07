@@ -39,18 +39,19 @@ load_dotenv()
 async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
-    views = {}
-    views[View.OFF] = OffDrawer()
-    views[View.MUSIC] = MusicDrawer()
-    views[View.SPORTS] = SportsDrawer()
-    views[View.DASHBOARD] = DashboardDrawer()
-    views[View.GAME_OF_LIFE] = GameOfLife()
+    data.view_drawers[View.OFF] = OffDrawer()
+    data.view_drawers[View.MUSIC] = MusicDrawer()
+    data.view_drawers[View.SPORTS] = SportsDrawer()
+    data.view_drawers[View.DASHBOARD] = DashboardDrawer()
+    data.view_drawers[View.GAME_OF_LIFE] = GameOfLife()
     while bus.connected:
         canvas.Clear()
-        if data.view not in views:
+        data.check_songrec_timeout()
+        
+        if data.view not in data.view_drawers:
             data.view = View.DASHBOARD
             
-        view: ViewDrawer = views[data.view]
+        view: ViewDrawer = data.view_drawers[data.view]
         await view.draw(canvas, data)
 
         canvas = matrix.SwapOnVSync(canvas)

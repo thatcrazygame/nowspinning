@@ -10,33 +10,36 @@ from PIL import Image, ImageChops
 from constants import View
 from eqstream import EQStream
 from sports import League
+from viewdraw import ViewDrawer
+
+SONGREC_TIMEOUT_SECS = 30.0 * 60.0
 
 class Data(object):
     """Class to share data between async functions"""
 
     def __init__(self):
-        self.music_last_updated = None
-        self.artist = None
-        self.title = "Listening..."
-        self.album = None
-        self.album_art = Image.open("../img/microphone.jpeg")
-        self.album_art_colors = None
+        self.view: View = View.GAME_OF_LIFE
+        self.view_drawers: dict[View, ViewDrawer] = {}
+        self.switch_to_music: bool = False
+
+        self.reset_music()
+        self.eq_stream: EQStream = EQStream()
+        self.eq_stream.listen()
+        
         self.temperature = None
         self.humidity = None
         self.co2 = None
         self.voc = None
         self.raw_gas = None
         self.averages: dict[str, list[float]] = {}
-        self.view: View = View.GAME_OF_LIFE
+        
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
-        self.switch_to_music: bool = False
-        self.eq_stream: EQStream = EQStream()
+        
         self.game_of_life_commands = []
         self.game_of_life_show_gens: bool = False
         
-        self.eq_stream.listen()
         
     
     def _str(self, val, round_digits=None) -> str:
@@ -130,3 +133,38 @@ class Data(object):
             if art_changed or self.album_art_colors is None:
                 self.album_art_colors = self.get_dominant_colors(art_image)
                 # print(self.album_art_colors)
+    
+    
+    def reset_music(self):
+        self.artist = None
+        self.title = "Listening..."
+        self.album = None
+        self.album_art = Image.open("../img/microphone.jpeg")
+        self.album_art_colors = None
+        self.music_last_updated = None
+    
+                
+    def views_by_last_drawn(self, exclude: list[View] = [View.MUSIC]):
+        views = [(drawer.last_drawn, view) 
+                 for view, drawer in self.view_drawers.items() 
+                 if view not in exclude]
+        views.sort(key=lambda v: v[0], reverse=True)
+        views = [view[1] for view in views]
+        return views
+
+
+    def check_songrec_timeout(self):
+        recognized = self.music_last_updated is not None
+        if not recognized: return
+        
+        now = perf_counter()
+        timedout = (now - self.music_last_updated) >= SONGREC_TIMEOUT_SECS
+        
+        if not timedout: return
+                
+        if self.view is View.MUSIC and self.switch_to_music:
+            sorted_views = self.views_by_last_drawn()
+            self.view = sorted_views[0]
+            
+        self.reset_music()
+

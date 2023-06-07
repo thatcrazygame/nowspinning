@@ -9,7 +9,7 @@ sys.path.append(root_folder)
 
 class ViewDrawer(ABC):
     def __init__(self) -> None:
-        self.last_drawn: float = None
+        self.last_drawn: float = 0.0
     
     
     def update_last_drawn(self):
