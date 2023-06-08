@@ -145,7 +145,7 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                            value_template="{{ value_json.title }}",
                            icon="mdi:music-circle")
     
-    views = [view.name.replace("_", " ").title() for view in View]
+    views = [view.value for view in View]
     mqtt.add_select(name="View",
                     callback=callbacks.update_view,
                     user_data=data,

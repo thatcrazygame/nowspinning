@@ -70,8 +70,8 @@ def update_league(client: Client, user_data: __UserDataLeague,
             
             
 def update_view(client: Client, data: Data, message: MQTTMessage):
-    view = str(message.payload.decode("UTF-8")).replace(" ", "_").upper()
-    data.view = View[view]
+    view = str(message.payload.decode("UTF-8"))
+    data.view = View(view)
     
 
 def music_switch(client: Client, data: Data, message: MQTTMessage):

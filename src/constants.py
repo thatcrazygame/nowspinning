@@ -1,11 +1,16 @@
-from enum import Enum
+from enum import Enum, auto
 
-class View(Enum):
-    OFF = 0
-    DASHBOARD = 1
-    MUSIC = 2
-    SPORTS = 3
-    GAME_OF_LIFE = 4
+class AutoValue(Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name.replace("_", " ").title()
+
+
+class View(AutoValue):
+    OFF = auto()
+    DASHBOARD = auto()
+    MUSIC = auto()
+    SPORTS = auto()
+    GAME_OF_LIFE = auto()
 
 
 class GameState(Enum):
