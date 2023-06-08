@@ -21,6 +21,8 @@ class Select(Subscriber[SelectInfo]):
     https://www.home-assistant.io/integrations/select.mqtt
     """
     def update_options(self, options: list[str]) -> None:
+        if set(options) == set(self._entity.options):
+            return
         self._entity.options = options
         self.write_config()
 
@@ -30,4 +32,9 @@ class Select(Subscriber[SelectInfo]):
             self._state_helper(str(option))
 
 
-    
+    def set_availability(self, availability: bool = None):
+        if availability is None:
+            has_opts = bool(self._entity.options)
+            availability = has_opts
+            
+        super().set_availability(availability)

@@ -223,8 +223,7 @@ async def mqtt_loop(bus: MessageBus, data: Data):
                     icon="mdi:counter",
                     always_available=False)
 
-    for entitiy in mqtt.entities.values():
-        entitiy.write_config()
+    mqtt.write_all_configs()
         
     while bus.connected:
         is_gol_view = data.view is View.GAME_OF_LIFE
@@ -236,20 +235,16 @@ async def mqtt_loop(bus: MessageBus, data: Data):
             elif is_gol_entity:
                 entity.set_availability(is_gol_view)
         
-        first = list(mqtt.entities.values())[0]
-        first.set_state(data.get_json())
+        mqtt.set_shared_state(data.get_json())
         
         view_select = mqtt.entities["View"]
-
-        view_select.set_selection(data.view.name.replace("_", " ").title())
+        view_select.set_selection(data.view.value)
         
         team_select = mqtt.entities["Team"]
         
         league_select = mqtt.entities["League"]
         league_opts = list(data.sports.keys())
-        
-        if set(league_opts) != set(league_select._entity.options):
-            league_select.update_options(league_opts)
+        league_select.update_options(league_opts)
             
         if data.selected_league_abbr is None and league_opts:
             data.selected_league_abbr = league_opts[0]
@@ -259,25 +254,21 @@ async def mqtt_loop(bus: MessageBus, data: Data):
             league: League = data.sports[data.selected_league_abbr]
     
             team_opts = league.friendly_team_names
-            if set(team_opts) != set(team_select._entity.options):
-                team_select.update_options(team_opts)
+            team_select.update_options(team_opts)
                 
             if data.selected_team_abbr:
                 team = league.team(data.selected_team_abbr)
             else:
                 teams = list(league.teams.values())
                 teams.sort(key=Team.by_game_state, reverse=True)
-                
                 team = teams[0]
                 data.selected_team_abbr = team.abbr
                 
             team_name = team.friendly_name
             team_select.set_selection(team_name)
                 
-        has_league_opts =  bool(league_select._entity.options)
-        has_team_opts = bool(team_select._entity.options)
-        league_select.set_availability(has_league_opts)
-        team_select.set_availability(has_team_opts)
+        league_select.set_availability()
+        team_select.set_availability()
         
         music_switch = mqtt.entities["Switch to Music"]
         if data.switch_to_music:
@@ -347,8 +338,6 @@ async def loops(data: Data):
     await asyncio.gather(matrix_loop(bus, matrix, data),
                          air_loop(bus, data),
                          mqtt_loop(bus, data))
-    
-    # await bus.wait_for_disconnect()
 
 
 def main():

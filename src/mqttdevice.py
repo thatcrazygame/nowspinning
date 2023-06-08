@@ -22,7 +22,9 @@ from customdiscoverable import (
     SharedSensorInfo, SharedSensor
 )
 
-class MQTTDevice(object):
+class MQTTDevice(object): 
+    T = TypeVar("T")
+    
     def __init__(self, mqtt_settings:Settings, device_info:DeviceInfo,
                  manual_availability=True) -> None:
         self.mqtt_settings = mqtt_settings
@@ -30,9 +32,13 @@ class MQTTDevice(object):
         self.manual_availability = manual_availability
         self.entities: dict[Discoverable] = {}
         self._shared_sensor_topic = None
- 
-    T = TypeVar("T")    
-        
+
+            
+    @property     
+    def shared_sensor_entities(self) -> list[SharedSensor]:
+        return [s for s in self.entities.values() if type(s) is SharedSensor]
+    
+    
     @property
     def shared_sensor_topic(self):
         return self._shared_sensor_topic
@@ -41,10 +47,22 @@ class MQTTDevice(object):
     @shared_sensor_topic.setter
     def shared_sensor_topic(self, value):
         self._shared_sensor_topic = value
-        sensors = [s for s in self.entities.values() 
-                   if type(s) is SharedSensor]
+        sensors = self.shared_sensor_entities
         for sensor in sensors:
             sensor.state_topic = self._shared_sensor_topic
+            
+            
+    def set_shared_state(self, state: str | int | float):
+        if not self.shared_sensor_entities:
+            return    
+        # doesn't matter which, just use the first
+        first = self.shared_sensor_entities[0]
+        first.set_state(state)
+        
+        
+    def write_all_configs(self):
+        for entitiy in self.entities.values():
+            entitiy.write_config()
 
     
     def _add_entity(self, EntityType:Type[Discoverable],
