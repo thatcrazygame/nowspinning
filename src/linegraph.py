@@ -29,7 +29,7 @@ class LineGraph(object):
     
     def get_scaled_data(self) -> list[int]:
         scaled = []
-        min_val = min(self.data)
+        min_val = min(d for d in self.data if d != 0)
         if self.fixed_min_val:
             min_val = self.fixed_min_val
         max_val = max(self.data)
@@ -40,6 +40,8 @@ class LineGraph(object):
         
         for d in self.data:
             val = d
+            if d == 0:
+                val = min_val
             if self.fixed_min_val and d < self.fixed_min_val:
                 val = self.fixed_min_val
             if self.fixed_max_val and d > self.fixed_max_val:

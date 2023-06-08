@@ -33,6 +33,8 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 # starting at 50KHz
 I2C = I2C(SCL, SDA, frequency=50000)
 FAN_PIN = 25
+METERS_ABOVE_SEA_LEVEL = 274
+TEMPERATURE_OFFSET = 6.0
 
 load_dotenv()
 
@@ -61,6 +63,8 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
 async def air_loop(bus: MessageBus, data: Data):
     sgp = SGP40(I2C)
     scd = SCD30(I2C)
+    scd.temperature_offset = TEMPERATURE_OFFSET
+    scd.altitude = METERS_ABOVE_SEA_LEVEL
     while bus.connected:
         # since the measurement interval is long (2+ seconds)
         # we check for new data before reading
@@ -122,6 +126,8 @@ async def mqtt_loop(bus: MessageBus, data: Data):
     mqtt.add_shared_sensor(name="VOC",
                            unique_id="nowspinning_voc",
                            device_class="aqi",
+                           # needs units to display as graph in HA
+                           unit_of_measurement="",
                            value_template="{{ value_json.voc }}")
     
     mqtt.add_shared_sensor(name="Artist",

@@ -18,7 +18,7 @@ class Data(object):
     """Class to share data between async functions"""
 
     def __init__(self):
-        self.view: View = View.GAME_OF_LIFE
+        self.view: View = View.DASHBOARD
         self.view_drawers: dict[View, ViewDrawer] = {}
         self.switch_to_music: bool = False
 
