@@ -7,7 +7,7 @@ from rgbmatrix.graphics import Color, DrawText, Font
 from linegraph import LineGraph
 from . import ViewDrawer
 
-class DashboardDrawer(ViewDrawer):
+class Dashboard(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
         self.fonts = {}

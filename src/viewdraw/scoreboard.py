@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawText, Font
 
-from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
 from data import Data
 from scrollingtext import ScrollingText
 from sports import League, Team
@@ -14,7 +14,7 @@ BASEBALL = "baseball"
 FOOTBALL = "football"
 LOGO_SIZE = 40
 
-class SportsDrawer(ViewDrawer):
+class Scoreboard(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
         self.fonts = {}
@@ -217,6 +217,9 @@ class SportsDrawer(ViewDrawer):
         logo_y = font_5x8.height + 2
         self.draw_logos(canvas, data, team, league, logo_y)
         
+        if team.game_state is not GameState.IN:
+            return
+                
         team_score = attr.get("team_score")
         self.draw_score(canvas, team_score, team_homeaway, font_10x20, 
                         white_text)
@@ -224,6 +227,9 @@ class SportsDrawer(ViewDrawer):
         oppo_score = attr.get("opponent_score")
         self.draw_score(canvas, oppo_score, oppo_homeaway, font_10x20, 
                         white_text)
+            
+        last_play = attr.get("last_play")
+        self.draw_last_play(canvas, last_play)
 
         if sport == HOCKEY:
             team_shots = attr.get("team_shots_on_target")
@@ -241,6 +247,4 @@ class SportsDrawer(ViewDrawer):
         if sport == BASEBALL:
             self.draw_bases(canvas, attr)
             self.draw_count(canvas, attr, font_5x8, white_text)
-            
-        last_play = attr.get("last_play")
-        self.draw_last_play(canvas, last_play)
+        

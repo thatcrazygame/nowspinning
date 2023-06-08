@@ -9,7 +9,7 @@ class View(AutoValue):
     OFF = auto()
     DASHBOARD = auto()
     MUSIC = auto()
-    SPORTS = auto()
+    SCOREBOARD = auto()
     GAME_OF_LIFE = auto()
 
 

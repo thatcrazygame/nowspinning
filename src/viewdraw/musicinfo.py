@@ -7,7 +7,7 @@ from . import ViewDrawer
 NUM_BARS = 16
 BAR_HEIGHT = 32
 
-class MusicDrawer(ViewDrawer):
+class MusicInfo(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
         font_8x13 = Font()

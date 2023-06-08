@@ -1,6 +1,5 @@
 import asyncio
 from gpiozero import PWMOutputDevice
-import json
 import os
 import subprocess
 import sys
@@ -21,10 +20,10 @@ from data import Data
 from mqttdevice import MQTTDevice
 from sports import League, Team
 from viewdraw import ViewDrawer
-from viewdraw.dashboarddrawer import DashboardDrawer
-from viewdraw.musicdrawer import MusicDrawer
-from viewdraw.offdrawer import OffDrawer
-from viewdraw.sportsdrawer import SportsDrawer
+from viewdraw.dashboard import Dashboard
+from viewdraw.musicinfo import MusicInfo
+from viewdraw.off import Off
+from viewdraw.scoreboard import Scoreboard
 from viewdraw.gameoflife import GameOfLife
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
@@ -41,10 +40,10 @@ load_dotenv()
 async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
-    data.view_drawers[View.OFF] = OffDrawer()
-    data.view_drawers[View.MUSIC] = MusicDrawer()
-    data.view_drawers[View.SPORTS] = SportsDrawer()
-    data.view_drawers[View.DASHBOARD] = DashboardDrawer()
+    data.view_drawers[View.OFF] = Off()
+    data.view_drawers[View.MUSIC] = MusicInfo()
+    data.view_drawers[View.SCOREBOARD] = Scoreboard()
+    data.view_drawers[View.DASHBOARD] = Dashboard()
     data.view_drawers[View.GAME_OF_LIFE] = GameOfLife()
     while bus.connected:
         canvas.Clear()
