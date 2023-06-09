@@ -1,5 +1,6 @@
 import asyncio
 from base64 import b64decode
+import colorsys
 from io import BytesIO
 import json
 from time import perf_counter
@@ -7,6 +8,7 @@ from time import perf_counter
 from dbus_next.errors import DBusError
 import numpy as np
 from PIL import Image, ImageChops
+import wcag_contrast_ratio as contrast
 
 from constants import View
 from eqstream import EQStream
@@ -20,7 +22,7 @@ class Data(object):
 
     def __init__(self):
         self.is_running = True
-        self.view: View = View.DASHBOARD
+        self.view: View = View.MUSIC
         self.view_drawers: dict[View, ViewDrawer] = {}
         self.switch_to_music: bool = False
 
@@ -106,10 +108,33 @@ class Data(object):
         # color_counts is a list of tuples: (count, index of color)
         # reorder colors to match the sorted counts
         colors = [colors[count[1]] for count in color_counts]
+        
+        colors = [self.increase_lightness(color, 0.14)
+                  if self.get_contrast(color) < 1.43
+                  else color
+                  for color in colors]
 
         return colors
+    
+    
+    def normalize_rgb(self, color) -> tuple[float,float,float]:
+        return tuple(x/255.0 for x in color)
+    
+    
+    def get_contrast(self, color, background=(0,0,0)) -> float:
+        normalized_color = self.normalize_rgb(color)
+        return contrast.rgb(background, normalized_color)
         
-
+        
+    def increase_lightness(self, color, amount):
+        normalized_color = self.normalize_rgb(color)
+        h,l,s = colorsys.rgb_to_hls(*normalized_color)
+        l = min(l + amount, 1.0)
+        r,g,b = colorsys.hls_to_rgb(h,l,s)
+        r,g,b = int(r*255), int(g*255), int(b*255)
+        return r,g,b
+    
+    
     async def refresh_music_data(self, player, width, height):
         metadata = None
         try:
