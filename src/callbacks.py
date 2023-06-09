@@ -88,7 +88,7 @@ def averages(client: Client, data: Data, message: MQTTMessage):
     
 def game_of_life_buttons(client: Client, data: Data, message: MQTTMessage):
     payload = str(message.payload.decode("UTF-8"))
-    data.game_of_life_commands.insert(0, payload)
+    data.game_of_life_commands.put_nowait(payload)
     
     
 def game_of_life_gens_switch(client: Client, data: Data, message: MQTTMessage):

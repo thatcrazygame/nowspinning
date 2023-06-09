@@ -1,3 +1,5 @@
+import asyncio
+
 import numpy as np
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawText, Font
@@ -61,9 +63,9 @@ class GameOfLife(ViewDrawer):
         return np.asmatrix(convolve2d(self.grid_data, kernel, "same"))
     
     
-    def handle_commands(self, commands: list):
-        while len(commands) > 0:
-            command = commands.pop()
+    async def handle_commands(self, commands: asyncio.Queue):
+        while not commands.empty():
+            command = await commands.get()
             if command == RESET:
                 self.grid_data = self.new_random_grid()
                 self.generation = 0
@@ -100,7 +102,7 @@ class GameOfLife(ViewDrawer):
     
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
-        self.handle_commands(data.game_of_life_commands)
+        await self.handle_commands(data.game_of_life_commands)
         img = Image.fromarray(np.uint8(self.get_display_grid()))
         canvas.SetImage(img, -GRID_MARGIN, -GRID_MARGIN)
         if data.game_of_life_show_gens:
