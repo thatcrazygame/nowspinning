@@ -1,6 +1,7 @@
 import asyncio
 from gpiozero import PWMOutputDevice
 import os
+import signal
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -9,7 +10,7 @@ from adafruit_sgp40 import SGP40
 from adafruit_scd30 import SCD30
 from board import SCL, SDA
 from busio import I2C
-from dbus_next.aio import MessageBus
+from dbus_next.aio import MessageBus, ProxyInterface
 from dotenv import load_dotenv
 from ha_mqtt_discoverable import Settings, DeviceInfo, Discoverable
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
@@ -37,7 +38,7 @@ TEMPERATURE_OFFSET = 6.0
 
 load_dotenv()
 
-async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
+async def matrix_loop(matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
     data.view_drawers[View.OFF] = Off()
@@ -45,7 +46,7 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
     data.view_drawers[View.SCOREBOARD] = Scoreboard()
     data.view_drawers[View.DASHBOARD] = Dashboard()
     data.view_drawers[View.GAME_OF_LIFE] = GameOfLife()
-    while bus.connected:
+    while data.is_running:
         canvas.Clear()
         data.check_songrec_timeout()
         
@@ -59,12 +60,12 @@ async def matrix_loop(bus: MessageBus, matrix: RGBMatrix, data: Data):
         await asyncio.sleep(0.05)
 
 
-async def air_loop(bus: MessageBus, data: Data):
+async def air_loop(data: Data):
     sgp = SGP40(I2C)
     scd = SCD30(I2C)
     scd.temperature_offset = TEMPERATURE_OFFSET
     scd.altitude = METERS_ABOVE_SEA_LEVEL
-    while bus.connected:
+    while data.is_running:
         # since the measurement interval is long (2+ seconds)
         # we check for new data before reading
         # the values, to ensure current readings.
@@ -85,7 +86,7 @@ async def air_loop(bus: MessageBus, data: Data):
         await asyncio.sleep(1)
 
 
-async def mqtt_loop(bus: MessageBus, data: Data):
+async def mqtt_loop(data: Data):
     address = subprocess.Popen(["cat","/sys/class/net/eth0/address"],
                                stdout=subprocess.PIPE, text=True)
     address.wait()
@@ -224,7 +225,7 @@ async def mqtt_loop(bus: MessageBus, data: Data):
 
     mqtt.write_all_configs()
         
-    while bus.connected:
+    while data.is_running:
         is_gol_view = data.view is View.GAME_OF_LIFE
         entity: Discoverable
         for name, entity in mqtt.entities.items():
@@ -301,7 +302,7 @@ def init_matrix():
     return matrix
 
 
-async def init_mpris():
+async def init_mpris() -> tuple[MessageBus, ProxyInterface, ProxyInterface]:
     # The matrix has to run as root
     # but the songrec mpris only updates on session
     # So manually set it here
@@ -334,18 +335,22 @@ async def loops(data: Data):
 
     properties.on_properties_changed(on_prop_change)
 
-    await asyncio.gather(matrix_loop(bus, matrix, data),
-                         air_loop(bus, data),
-                         mqtt_loop(bus, data))
+    await asyncio.gather(matrix_loop(matrix, data),
+                         air_loop(data),
+                         mqtt_loop(data))
+    
+    bus.disconnect()
 
 
 def main():
     data = Data()
+    signal.signal(signal.SIGINT, data.stop)
+    signal.signal(signal.SIGTERM, data.stop)
+    
     fan = PWMOutputDevice(FAN_PIN)
     fan.value = 0.7
 
     asyncio.run(loops(data))
-    data.eq_stream.stop()
 
      
 if __name__ == "__main__":

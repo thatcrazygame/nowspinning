@@ -19,6 +19,7 @@ class Data(object):
     """Class to share data between async functions"""
 
     def __init__(self):
+        self.is_running = True
         self.view: View = View.DASHBOARD
         self.view_drawers: dict[View, ViewDrawer] = {}
         self.switch_to_music: bool = False
@@ -48,7 +49,13 @@ class Data(object):
         self.album = None
         self.album_art = Image.open("../img/microphone.jpeg")
         self.album_art_colors = None
-        self.music_last_updated = None        
+        self.music_last_updated = None
+        
+    
+    def stop(self, signum, frame):
+        print("Stopping...")
+        self.eq_stream.stop()
+        self.is_running = False
         
     
     def _str(self, val, round_digits=None) -> str:
