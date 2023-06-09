@@ -283,6 +283,8 @@ async def mqtt_loop(data: Data):
             gol_switch.off()
 
         await asyncio.sleep(1)
+        
+    mqtt.set_all_availability(False)
 
 
 def init_matrix():

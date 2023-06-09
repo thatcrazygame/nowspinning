@@ -60,10 +60,16 @@ class MQTTDevice(object):
         first.set_state(state)
         
         
-    def write_all_configs(self):
+    def write_all_configs(self) -> None:
         entitiy: Discoverable
         for entitiy in self.entities.values():
             entitiy.write_config()
+            
+            
+    def set_all_availability(self, availability: bool) -> None:
+        entitiy: Discoverable
+        for entitiy in self.entities.values():
+            entitiy.set_availability(availability)
 
     
     def _add_entity(self, EntityType:Type[Discoverable],
