@@ -9,7 +9,8 @@ from sports import League, Team
 
 def teamtracker(client: Client, data: Data, message: MQTTMessage):
     payload = json.loads(str(message.payload.decode("UTF-8")) )
-    if "teams" not in payload: return
+    if "teams" not in payload:
+        return
     
     for team in payload["teams"]:
         league_abbr = team["league"]
@@ -36,13 +37,15 @@ def teamtracker(client: Client, data: Data, message: MQTTMessage):
         
 def update_team(client: Client, data: Data, message: MQTTMessage):
         selected_name = str(message.payload.decode("UTF-8"))
-        if selected_name and data.selected_league_abbr:
-            league = data.sports[data.selected_league_abbr]
-            for team in league.teams.values():
-                team_name = team.friendly_name
-                if team_name and team_name == selected_name:
-                    data.selected_team_abbr = team.abbr
-                    break
+        if not (selected_name and data.selected_league_abbr):
+            return
+        
+        league = data.sports[data.selected_league_abbr]
+        for team in league.teams.values():
+            team_name = team.friendly_name
+            if team_name and team_name == selected_name:
+                data.selected_team_abbr = team.abbr
+                break
                 
 
 class __UserDataLeague(TypedDict):
@@ -58,15 +61,17 @@ def update_league(client: Client, user_data: __UserDataLeague,
     if league_abbr in user_data["data"].sports and diff_league:
         user_data["data"].selected_league_abbr = league_abbr
         league: League = user_data["data"].sports[league_abbr]
-        if league.teams:
-            teams = list(league.teams.values())
-            teams.sort(key=Team.by_game_state, reverse=True)
-            first_team = teams[0]
-            user_data["data"].selected_team_abbr = first_team.abbr
-            # team_select = mqtt.entities["Team"]
-            team_names = league.friendly_team_names
-            user_data["team_select"].update_options(team_names)
-            user_data["team_select"].set_selection(None) # Maybe helps reset?
+        if not league.teams:
+            return
+        
+        teams = list(league.teams.values())
+        teams.sort(key=Team.by_game_state, reverse=True)
+        first_team = teams[0]
+        user_data["data"].selected_team_abbr = first_team.abbr
+        # team_select = mqtt.entities["Team"]
+        team_names = league.friendly_team_names
+        user_data["team_select"].update_options(team_names)
+        user_data["team_select"].set_selection(None) # Maybe helps reset?
             
             
 def update_view(client: Client, data: Data, message: MQTTMessage):

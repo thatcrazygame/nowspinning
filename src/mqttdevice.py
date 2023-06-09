@@ -1,4 +1,4 @@
-from typing import Any, Callable, Type, TypeVar
+from typing import Any, Callable, Dict, Type, TypeVar
 import inspect
 
 from paho.mqtt.client import Client, MQTTMessage
@@ -30,7 +30,7 @@ class MQTTDevice(object):
         self.mqtt_settings = mqtt_settings
         self.device_info = device_info
         self.manual_availability = manual_availability
-        self.entities: dict[Discoverable] = {}
+        self.entities: Dict[str, Discoverable] = {}
         self._shared_sensor_topic = None
 
             
@@ -61,6 +61,7 @@ class MQTTDevice(object):
         
         
     def write_all_configs(self):
+        entitiy: Discoverable
         for entitiy in self.entities.values():
             entitiy.write_config()
 

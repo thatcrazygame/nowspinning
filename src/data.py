@@ -116,9 +116,6 @@ class Data(object):
         if not metadata:
             return
         
-        if self.switch_to_music:
-            self.view = View.MUSIC
-            
         self.music_last_updated = perf_counter()
         
         if "xesam:artist" in metadata:
@@ -141,7 +138,9 @@ class Data(object):
             
             if art_changed or self.album_art_colors is None:
                 self.album_art_colors = self.get_dominant_colors(art_image)
-                # print(self.album_art_colors)
+                
+        if self.switch_to_music:
+            self.view = View.MUSIC
 
                 
     def views_by_last_drawn(self, exclude: list[View] = [View.MUSIC]):
@@ -155,12 +154,14 @@ class Data(object):
 
     def check_songrec_timeout(self):
         recognized = self.music_last_updated is not None
-        if not recognized: return
+        if not recognized: 
+            return
         
         now = perf_counter()
         timedout = (now - self.music_last_updated) >= SONGREC_TIMEOUT_SECS
         
-        if not timedout: return
+        if not timedout: 
+            return
                 
         if self.view is View.MUSIC and self.switch_to_music:
             sorted_views = self.views_by_last_drawn()

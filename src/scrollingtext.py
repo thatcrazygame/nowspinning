@@ -58,32 +58,35 @@ class ScrollingText(object):
     def is_paused(self) -> bool:
         if self._pause_time is None:
             return False
-        else:
-            dur_elapsed = (perf_counter() - self._pause_time > self._pause_dur)
-            if dur_elapsed:
-                self.unpause()
-            return not dur_elapsed
+
+        dur_elapsed = (perf_counter() - self._pause_time > self._pause_dur)
+        if dur_elapsed:
+            self.unpause()
+        return not dur_elapsed
         
         
     def draw(self, canvas, text: str) -> None:
         self.update_text(text)
         
-        if self.text is not None and not self.text.isspace():
-            self.text_len = DrawText(canvas, self._font, self.x, self.y,
-                                     self._color, self.text)
-            
-            len_diff = self._right_bound - self._left_bound - self.text_len
-            if len_diff < 0:
-                x_2 = (self.x 
-                       - self._scroll_dir
-                       * (self.text_len + self.__space_width))
+        if self.text is None or self.text.isspace():
+            return
+        
+        self.text_len = DrawText(canvas, self._font, self.x, self.y, 
+                                 self._color, self.text)
+        
+        len_diff = self._right_bound - self._left_bound - self.text_len
+        if len_diff >= 0:
+            return
+        
+        x_2 = (self.x 
+               - self._scroll_dir 
+               * (self.text_len + self.__space_width))
 
-                DrawText(canvas, self._font, x_2, self.y, self._color,
-                         self.text)
-                
-                if not self.is_paused():
-                    self.x += self._scroll_dir * self._scroll_speed
+        DrawText(canvas, self._font, x_2, self.y, self._color, self.text)
+        
+        if not self.is_paused():
+            self.x += self._scroll_dir * self._scroll_speed
 
-                if self._is_out_of_bounds():
-                    self.x = self._left_bound
-                    self.pause()
+        if self._is_out_of_bounds():
+            self.x = self._left_bound
+            self.pause()

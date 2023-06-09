@@ -217,7 +217,7 @@ class Scoreboard(ViewDrawer):
         logo_y = font_5x8.height + 2
         self.draw_logos(canvas, data, team, league, logo_y)
         
-        if team.game_state is not GameState.IN:
+        if team.game_state not in [GameState.IN, GameState.POST]:
             return
                 
         team_score = attr.get("team_score")
@@ -230,6 +230,9 @@ class Scoreboard(ViewDrawer):
             
         last_play = attr.get("last_play")
         self.draw_last_play(canvas, last_play)
+        
+        if team.game_state is not GameState.IN:
+            return
 
         if sport == HOCKEY:
             team_shots = attr.get("team_shots_on_target")
