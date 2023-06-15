@@ -1,8 +1,9 @@
 from enum import Enum
 from time import perf_counter
 
-from rgbmatrix.graphics import Color, DrawText, Font
+from rgbmatrix.graphics import Color, DrawText
 
+from constants.fonts import MonoFont
 
 class Direction(Enum):
     LEFT = -1
@@ -12,7 +13,7 @@ class Direction(Enum):
 class ScrollingText(object):
     def __init__(
         self,
-        font: Font,
+        font: MonoFont,
         color: Color,
         starting_x: int,
         y: int,

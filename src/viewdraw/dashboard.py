@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants.fonts import FONT_4x6, FONT_8x13
 from data import Data
 from rgbmatrix.graphics import Color, DrawText, Font
 
@@ -11,32 +12,18 @@ from . import ViewDrawer
 class Dashboard(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
-        self.fonts = {}
-
-        font_8x13 = Font()
-        font_8x13.LoadFont("../fonts/8x13.bdf")
-        self.fonts["8x13"] = font_8x13
-
-        font_4x6 = Font()
-        font_4x6.LoadFont("../fonts/4x6.bdf")
-        self.fonts["4x6"] = font_4x6
-
-        self.white_text = Color(255, 255, 255)
 
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
 
-        font_4x6 = self.fonts["4x6"]
-        font_8x13 = self.fonts["8x13"]
-        white_text = self.white_text
+        white_text = Color(255, 255, 255)
 
         now = datetime.now()
         now_str = now.strftime("%I:%M %m/%d/%Y")
 
-        char_width = 8
-        x = PANEL_WIDTH - (len(now_str) * char_width) / 2
-        y = font_8x13.height - 2
-        DrawText(canvas, font_8x13, x, y, white_text, now_str)
+        x = PANEL_WIDTH - (len(now_str) * FONT_8x13.char_width) / 2
+        y = FONT_8x13.height - 2
+        DrawText(canvas, FONT_8x13, x, y, white_text, now_str)
 
         if not data.averages:
             return
@@ -95,5 +82,5 @@ class Dashboard(ViewDrawer):
         for i, graph in enumerate(graphs):
             graph.background = background
             graph_y = PANEL_HEIGHT - graph.height * (len(graphs) - i)
-            graph.draw(canvas, font_4x6, graph_x, graph_y, white_text)
+            graph.draw(canvas, FONT_4x6, graph_x, graph_y, white_text)
             background = graph.fill_color

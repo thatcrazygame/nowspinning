@@ -6,6 +6,7 @@ from rgbmatrix.graphics import Color, DrawText, Font
 from scipy.signal import convolve2d
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants.fonts import FONT_4x6
 from data import Data
 from . import ViewDrawer
 
@@ -28,12 +29,6 @@ RESET = "RESET"
 class GameOfLife(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
-        self.fonts = {}
-
-        font_4x6 = Font()
-        font_4x6.LoadFont("../fonts/4x6.bdf")
-        self.fonts["4x6"] = font_4x6
-
         self.generation: int = 0
         self.grid_data = self.new_random_grid()
 
@@ -79,7 +74,7 @@ class GameOfLife(ViewDrawer):
 
     def draw_gens_counter(self, canvas):
         gens_str = f"gen: {self.generation}"
-        font = self.fonts["4x6"]
+        font = FONT_4x6
         char_width = 4
         padding = 2
         width = len(gens_str) * char_width + padding * 2

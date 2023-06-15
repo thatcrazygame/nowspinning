@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawText, Font
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
+from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
 from data import Data
 from scrollingtext import ScrollingText
 from sports import League, Team
@@ -18,24 +19,11 @@ LOGO_SIZE = 40
 class Scoreboard(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
-        self.fonts = {}
-
-        font_8x13 = Font()
-        font_8x13.LoadFont("../fonts/8x13.bdf")
-        self.fonts["8x13"] = font_8x13
-
-        font_5x8 = Font()
-        font_5x8.LoadFont("../fonts/5x8.bdf")
-        self.fonts["5x8"] = font_5x8
-
-        font_10x20 = Font()
-        font_10x20.LoadFont("../fonts/10x20.bdf")
-        self.fonts["10x20"] = font_10x20
 
         self.white_text = Color(255, 255, 255)
 
         self.play_scroll = ScrollingText(
-            self.fonts["8x13"],
+            FONT_8x13,
             self.white_text,
             0,
             PANEL_HEIGHT - 2,
@@ -51,7 +39,7 @@ class Scoreboard(ViewDrawer):
         else:
             return 0
 
-    def get_score_x(self, homeaway: str, score: int, char_width: int = 10) -> int:
+    def get_score_x(self, homeaway: str, score: int, char_width: int) -> int:
         score_space = PANEL_WIDTH - LOGO_SIZE
         score_width = len(score) * char_width
         if homeaway == HOME:
@@ -59,19 +47,18 @@ class Scoreboard(ViewDrawer):
         else:
             return int(LOGO_SIZE + score_space / 2 - score_width / 2)
 
-    def get_shots_x(self, homeaway: str, shots: str, char_width: int = 5) -> int:
+    def get_shots_x(self, homeaway: str, shots: str, char_width: int) -> int:
         if homeaway == HOME:
             shots_width = len(shots) * char_width
             return int(PANEL_WIDTH * 2 - LOGO_SIZE - char_width - shots_width)
         else:
             return int(LOGO_SIZE + char_width)
 
-    def draw_clock(self, canvas, clock, font, color):
+    def draw_clock(self, canvas, clock, font: MonoFont, color):
         if not clock:
             return
 
-        char_width = 5
-        clock_width = len(clock) * char_width
+        clock_width = len(clock) * font.char_width
         x = int(PANEL_WIDTH - clock_width / 2)
         y = font.height
         DrawText(canvas, font, x, y, color, clock)
@@ -100,26 +87,25 @@ class Scoreboard(ViewDrawer):
             league_img_x = self.get_logo_x(AWAY)
             canvas.SetImage(league_img, league_img_x, logo_y)
 
-    def draw_score(self, canvas, score, homeaway, font, color, score_y=25):
+    def draw_score(self, canvas, score, homeaway, font: MonoFont, color, score_y=25):
         if not score:
             return
 
-        x = self.get_score_x(homeaway, score)
+        x = self.get_score_x(homeaway, score, font.char_width)
         y = score_y
         DrawText(canvas, font, x, y, color, score)
 
-    def draw_shots_label(self, canvas, font, color, y=35):
-        char_width = 5
+    def draw_shots_label(self, canvas, font: MonoFont, color, y=35):
         shots = "shots"
-        shots_width = len(shots) * char_width
+        shots_width = len(shots) * font.char_width
         x = int(PANEL_WIDTH - shots_width / 2)
         DrawText(canvas, font, x, y, color, shots)
 
-    def draw_shots(self, canvas, shots, homeaway, font, color, shots_y=45):
+    def draw_shots(self, canvas, shots, homeaway, font: MonoFont, color, shots_y=45):
         if not shots:
             return
 
-        x = self.get_shots_x(homeaway, shots)
+        x = self.get_shots_x(homeaway, shots, font.char_width)
         y = shots_y
         DrawText(canvas, font, x, y, color, shots)
 
@@ -175,7 +161,7 @@ class Scoreboard(ViewDrawer):
         if not last_play:
             return
 
-        char_width = 8
+        char_width = self.play_scroll._font.char_width
         play_width = len(last_play) * char_width
         play_x = PANEL_WIDTH - play_width / 2
         self.play_scroll._starting_x = play_x
@@ -188,8 +174,6 @@ class Scoreboard(ViewDrawer):
         team: Team = None
 
         white_text = self.white_text
-        font_5x8 = self.fonts["5x8"]
-        font_10x20 = self.fonts["10x20"]
 
         if data.selected_league_abbr in data.sports:
             league = data.sports[data.selected_league_abbr]
@@ -206,19 +190,19 @@ class Scoreboard(ViewDrawer):
         oppo_homeaway = attr.get("opponent_homeaway") or AWAY
 
         clock = attr.get("clock")
-        self.draw_clock(canvas, clock, font_5x8, white_text)
+        self.draw_clock(canvas, clock, FONT_5x8, white_text)
 
-        logo_y = font_5x8.height + 2
+        logo_y = FONT_5x8.height + 2
         self.draw_logos(canvas, data, team, league, logo_y)
 
         if team.game_state not in [GameState.IN, GameState.POST]:
             return
 
         team_score = attr.get("team_score")
-        self.draw_score(canvas, team_score, team_homeaway, font_10x20, white_text)
+        self.draw_score(canvas, team_score, team_homeaway, FONT_10x20, white_text)
 
         oppo_score = attr.get("opponent_score")
-        self.draw_score(canvas, oppo_score, oppo_homeaway, font_10x20, white_text)
+        self.draw_score(canvas, oppo_score, oppo_homeaway, FONT_10x20, white_text)
 
         last_play = attr.get("last_play")
         self.draw_last_play(canvas, last_play)
@@ -231,12 +215,12 @@ class Scoreboard(ViewDrawer):
             oppo_shots = attr.get("opponent_shots_on_target")
 
             if team_shots and oppo_shots:
-                self.draw_shots_label(canvas, font_5x8, white_text)
+                self.draw_shots_label(canvas, FONT_5x8, white_text)
 
-            self.draw_shots(canvas, team_shots, team_homeaway, font_5x8, white_text)
+            self.draw_shots(canvas, team_shots, team_homeaway, FONT_5x8, white_text)
 
-            self.draw_shots(canvas, oppo_shots, oppo_homeaway, font_5x8, white_text)
+            self.draw_shots(canvas, oppo_shots, oppo_homeaway, FONT_5x8, white_text)
 
         if sport == BASEBALL:
             self.draw_bases(canvas, attr)
-            self.draw_count(canvas, attr, font_5x8, white_text)
+            self.draw_count(canvas, attr, FONT_5x8, white_text)

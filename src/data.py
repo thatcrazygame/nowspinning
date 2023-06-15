@@ -25,7 +25,7 @@ class Data(object):
         self.is_running = True
         self.view: View = View.DASHBOARD
         self.view_drawers: dict[View, ViewDrawer] = {}
-        self.switch_to_music: bool = True
+        self.switch_to_music: bool = False
 
         self.reset_music()
         self.eq_stream: EQStream = EQStream()

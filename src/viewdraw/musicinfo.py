@@ -1,4 +1,5 @@
 from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants.fonts import FONT_8x13
 from data import Data
 from rgbmatrix.graphics import Color, Font
 from scrollingtext import ScrollingText
@@ -11,22 +12,20 @@ BAR_HEIGHT = 32
 class MusicInfo(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
-        font_8x13 = Font()
-        font_8x13.LoadFont("../fonts/8x13.bdf")
 
         white_text = Color(255, 255, 255)
         margin = 2
         linespace = 1
 
-        offset = font_8x13.height + margin
+        offset = FONT_8x13.height + margin
         x = PANEL_WIDTH + margin
         y = offset
 
         title_y = y
-        artist_y = y + font_8x13.height + linespace
+        artist_y = y + FONT_8x13.height + linespace
 
         self.title_scroll = ScrollingText(
-            font_8x13,
+            FONT_8x13,
             white_text,
             x,
             title_y,
@@ -37,7 +36,7 @@ class MusicInfo(ViewDrawer):
         )
 
         self.artist_scroll = ScrollingText(
-            font_8x13,
+            FONT_8x13,
             white_text,
             x,
             artist_y,
