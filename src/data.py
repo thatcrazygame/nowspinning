@@ -17,34 +17,34 @@ from viewdraw import ViewDrawer
 
 SONGREC_TIMEOUT_SECS = 30.0 * 60.0
 
+
 class Data(object):
     """Class to share data between async functions"""
 
     def __init__(self):
         self.is_running = True
-        self.view: View = View.MUSIC
+        self.view: View = View.DASHBOARD
         self.view_drawers: dict[View, ViewDrawer] = {}
-        self.switch_to_music: bool = False
+        self.switch_to_music: bool = True
 
         self.reset_music()
         self.eq_stream: EQStream = EQStream()
         self.eq_stream.listen()
-        
+
         self.temperature = None
         self.humidity = None
         self.co2 = None
         self.voc = None
         self.raw_gas = None
         self.averages: dict[str, list[float]] = {}
-        
+
         self.sports: dict[str, League] = {}
         self.selected_league_abbr: str = None
         self.selected_team_abbr: str = None
-        
+
         self.game_of_life_commands = asyncio.Queue()
         self.game_of_life_show_gens: bool = False
-    
-    
+
     def reset_music(self):
         self.artist = None
         self.title = "Listening..."
@@ -52,21 +52,18 @@ class Data(object):
         self.album_art = Image.open("../img/microphone.jpeg")
         self.album_art_colors = None
         self.music_last_updated = None
-        
-    
+
     def stop(self, signum, frame):
         print("Stopping...")
         self.eq_stream.stop()
         self.is_running = False
-        
-    
+
     def _str(self, val, round_digits=None) -> str:
         is_number = type(val) is int or type(val) is float
         if is_number:
             val = f"{round(val, round_digits)}"
-        
+
         return str(val) if val is not None else ""
-    
 
     @property
     def temperature_f(self):
@@ -74,7 +71,6 @@ class Data(object):
             return None
         else:
             return (self.temperature * 1.8) + 32.0
-        
 
     def get_json(self) -> dict:
         payload = {}
@@ -82,59 +78,55 @@ class Data(object):
         payload["humidity"] = self._str(self.humidity, round_digits=1)
         payload["co2"] = self._str(self.co2)
         payload["voc"] = self._str(self.voc)
-        
+
         artists = ""
         if self.artist is not None:
             artists = f"{','.join(self.artist)}"
         payload["artist"] = artists
-        payload["album"] = self._str(self.album) 
+        payload["album"] = self._str(self.album)
         payload["title"] = self._str(self.title)
-        
+
         return json.dumps(payload)
-    
-    
+
     def get_dominant_colors(self, pil_img: Image.Image, palette_size=3):
         img = pil_img.copy()
         # Reduce colors (uses k-means internally)
-        paletted = img.convert('P', palette=Image.ADAPTIVE, 
-                               colors=palette_size)
+        paletted = img.convert("P", palette=Image.ADAPTIVE, colors=palette_size)
         # Find the color that occurs most often
         palette = paletted.getpalette()
         color_counts = sorted(paletted.getcolors(), reverse=True)
-        
+
         # palette is a byte array of the colors in form [RGBRGBRGB...]
         colors = np.reshape(palette, (-1, 3))[:palette_size]
         colors = list(map(tuple, colors))
         # color_counts is a list of tuples: (count, index of color)
         # reorder colors to match the sorted counts
         colors = [colors[count[1]] for count in color_counts]
-        
-        colors = [self.increase_lightness(color, 0.14)
-                  if self.get_contrast(color) < 1.43
-                  else color
-                  for color in colors]
+
+        colors = [
+            self.increase_lightness(color, 0.14)
+            if self.get_contrast(color) < 1.43
+            else color
+            for color in colors
+        ]
 
         return colors
-    
-    
-    def normalize_rgb(self, color) -> tuple[float,float,float]:
-        return tuple(x/255.0 for x in color)
-    
-    
-    def get_contrast(self, color, background=(0,0,0)) -> float:
+
+    def normalize_rgb(self, color) -> tuple[float, float, float]:
+        return tuple(x / 255.0 for x in color)
+
+    def get_contrast(self, color, background=(0, 0, 0)) -> float:
         normalized_color = self.normalize_rgb(color)
         return contrast.rgb(background, normalized_color)
-        
-        
+
     def increase_lightness(self, color, amount):
         normalized_color = self.normalize_rgb(color)
-        h,l,s = colorsys.rgb_to_hls(*normalized_color)
+        h, l, s = colorsys.rgb_to_hls(*normalized_color)
         l = min(l + amount, 1.0)
-        r,g,b = colorsys.hls_to_rgb(h,l,s)
-        r,g,b = int(r*255), int(g*255), int(b*255)
-        return r,g,b
-    
-    
+        r, g, b = colorsys.hls_to_rgb(h, l, s)
+        r, g, b = int(r * 255), int(g * 255), int(b * 255)
+        return r, g, b
+
     async def refresh_music_data(self, player, width, height):
         metadata = None
         try:
@@ -144,12 +136,12 @@ class Data(object):
             self.title = "Service unavailable"
             # print(e.text)
             return
-            
+
         if not metadata:
             return
-        
+
         self.music_last_updated = perf_counter()
-        
+
         if "xesam:artist" in metadata:
             self.artist = metadata["xesam:artist"].value
         if "xesam:title" in metadata:
@@ -162,42 +154,41 @@ class Data(object):
             art_base64 = BytesIO(b64decode(art_str))
             art_image = Image.open(art_base64)
             art_image.thumbnail((width, height), Image.Resampling.LANCZOS)
-            
+
             diff = ImageChops.difference(art_image, self.album_art)
             art_changed = diff.getbbox() is not None
 
             self.album_art = art_image
-            
+
             if art_changed or self.album_art_colors is None:
                 self.album_art_colors = self.get_dominant_colors(art_image)
-                
+
         if self.switch_to_music:
             self.view = View.MUSIC
 
-                
     def views_by_last_drawn(self, exclude: list[View] = [View.MUSIC]):
-        views = [(drawer.last_drawn, view) 
-                 for view, drawer in self.view_drawers.items() 
-                 if view not in exclude]
+        views = [
+            (drawer.last_drawn, view)
+            for view, drawer in self.view_drawers.items()
+            if view not in exclude
+        ]
         views.sort(key=lambda v: v[0], reverse=True)
         views = [view[1] for view in views]
         return views
 
-
     def check_songrec_timeout(self):
         recognized = self.music_last_updated is not None
-        if not recognized: 
+        if not recognized:
             return
-        
+
         now = perf_counter()
         timedout = (now - self.music_last_updated) >= SONGREC_TIMEOUT_SECS
-        
-        if not timedout: 
+
+        if not timedout:
             return
-                
+
         if self.view is View.MUSIC and self.switch_to_music:
             sorted_views = self.views_by_last_drawn()
             self.view = sorted_views[0]
-            
-        self.reset_music()
 
+        self.reset_music()

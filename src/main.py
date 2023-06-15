@@ -38,6 +38,7 @@ TEMPERATURE_OFFSET = 6.0
 
 load_dotenv()
 
+
 async def matrix_loop(matrix: RGBMatrix, data: Data):
     canvas = matrix.CreateFrameCanvas()
 
@@ -49,10 +50,10 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
     while data.is_running:
         canvas.Clear()
         data.check_songrec_timeout()
-        
+
         if data.view not in data.view_drawers:
             data.view = View.DASHBOARD
-            
+
         view: ViewDrawer = data.view_drawers[data.view]
         await view.draw(canvas, data)
 
@@ -75,10 +76,8 @@ async def air_loop(data: Data):
             data.co2 = scd.CO2
 
         if data.temperature is not None and data.humidity is not None:
-            voc = asyncio.to_thread(sgp.measure_index,
-                                    data.temperature, data.humidity)
-            gas = asyncio.to_thread(sgp.measure_raw,
-                                    data.temperature, data.humidity)
+            voc = asyncio.to_thread(sgp.measure_index, data.temperature, data.humidity)
+            gas = asyncio.to_thread(sgp.measure_raw, data.temperature, data.humidity)
             data.voc = await voc
             data.raw_gas = await gas
 
@@ -87,144 +86,178 @@ async def air_loop(data: Data):
 
 
 async def mqtt_loop(data: Data):
-    address = subprocess.Popen(["cat","/sys/class/net/eth0/address"],
-                               stdout=subprocess.PIPE, text=True)
+    address = subprocess.Popen(
+        ["cat", "/sys/class/net/eth0/address"], stdout=subprocess.PIPE, text=True
+    )
     address.wait()
     mac = address.stdout.read().strip()
 
     password = os.environ.get("MQTT_PASSWORD")
 
-    mqtt_settings = Settings.MQTT(host="172.16.1.2",
-                                  username="nowspinning",
-                                  password=password)
-    
-    device_info = DeviceInfo(name="nowspinning",
-                             identifiers=mac,
-                             manufacturer="Raspberry Pi Foundation",
-                             viewl="Raspberry Pi 3B+")
-    
+    mqtt_settings = Settings.MQTT(
+        host="172.16.1.2", username="nowspinning", password=password
+    )
+
+    device_info = DeviceInfo(
+        name="nowspinning",
+        identifiers=mac,
+        manufacturer="Raspberry Pi Foundation",
+        viewl="Raspberry Pi 3B+",
+    )
+
     mqtt = MQTTDevice(mqtt_settings, device_info)
 
-    mqtt.add_shared_sensor(name="Temperature",
-                           unique_id="nowspinning_temperature",
-                           device_class="temperature",
-                           unit_of_measurement="°F",
-                           value_template="{{ value_json.temperature }}")
-    
-    mqtt.add_shared_sensor(name="Humidity",
-                           unique_id="nowspinning_humidity",
-                           device_class="humidity",
-                           unit_of_measurement="%",
-                           value_template="{{ value_json.humidity }}")
-    
-    mqtt.add_shared_sensor(name="CO2",
-                           unique_id="nowspinning_co2",
-                           device_class="carbon_dioxide",
-                           unit_of_measurement="ppm",
-                           value_template="{{ value_json.co2 }}")
-    
-    mqtt.add_shared_sensor(name="VOC",
-                           unique_id="nowspinning_voc",
-                           device_class="aqi",
-                           # needs units to display as graph in HA
-                           unit_of_measurement="",
-                           value_template="{{ value_json.voc }}")
-    
-    mqtt.add_shared_sensor(name="Artist",
-                           unique_id="nowspinning_artist",
-                           value_template="{{ value_json.artist }}",
-                           icon="mdi:account-music")
-    
-    mqtt.add_shared_sensor(name="Album",
-                           unique_id="nowspinning_album",
-                           value_template="{{ value_json.album }}",
-                           icon="mdi:album")
-    
-    mqtt.add_shared_sensor(name="Title",
-                           unique_id="nowspinning_title",
-                           value_template="{{ value_json.title }}",
-                           icon="mdi:music-circle")
-    
+    mqtt.add_shared_sensor(
+        name="Temperature",
+        unique_id="nowspinning_temperature",
+        device_class="temperature",
+        unit_of_measurement="°F",
+        value_template="{{ value_json.temperature }}",
+    )
+
+    mqtt.add_shared_sensor(
+        name="Humidity",
+        unique_id="nowspinning_humidity",
+        device_class="humidity",
+        unit_of_measurement="%",
+        value_template="{{ value_json.humidity }}",
+    )
+
+    mqtt.add_shared_sensor(
+        name="CO2",
+        unique_id="nowspinning_co2",
+        device_class="carbon_dioxide",
+        unit_of_measurement="ppm",
+        value_template="{{ value_json.co2 }}",
+    )
+
+    mqtt.add_shared_sensor(
+        name="VOC",
+        unique_id="nowspinning_voc",
+        device_class="aqi",
+        # needs units to display as graph in HA
+        unit_of_measurement="",
+        value_template="{{ value_json.voc }}",
+    )
+
+    mqtt.add_shared_sensor(
+        name="Artist",
+        unique_id="nowspinning_artist",
+        value_template="{{ value_json.artist }}",
+        icon="mdi:account-music",
+    )
+
+    mqtt.add_shared_sensor(
+        name="Album",
+        unique_id="nowspinning_album",
+        value_template="{{ value_json.album }}",
+        icon="mdi:album",
+    )
+
+    mqtt.add_shared_sensor(
+        name="Title",
+        unique_id="nowspinning_title",
+        value_template="{{ value_json.title }}",
+        icon="mdi:music-circle",
+    )
+
     views = [view.value for view in View]
-    mqtt.add_select(name="View",
-                    callback=callbacks.update_view,
-                    user_data=data,
-                    unique_id="nowspinning_view",
-                    options=views)
+    mqtt.add_select(
+        name="View",
+        callback=callbacks.update_view,
+        user_data=data,
+        unique_id="nowspinning_view",
+        options=views,
+    )
 
     team_opts = []
     if data.selected_league_abbr:
         league = data.sports[data.selected_league_abbr]
         team_opts = league.friendly_team_names
-        
-    mqtt.add_select(name="Team",
-                    callback=callbacks.update_team,
-                    user_data=data,
-                    unique_id="nowspinning_team",
-                    options=team_opts,
-                    always_available=False)
+
+    mqtt.add_select(
+        name="Team",
+        callback=callbacks.update_team,
+        user_data=data,
+        unique_id="nowspinning_team",
+        options=team_opts,
+        always_available=False,
+    )
 
     league_opts = []
     if data.sports:
         league_opts = list(data.sports.keys())
-    
-    mqtt.add_select(name="League",
-                    callback=callbacks.update_league,
-                    user_data={"data": data, 
-                               "team_select": mqtt.entities["Team"]},
-                    unique_id="nowspinning_league",
-                    options=league_opts,
-                    always_available=False)
 
-    mqtt.add_switch(name="Switch to Music",
-                    callback=callbacks.music_switch,
-                    user_data=data,
-                    unique_id="nowspinning_music_switch",
-                    icon="mdi:music-box-multiple")
+    mqtt.add_select(
+        name="League",
+        callback=callbacks.update_league,
+        user_data={"data": data, "team_select": mqtt.entities["Team"]},
+        unique_id="nowspinning_league",
+        options=league_opts,
+        always_available=False,
+    )
 
-    mqtt.add_subscriber_only(name="Sports Sub",
-                             unique_id="nowspinning_sports_sub",
-                             callback=callbacks.teamtracker,
-                             user_data=data,
-                             sub_topic="teamtracker/all",
-                             start_topic="teamtracker/start",
-                             always_available=False)
-    
-    mqtt.add_subscriber_only(name="Averages Sub",
-                             unique_id="nowspinning_avg_sub",
-                             callback=callbacks.averages,
-                             user_data=data,
-                             sub_topic="sensor-averages/all",
-                             start_topic="sensor-averages/start",
-                             always_available=False)
+    mqtt.add_switch(
+        name="Switch to Music",
+        callback=callbacks.music_switch,
+        user_data=data,
+        unique_id="nowspinning_music_switch",
+        icon="mdi:music-box-multiple",
+    )
+
+    mqtt.add_subscriber_only(
+        name="Sports Sub",
+        unique_id="nowspinning_sports_sub",
+        callback=callbacks.teamtracker,
+        user_data=data,
+        sub_topic="teamtracker/all",
+        start_topic="teamtracker/start",
+        always_available=False,
+    )
+
+    mqtt.add_subscriber_only(
+        name="Averages Sub",
+        unique_id="nowspinning_avg_sub",
+        callback=callbacks.averages,
+        user_data=data,
+        sub_topic="sensor-averages/all",
+        start_topic="sensor-averages/start",
+        always_available=False,
+    )
 
     mqtt.shared_sensor_topic = "hmd/sensor/nowspinning/state"
-    
-    mqtt.add_button(name="Game of Life Reset",
-                    unique_id="nowspinning_gol_reset",
-                    payload_press="RESET",
-                    callback=callbacks.game_of_life_buttons,
-                    user_data=data,
-                    icon="mdi:restart",
-                    always_available=False)
-    
-    mqtt.add_button(name="Game of Life Add Noise",
-                    unique_id="nowspinning_gol_add_noise",
-                    payload_press="ADD_NOISE",
-                    callback=callbacks.game_of_life_buttons,
-                    user_data=data,
-                    icon="mdi:view-grid-plus",
-                    always_available=False)
-    
-    mqtt.add_switch(name="Game of Life Show Gens",
-                    unique_id="nowspinning_gol_show_gens",
-                    callback=callbacks.game_of_life_gens_switch,
-                    user_data=data,
-                    icon="mdi:counter",
-                    always_available=False)
+
+    mqtt.add_button(
+        name="Game of Life Reset",
+        unique_id="nowspinning_gol_reset",
+        payload_press="RESET",
+        callback=callbacks.game_of_life_buttons,
+        user_data=data,
+        icon="mdi:restart",
+        always_available=False,
+    )
+
+    mqtt.add_button(
+        name="Game of Life Add Noise",
+        unique_id="nowspinning_gol_add_noise",
+        payload_press="ADD_NOISE",
+        callback=callbacks.game_of_life_buttons,
+        user_data=data,
+        icon="mdi:view-grid-plus",
+        always_available=False,
+    )
+
+    mqtt.add_switch(
+        name="Game of Life Show Gens",
+        unique_id="nowspinning_gol_show_gens",
+        callback=callbacks.game_of_life_gens_switch,
+        user_data=data,
+        icon="mdi:counter",
+        always_available=False,
+    )
 
     mqtt.write_all_configs()
-        
+
     while data.is_running:
         is_gol_view = data.view is View.GAME_OF_LIFE
         entity: Discoverable
@@ -234,28 +267,28 @@ async def mqtt_loop(data: Data):
                 entity.set_availability(True)
             elif is_gol_entity:
                 entity.set_availability(is_gol_view)
-        
+
         mqtt.set_shared_state(data.get_json())
-        
+
         view_select = mqtt.entities["View"]
         view_select.set_selection(data.view.value)
-        
+
         team_select = mqtt.entities["Team"]
-        
+
         league_select = mqtt.entities["League"]
         league_opts = list(data.sports.keys())
         league_select.update_options(league_opts)
-            
+
         if data.selected_league_abbr is None and league_opts:
             data.selected_league_abbr = league_opts[0]
-                                
+
         league_select.set_selection(data.selected_league_abbr)
         if data.selected_league_abbr:
             league: League = data.sports[data.selected_league_abbr]
-    
+
             team_opts = league.friendly_team_names
             team_select.update_options(team_opts)
-                
+
             if data.selected_team_abbr:
                 team = league.team(data.selected_team_abbr)
             else:
@@ -263,19 +296,19 @@ async def mqtt_loop(data: Data):
                 teams.sort(key=Team.by_game_state, reverse=True)
                 team = teams[0]
                 data.selected_team_abbr = team.abbr
-                
+
             team_name = team.friendly_name
             team_select.set_selection(team_name)
-                
+
         league_select.set_availability()
         team_select.set_availability()
-        
+
         music_switch = mqtt.entities["Switch to Music"]
         if data.switch_to_music:
             music_switch.on()
         else:
             music_switch.off()
-            
+
         gol_switch = mqtt.entities["Game of Life Show Gens"]
         if data.game_of_life_show_gens:
             gol_switch.on()
@@ -283,7 +316,7 @@ async def mqtt_loop(data: Data):
             gol_switch.off()
 
         await asyncio.sleep(1)
-        
+
     mqtt.set_all_availability(False)
 
 
@@ -295,9 +328,9 @@ def init_matrix():
     options.parallel = 1
     options.hardware_mapping = "adafruit-hat-pwm"
     options.gpio_slowdown = 2
-    #options.pwm_lsb_nanoseconds = 50
-    #options.brightness = 50
-    #options.pwm_bits = 8
+    # options.pwm_lsb_nanoseconds = 50
+    # options.brightness = 50
+    # options.pwm_bits = 8
     # options.show_refresh_rate = True
 
     matrix = RGBMatrix(options=options)
@@ -313,9 +346,9 @@ async def init_mpris() -> tuple[MessageBus, ProxyInterface, ProxyInterface]:
 
     tree = ET.parse("mpris.xml")
 
-    obj = bus.get_proxy_object("org.mpris.MediaPlayer2.SongRec",
-                               "/org/mpris/MediaPlayer2",
-                               tree.getroot())
+    obj = bus.get_proxy_object(
+        "org.mpris.MediaPlayer2.SongRec", "/org/mpris/MediaPlayer2", tree.getroot()
+    )
 
     player = obj.get_interface("org.mpris.MediaPlayer2.Player")
     properties = obj.get_interface("org.freedesktop.DBus.Properties")
@@ -326,21 +359,19 @@ async def init_mpris() -> tuple[MessageBus, ProxyInterface, ProxyInterface]:
 async def loops(data: Data):
     bus, player, properties = await init_mpris()
     matrix = init_matrix()
-    
+
     await data.refresh_music_data(player, PANEL_WIDTH, PANEL_HEIGHT)
 
-    async def on_prop_change(interface_name, changed_properties,
-                             invalidated_properties):
+    async def on_prop_change(
+        interface_name, changed_properties, invalidated_properties
+    ):
         if "Metadata" in changed_properties:
             await data.refresh_music_data(player, PANEL_WIDTH, PANEL_HEIGHT)
-           
 
     properties.on_properties_changed(on_prop_change)
 
-    await asyncio.gather(matrix_loop(matrix, data),
-                         air_loop(data),
-                         mqtt_loop(data))
-    
+    await asyncio.gather(matrix_loop(matrix, data), air_loop(data), mqtt_loop(data))
+
     bus.disconnect()
 
 
@@ -348,12 +379,12 @@ def main():
     data = Data()
     signal.signal(signal.SIGINT, data.stop)
     signal.signal(signal.SIGTERM, data.stop)
-    
+
     fan = PWMOutputDevice(FAN_PIN)
     fan.value = 0.7
 
     asyncio.run(loops(data))
 
-     
+
 if __name__ == "__main__":
     main()
