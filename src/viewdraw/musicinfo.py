@@ -50,13 +50,11 @@ class MusicInfo(ViewDrawer):
         self.update_last_drawn()
 
         title = data.title
-        artist = data.artist
+        artists = data.artists
         if title is not None:
             self.title_scroll.draw(canvas, title)
 
-        if artist is not None:
-            artists = ", ".join(artist)
-            self.artist_scroll.draw(canvas, artists)
+        self.artist_scroll.draw(canvas, artists)
 
         if data.album_art is not None:
             canvas.SetImage(data.album_art)

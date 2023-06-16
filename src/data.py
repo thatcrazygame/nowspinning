@@ -1,17 +1,15 @@
 import asyncio
 from base64 import b64decode
-import colorsys
 from io import BytesIO
 import json
 from time import perf_counter
 
 from dbus_next.errors import DBusError
-import numpy as np
 from PIL import Image, ImageChops
-import wcag_contrast_ratio as contrast
 
 from constants import View
 from eqstream import EQStream
+from img_funcs import get_dominant_colors, get_min_constrast_colors
 from sports import League
 from viewdraw import ViewDrawer
 
@@ -46,7 +44,7 @@ class Data(object):
         self.game_of_life_show_gens: bool = False
 
     def reset_music(self):
-        self.artist = None
+        self._artists: list[str] = None
         self.title = "Listening..."
         self.album = None
         self.album_art = Image.open("../img/microphone.jpeg")
@@ -66,11 +64,18 @@ class Data(object):
         return str(val) if val is not None else ""
 
     @property
-    def temperature_f(self):
+    def temperature_f(self) -> float:
         if self.temperature is None:
             return None
         else:
             return (self.temperature * 1.8) + 32.0
+
+    @property
+    def artists(self) -> str:
+        artists_str = ""
+        if self._artists is not None:
+            artists_str = f"{','.join(self._artists)}"
+        return artists_str
 
     def get_json(self) -> dict:
         payload = {}
@@ -78,54 +83,11 @@ class Data(object):
         payload["humidity"] = self._str(self.humidity, round_digits=1)
         payload["co2"] = self._str(self.co2)
         payload["voc"] = self._str(self.voc)
-
-        artists = ""
-        if self.artist is not None:
-            artists = f"{','.join(self.artist)}"
-        payload["artist"] = artists
+        payload["artist"] = self.artists
         payload["album"] = self._str(self.album)
         payload["title"] = self._str(self.title)
 
         return json.dumps(payload)
-
-    def get_dominant_colors(self, pil_img: Image.Image, palette_size=3):
-        img = pil_img.copy()
-        # Reduce colors (uses k-means internally)
-        paletted = img.convert("P", palette=Image.ADAPTIVE, colors=palette_size)
-        # Find the color that occurs most often
-        palette = paletted.getpalette()
-        color_counts = sorted(paletted.getcolors(), reverse=True)
-
-        # palette is a byte array of the colors in form [RGBRGBRGB...]
-        colors = np.reshape(palette, (-1, 3))[:palette_size]
-        colors = list(map(tuple, colors))
-        # color_counts is a list of tuples: (count, index of color)
-        # reorder colors to match the sorted counts
-        colors = [colors[count[1]] for count in color_counts]
-
-        colors = [
-            self.increase_lightness(color, 0.14)
-            if self.get_contrast(color) < 1.43
-            else color
-            for color in colors
-        ]
-
-        return colors
-
-    def normalize_rgb(self, color) -> tuple[float, float, float]:
-        return tuple(x / 255.0 for x in color)
-
-    def get_contrast(self, color, background=(0, 0, 0)) -> float:
-        normalized_color = self.normalize_rgb(color)
-        return contrast.rgb(background, normalized_color)
-
-    def increase_lightness(self, color, amount):
-        normalized_color = self.normalize_rgb(color)
-        h, l, s = colorsys.rgb_to_hls(*normalized_color)
-        l = min(l + amount, 1.0)
-        r, g, b = colorsys.hls_to_rgb(h, l, s)
-        r, g, b = int(r * 255), int(g * 255), int(b * 255)
-        return r, g, b
 
     async def refresh_music_data(self, player, width, height):
         metadata = None
@@ -143,7 +105,7 @@ class Data(object):
         self.music_last_updated = perf_counter()
 
         if "xesam:artist" in metadata:
-            self.artist = metadata["xesam:artist"].value
+            self._artists = metadata["xesam:artist"].value
         if "xesam:title" in metadata:
             self.title = metadata["xesam:title"].value
         if "xesam:album" in metadata:
@@ -161,7 +123,8 @@ class Data(object):
             self.album_art = art_image
 
             if art_changed or self.album_art_colors is None:
-                self.album_art_colors = self.get_dominant_colors(art_image)
+                colors = get_dominant_colors(art_image)
+                self.album_art_colors = get_min_constrast_colors(colors)
 
         if self.switch_to_music:
             self.view = View.MUSIC

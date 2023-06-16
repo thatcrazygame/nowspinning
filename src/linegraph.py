@@ -3,6 +3,8 @@ from typing import Tuple
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawText, Font
 
+from img_funcs import get_gradient_img, adjust_lightness
+
 
 class LineGraph(object):
     def __init__(
@@ -33,7 +35,11 @@ class LineGraph(object):
 
     def get_scaled_data(self) -> list[int]:
         scaled = []
-        min_val = min(d for d in self.data if d != 0)
+        non_zeros = [d for d in self.data if d != 0]
+        if not non_zeros:
+            return scaled
+
+        min_val = min(non_zeros)
         if self.fixed_min_val:
             min_val = self.fixed_min_val
         max_val = max(self.data)
@@ -63,6 +69,10 @@ class LineGraph(object):
 
         size = (self.width, self.height)
         img = Image.new("RGB", size, self.background)
+        if self.background != (0, 0, 0):
+            darker = adjust_lightness(self.background, -0.125)
+            img = get_gradient_img(self.width, self.height, [self.background, darker])
+
         draw = ImageDraw.Draw(img)
 
         points: list[Tuple[int, int]] = []
