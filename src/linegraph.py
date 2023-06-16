@@ -5,11 +5,16 @@ from rgbmatrix.graphics import Color, DrawText, Font
 
 
 class LineGraph(object):
-    def __init__(self, label: str, data: list[float] = [],
-                 units: str = "", round: int = 0,
-                 line_color: Tuple[int, int, int] = (255, 255, 255),
-                 fill_color: Tuple[int, int, int] = (0, 0, 0),
-                 background: Tuple[int, int, int] = (0, 0, 0)) -> None:
+    def __init__(
+        self,
+        label: str,
+        data: list[float] = [],
+        units: str = "",
+        round: int = 0,
+        line_color: Tuple[int, int, int] = (255, 255, 255),
+        fill_color: Tuple[int, int, int] = (0, 0, 0),
+        background: Tuple[int, int, int] = (0, 0, 0),
+    ) -> None:
         self.label: str = label
         self.data: list[float] = data
         self.units: str = units
@@ -46,9 +51,9 @@ class LineGraph(object):
             if self.fixed_max_val and d > self.fixed_max_val:
                 val = self.fixed_max_val
 
-            val = round((val - min_val)
-                        / (max_val - min_val)
-                        * (self.height - 1))  # coords 0 based
+            val = round(
+                (val - min_val) / (max_val - min_val) * (self.height - 1)
+            )  # coords 0 based
             scaled.append(val)
         return scaled
 
@@ -61,14 +66,12 @@ class LineGraph(object):
         draw = ImageDraw.Draw(img)
 
         points: list[Tuple[int, int]] = []
-        x: int = 0
-        y: int = 0
+        x = 0
+        y = 0
 
         points.append((x, y))
         scaled = self.get_scaled_data()
-        for i in range(len(scaled)):
-            val = scaled[i]
-            y = val
+        for i, y in enumerate(scaled):
             points.append((x, y))
             if i < len(scaled) - 1:
                 x += self.data_space
@@ -88,12 +91,15 @@ class LineGraph(object):
 
         return img
 
-    def draw(self, canvas, font: Font, x: int, y: int,
-             text_color: Color) -> None:
+    def draw(self, canvas, font: Font, x: int, y: int, text_color: Color) -> None:
+        if not self.data:
+            return
+
         graph_x = x
         graph_y = y
         img = self.get_graph_img()
-        canvas.SetImage(img, graph_x, graph_y)
+        if len(self.data) > 1:
+            canvas.SetImage(img, graph_x, graph_y)
 
         txt_x = img.width + 2
         txt_y = graph_y + self.height - 1

@@ -1,7 +1,7 @@
 from constants import PANEL_HEIGHT, PANEL_WIDTH
 from constants.fonts import FONT_8x13
 from data import Data
-from rgbmatrix.graphics import Color, Font
+from rgbmatrix.graphics import Color
 from scrollingtext import ScrollingText
 from . import ViewDrawer
 

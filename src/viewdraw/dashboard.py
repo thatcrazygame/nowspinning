@@ -3,7 +3,7 @@ from datetime import datetime
 from constants import PANEL_HEIGHT, PANEL_WIDTH
 from constants.fonts import FONT_4x6, FONT_8x13
 from data import Data
-from rgbmatrix.graphics import Color, DrawText, Font
+from rgbmatrix.graphics import Color, DrawText
 
 from linegraph import LineGraph
 from . import ViewDrawer
@@ -25,22 +25,24 @@ class Dashboard(ViewDrawer):
         y = FONT_8x13.height - 2
         DrawText(canvas, FONT_8x13, x, y, white_text, now_str)
 
-        if not data.averages:
-            return
+        tmpr_avgs = []
+        hum_avgs = []
+        voc_avgs = []
+        co2_avgs = []
 
-        tmpr_avgs = data.averages.get("temperature").copy()
+        tmpr_avgs.extend(data.averages.get("temperature") or [])
         if data.temperature_f is not None:
             tmpr_avgs.append(round(data.temperature_f, 1))
 
-        hum_avgs = data.averages.get("humidity").copy()
+        hum_avgs.extend(data.averages.get("humidity") or [])
         if data.humidity is not None:
             hum_avgs.append(round(data.humidity, 1))
 
-        voc_avgs = data.averages.get("voc").copy()
+        voc_avgs.extend(data.averages.get("voc") or [])
         if data.voc is not None:
             voc_avgs.append(round(data.voc))
 
-        co2_avgs = data.averages.get("co2").copy()
+        co2_avgs.extend(data.averages.get("co2") or [])
         if data.co2 is not None:
             co2_avgs.append(round(data.co2))
 
