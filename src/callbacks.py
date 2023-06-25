@@ -20,7 +20,7 @@ def teamtracker(client: Client, data: Data, message: MQTTMessage):
         if league_abbr not in data.sports:
             data.sports[league_abbr] = League(league_abbr)
 
-        state: GameState = GameState[team["state"]]
+        state: GameState = GameState[team["state"].upper()]
         new_attr: dict = team["attributes"]
 
         for attr in new_attr:
