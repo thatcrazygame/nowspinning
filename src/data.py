@@ -10,7 +10,7 @@ from PIL import Image, ImageChops
 from constants import View
 from eqstream import EQStream
 from img_funcs import get_dominant_colors, get_min_constrast_colors
-from sports import League
+from sports import League, Team
 from viewdraw import ViewDrawer
 
 SONGREC_TIMEOUT_SECS = 30.0 * 60.0
@@ -21,7 +21,7 @@ class Data(object):
 
     def __init__(self):
         self.is_running = True
-        self.view: View = View.DASHBOARD
+        self.view: View = View.OFF
         self.view_drawers: dict[View, ViewDrawer] = {}
         self.switch_to_music: bool = False
 
@@ -63,6 +63,9 @@ class Data(object):
 
         return str(val) if val is not None else ""
 
+    def _on_off(self, b: bool, line: str = "") -> str:
+        return f"{'on' if b else 'off'}{line}"
+
     @property
     def temperature_f(self) -> float:
         if self.temperature is None:
@@ -77,17 +80,77 @@ class Data(object):
             artists_str = f"{','.join(self._artists)}"
         return artists_str
 
-    def get_json(self) -> dict:
-        payload = {}
-        payload["temperature"] = self._str(self.temperature_f, round_digits=1)
-        payload["humidity"] = self._str(self.humidity, round_digits=1)
-        payload["co2"] = self._str(self.co2)
-        payload["voc"] = self._str(self.voc)
-        payload["artist"] = self.artists
-        payload["album"] = self._str(self.album)
-        payload["title"] = self._str(self.title)
+    @property
+    def selected_league(self) -> League:
+        if not self.selected_league_abbr:
+            return None
 
-        return json.dumps(payload)
+        return self.sports[self.selected_league_abbr]
+
+    @property
+    def selected_team(self) -> Team:
+        if not self.selected_league:
+            return None
+
+        league = self.selected_league
+        team: Team = None
+
+        if self.selected_team_abbr:
+            team = league.team(self.selected_team_abbr)
+        else:
+            teams = list(league.teams.values())
+            teams.sort(key=Team.by_game_state, reverse=True)
+            team = teams[0]
+            self.selected_team_abbr = team.abbr
+
+        return team
+
+    def get_payload(self) -> dict:
+        payload = {}
+        payload["temperature"] = {
+            "value": self._str(self.temperature_f, round_digits=1),
+            "available": "online",
+        }
+        payload["humidity"] = {
+            "value": self._str(self.humidity, round_digits=1),
+            "available": "online",
+        }
+        payload["co2"] = {"value": self._str(self.co2), "available": "online"}
+        payload["voc"] = {"value": self._str(self.voc), "available": "online"}
+        payload["artist"] = {"value": self.artists, "available": "online"}
+        payload["album"] = {"value": self._str(self.album), "available": "online"}
+        payload["title"] = {"value": self._str(self.title), "available": "online"}
+        payload["view"] = {"value": self._str(self.view.value), "available": "online"}
+        payload["league"] = {
+            "value": self._str(self.selected_league_abbr),
+            "available": self._on_off(bool(self.sports), "line"),
+        }
+        team_name = self.selected_team.friendly_name if self.selected_team else ""
+        payload["team"] = {
+            "value": self._str(team_name),
+            "available": self._on_off(bool(self.sports), "line"),
+        }
+        payload["music_switch"] = {
+            "value": self._on_off(self.switch_to_music).upper(),
+            "available": "online",
+        }
+        payload["gol_show_gens"] = {
+            "value": self._on_off(self.game_of_life_show_gens).upper(),
+            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+        }
+        payload["gol_reset"] = {
+            "value": None,
+            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+        }
+        payload["gol_add_noise"] = {
+            "value": None,
+            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+        }
+
+        return payload
+
+    def get_json(self) -> str:
+        return json.dumps(self.get_payload())
 
     async def refresh_music_data(self, player, width, height):
         metadata = None
