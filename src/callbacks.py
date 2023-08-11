@@ -79,7 +79,11 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
                 continue
             team.game_state = None
 
-    active_teams = [t.abbr for t in selected_league.teams.values() if t.game_state]
+    active_teams = [
+        t.abbr
+        for t in selected_league.teams.values()
+        if t.game_state is not GameState.UNAVAILABLE
+    ]
     if user_data["data"].selected_team_abbr not in active_teams:
         teams = list(selected_league.teams.values())
         teams.sort(key=Team.by_game_state, reverse=True)
