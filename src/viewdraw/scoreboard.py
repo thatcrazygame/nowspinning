@@ -1,5 +1,7 @@
+from math import floor
+
 from PIL import Image, ImageDraw
-from rgbmatrix.graphics import Color, DrawText, Font
+from rgbmatrix.graphics import Color, DrawLine, DrawText, Font
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
 from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
@@ -54,9 +56,51 @@ class Scoreboard(ViewDrawer):
         else:
             return int(LOGO_SIZE + char_width)
 
-    def draw_clock(self, canvas, clock, font: MonoFont, color):
+    def get_possession_homeaway(self, possession_id, team_id, team_homeaway) -> str:
+        if not possession_id:
+            return None
+
+        homeaway_char = {
+            HOME: "►",
+            AWAY: "◄",
+        }
+
+        if possession_id == team_id:
+            return homeaway_char[team_homeaway]
+        else:
+            # remove team's homeaway to be left with oppo's homeaway
+            homeaway_char.pop(team_homeaway)
+            return homeaway_char.values()[0]
+
+    def draw_clock(
+        self,
+        canvas,
+        clock: str,
+        font: MonoFont,
+        color,
+        quarter: str = None,
+        show_possession=False,
+        possession_homeaway=None,
+    ):
         if not clock:
             return
+
+        if quarter:
+            if quarter == "1":
+                quarter = "1st"
+            elif quarter == "2":
+                quarter = "2nd"
+            elif quarter == "3":
+                quarter = "3rd"
+            elif quarter == "4":
+                quarter = "4th"
+            clock = f"{quarter} {clock}"
+
+        if show_possession and possession_homeaway:
+            if possession_homeaway == "◄":
+                clock = f"{possession_homeaway}{clock}"
+            elif possession_homeaway == "►":
+                clock = f"{clock}{possession_homeaway}"
 
         clock_width = len(clock) * font.char_width
         x = int(PANEL_WIDTH - clock_width / 2)
@@ -94,6 +138,19 @@ class Scoreboard(ViewDrawer):
         x = self.get_score_x(homeaway, score, font.char_width)
         y = score_y
         DrawText(canvas, font, x, y, color, score)
+
+    def draw_timeouts(self, canvas, homeaway, timeouts: int, max_timeouts: int, y: int):
+        if not timeouts:
+            return
+
+        line_width = 8
+        space = 2
+        max_width = line_width * max_timeouts + space * (max_timeouts - 1)
+        logo_x = self.get_logo_x(homeaway)
+        x = logo_x + floor(LOGO_SIZE / 2) - floor(max_width / 2)
+        for i in range(max_timeouts):
+            DrawLine(canvas, x, y, x + line_width, y, self.white_text)
+            x = x + line_width + space
 
     def draw_shots_label(self, canvas, font: MonoFont, color, y=35):
         shots = "shots"
@@ -167,6 +224,32 @@ class Scoreboard(ViewDrawer):
         self.play_scroll._starting_x = play_x
         self.play_scroll.draw(canvas, last_play)
 
+    def draw_down_distance_yard(
+        self, canvas, down_distance: str, font: MonoFont, color, y=35
+    ):
+        if not down_distance:
+            return
+
+        down_distance = down_distance.replace("and", "&")
+        at_separator = " at "
+        at_yard: str = None
+        if at_separator in down_distance:
+            down_yard = down_distance.split(at_separator)
+            down_distance = down_yard[0]
+            at_yard = down_yard[1]
+
+        dd_width = len(down_distance) * font.char_width
+        x = int(PANEL_WIDTH - dd_width / 2)
+        DrawText(canvas, font, x, y, color, down_distance)
+
+        if not at_yard:
+            return
+
+        yard_width = len(at_yard) * font.char_width
+        x = int(PANEL_WIDTH - yard_width / 2)
+        y += 10
+        DrawText(canvas, font, x, y, color, at_yard)
+
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
 
@@ -190,7 +273,30 @@ class Scoreboard(ViewDrawer):
         oppo_homeaway = attr.get("opponent_homeaway") or AWAY
 
         clock = attr.get("clock")
-        self.draw_clock(canvas, clock, FONT_5x8, white_text)
+
+        quarter = None
+        show_possession = False
+        possession_homeaway = None
+        if sport == FOOTBALL:
+            show_possession = True
+            possession_id = attr.get("possession")
+            team_id = attr.get("team_id")
+            possession_homeaway = self.get_possession_homeaway(
+                possession_id, team_id, team_homeaway
+            )
+
+            if league.abbr == "NFL":
+                quarter = attr.get("quarter")
+
+        self.draw_clock(
+            canvas,
+            clock,
+            FONT_5x8,
+            white_text,
+            quarter,
+            show_possession,
+            possession_homeaway,
+        )
 
         logo_y = FONT_5x8.height + 2
         self.draw_logos(canvas, data, team, league, logo_y)
@@ -218,9 +324,21 @@ class Scoreboard(ViewDrawer):
                 self.draw_shots_label(canvas, FONT_5x8, white_text)
 
             self.draw_shots(canvas, team_shots, team_homeaway, FONT_5x8, white_text)
-
             self.draw_shots(canvas, oppo_shots, oppo_homeaway, FONT_5x8, white_text)
 
         if sport == BASEBALL:
             self.draw_bases(canvas, attr)
             self.draw_count(canvas, attr, FONT_5x8, white_text)
+
+        if sport == FOOTBALL:
+            down_distance_text = attr.get("down_distance_text")
+            self.draw_down_distance_yard(
+                canvas, down_distance_text, FONT_5x8, white_text
+            )
+
+            team_timeouts = attr.get("team_timeouts")
+            oppo_timeouts = attr.get("opponent_timeouts")
+            max_timeouts = 3
+            y = logo_y + 2
+            self.draw_timeouts(canvas, team_homeaway, team_timeouts, max_timeouts, y)
+            self.draw_timeouts(canvas, oppo_homeaway, oppo_timeouts, max_timeouts, y)
