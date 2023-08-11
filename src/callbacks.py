@@ -20,14 +20,24 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
     if "teams" not in payload:
         return
 
-    for team in payload["teams"]:
+    json_teams = payload["teams"]
+
+    for team in json_teams:
         league_abbr = team["league"]
         team_abbr = team["team_abbr"]
+
+        if not league_abbr or not team_abbr:
+            continue
 
         if league_abbr not in user_data["data"].sports:
             user_data["data"].sports[league_abbr] = League(league_abbr)
 
-        state: GameState = GameState[team["state"].upper()]
+        state: GameState
+        try:
+            state = GameState[team["state"].upper()]
+        except KeyError:
+            continue
+
         new_attr: dict = team["attributes"]
 
         for attr in new_attr:
@@ -42,6 +52,39 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
         user_data["data"].sports[league_abbr].team(
             team_abbr, attributes=new_attr, changes=diff, game_state=state
         )
+
+    # remove unused leagues
+    leagues = list(set([team["league"] for team in json_teams]))
+    user_data["data"].sports = {
+        abbr: league
+        for abbr, league in user_data["data"].sports.items()
+        if abbr in leagues
+    }
+
+    selected_league_abbr = user_data["data"].selected_league_abbr
+    if selected_league_abbr not in user_data["data"].sports:
+        selected_league_abbr = list(user_data["data"].sports.keys())[0]
+        user_data["data"].selected_league_abbr = selected_league_abbr
+    selected_league = user_data["data"].sports[selected_league_abbr]
+
+    # mark game state of unused teams None which removes it from the select options
+    for l_abbr, league in user_data["data"].sports.items():
+        for t_abbr, team in league.teams.items():
+            json_team = [
+                t
+                for t in json_teams
+                if t["team_abbr"] == t_abbr and t["league"] == l_abbr
+            ]
+            if json_team:
+                continue
+            team.game_state = None
+
+    active_teams = [t.abbr for t in selected_league.teams.values() if t.game_state]
+    if user_data["data"].selected_team_abbr not in active_teams:
+        teams = list(selected_league.teams.values())
+        teams.sort(key=Team.by_game_state, reverse=True)
+        first_team = teams[0]
+        user_data["data"].selected_team_abbr = first_team.abbr
 
 
 def update_team(client: Client, user_data: __UserData, message: MQTTMessage):

@@ -16,6 +16,7 @@ class View(AutoValue):
 
 class GameState(Enum):
     # values represent priority, not chronological order
+    UNAVAILABLE = -1
     NOT_FOUND = 0
     BYE = 1
     POST = 2
