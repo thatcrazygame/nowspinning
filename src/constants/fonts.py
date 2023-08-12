@@ -26,4 +26,5 @@ class MonoFont(Font):
 FONT_4x6 = MonoFont("../fonts/4x6.bdf")
 FONT_5x8 = MonoFont("../fonts/5x8.bdf")
 FONT_8x13 = MonoFont("../fonts/8x13.bdf")
+FONT_9x18 = MonoFont("../fonts/9x18.bdf")
 FONT_10x20 = MonoFont("../fonts/10x20.bdf")
