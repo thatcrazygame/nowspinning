@@ -50,6 +50,12 @@ class Scoreboard(ViewDrawer):
         else:
             return int(LOGO_SIZE + padding)
 
+    def get_inside_logo_x(self, homeaway: str, width: int, padding: int = 0) -> int:
+        if homeaway == HOME:
+            return int(PANEL_WIDTH * 2 - LOGO_SIZE - padding - width)
+        else:
+            return int(LOGO_SIZE + padding)
+
     def get_middle_logo_x(self, homeaway: str, width: int) -> int:
         logo_x = self.get_logo_x(homeaway)
         x = logo_x + floor(LOGO_SIZE / 2) - floor(width / 2)
@@ -118,7 +124,7 @@ class Scoreboard(ViewDrawer):
             league_img_x = self.get_logo_x(AWAY)
             canvas.SetImage(league_img, league_img_x, logo_y)
 
-    def draw_score(self, canvas, score, homeaway, font: MonoFont, color, score_y=25):
+    def draw_score(self, canvas, score, homeaway, font: MonoFont, color, score_y=23):
         if not score:
             return
 
@@ -133,7 +139,7 @@ class Scoreboard(ViewDrawer):
         line_width = 3
         space = 3
         max_width = line_width * max_timeouts + space * (max_timeouts - 1)
-        x = self.get_middle_logo_x(homeaway, max_width)
+        x = self.get_inside_logo_x(homeaway, max_width, padding=2)
         for _ in range(timeouts):
             DrawLine(canvas, x, y, x + line_width, y, self.white_text)
             x = x + line_width + space
@@ -167,10 +173,10 @@ class Scoreboard(ViewDrawer):
             return
 
         bases_x = LOGO_SIZE + 2
-        bases_y = 30
+        bases_y = 29
         canvas.SetImage(bases_img, bases_x, bases_y)
 
-    def draw_count(self, canvas, attributes, font, color, count_y=36):
+    def draw_count(self, canvas, attributes, font, color, count_y=35):
         attr = attributes
 
         outs = attr.get("outs") or 0
@@ -211,7 +217,7 @@ class Scoreboard(ViewDrawer):
         self.play_scroll.draw(canvas, last_play)
 
     def draw_down_distance_yard(
-        self, canvas, down_distance: str, font: MonoFont, color, y=35
+        self, canvas, down_distance: str, font: MonoFont, color, y=36
     ):
         if not down_distance:
             return
@@ -341,6 +347,6 @@ class Scoreboard(ViewDrawer):
             team_timeouts = attr.get("team_timeouts")
             oppo_timeouts = attr.get("opponent_timeouts")
             max_timeouts = 3
-            y = logo_y + LOGO_SIZE
+            y = 26
             self.draw_timeouts(canvas, team_homeaway, team_timeouts, max_timeouts, y)
             self.draw_timeouts(canvas, oppo_homeaway, oppo_timeouts, max_timeouts, y)
