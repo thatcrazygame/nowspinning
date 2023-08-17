@@ -4,6 +4,7 @@ import os
 import signal
 import subprocess
 import sys
+import traceback
 import xml.etree.ElementTree as ET
 
 from adafruit_sgp40 import SGP40
@@ -70,16 +71,24 @@ async def air_loop(data: Data):
         # since the measurement interval is long (2+ seconds)
         # we check for new data before reading
         # the values, to ensure current readings.
-        if scd.data_available:
-            data.temperature = scd.temperature
-            data.humidity = scd.relative_humidity
-            data.co2 = scd.CO2
+        try:
+            if scd.data_available:
+                data.temperature = scd.temperature
+                data.humidity = scd.relative_humidity
+                data.co2 = scd.CO2
 
-        if data.temperature is not None and data.humidity is not None:
-            voc = asyncio.to_thread(sgp.measure_index, data.temperature, data.humidity)
-            gas = asyncio.to_thread(sgp.measure_raw, data.temperature, data.humidity)
-            data.voc = await voc
-            data.raw_gas = await gas
+            if data.temperature is not None and data.humidity is not None:
+                voc = asyncio.to_thread(
+                    sgp.measure_index, data.temperature, data.humidity
+                )
+                gas = asyncio.to_thread(
+                    sgp.measure_raw, data.temperature, data.humidity
+                )
+                data.voc = await voc
+                data.raw_gas = await gas
+        except Exception as e:
+            print(f"ERROR: {e}")
+            traceback.print_exc()
 
         # The voc algorithm expects a 1Hz sampling rate
         await asyncio.sleep(1)
