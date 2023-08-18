@@ -41,6 +41,7 @@ class Data(object):
         self.selected_team_abbr: str = None
 
         self.game_of_life_commands = asyncio.Queue()
+        self.game_of_life_generations: int = 0
         self.game_of_life_show_gens: bool = False
 
         self.weather_forecast: dict = None
@@ -135,6 +136,10 @@ class Data(object):
         }
         payload["music_switch"] = {
             "value": self._on_off(self.switch_to_music).upper(),
+            "available": "online",
+        }
+        payload["gol_generations"] = {
+            "value": self._str(self.game_of_life_generations),
             "available": "online",
         }
         payload["gol_show_gens"] = {

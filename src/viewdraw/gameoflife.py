@@ -88,6 +88,7 @@ class GameOfLife(ViewDrawer):
         await self.handle_commands(data.game_of_life_commands)
         img = Image.fromarray(np.uint8(self.get_display_grid()))
         canvas.SetImage(img, -GRID_MARGIN, -GRID_MARGIN)
+        data.game_of_life_generations = self.generation
         if data.game_of_life_show_gens:
             self.draw_gens_counter(canvas)
         self.tick()
