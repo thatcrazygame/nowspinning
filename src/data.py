@@ -7,7 +7,7 @@ from time import perf_counter
 from dbus_next.errors import DBusError
 from PIL import Image, ImageChops
 
-from constants import View
+from constants import View, HOURLY, DAILY
 from eqstream import EQStream
 from img_funcs import get_dominant_colors, get_min_constrast_colors
 from sports import League, Team
@@ -42,6 +42,9 @@ class Data(object):
 
         self.game_of_life_commands = asyncio.Queue()
         self.game_of_life_show_gens: bool = False
+
+        self.weather_forecast: dict = None
+        self.forecast_type: str = DAILY
 
     def reset_music(self):
         self._artists: list[str] = None
@@ -145,6 +148,10 @@ class Data(object):
         payload["gol_add_noise"] = {
             "value": None,
             "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+        }
+        payload["forecast_type"] = {
+            "value": self._str(self.forecast_type),
+            "available": "online",
         }
 
         return payload

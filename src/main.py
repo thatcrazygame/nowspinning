@@ -17,7 +17,7 @@ from ha_mqtt_discoverable import Settings, DeviceInfo
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 import callbacks
-from constants import PANEL_WIDTH, PANEL_HEIGHT, View
+from constants import FORECAST_TYPE, PANEL_WIDTH, PANEL_HEIGHT, View
 from data import Data
 from mqttdevice import MQTTDevice, Discoverable
 from sports import League, Team
@@ -27,6 +27,7 @@ from viewdraw.musicinfo import MusicInfo
 from viewdraw.off import Off
 from viewdraw.scoreboard import Scoreboard
 from viewdraw.gameoflife import GameOfLife
+from viewdraw.weather import Weather
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 
@@ -48,6 +49,7 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
     data.view_drawers[View.SCOREBOARD] = Scoreboard()
     data.view_drawers[View.DASHBOARD] = Dashboard()
     data.view_drawers[View.GAME_OF_LIFE] = GameOfLife()
+    data.view_drawers[View.WEATHER] = Weather()
     while data.is_running:
         canvas.Clear()
         data.check_songrec_timeout()
@@ -281,6 +283,24 @@ async def mqtt_loop(data: Data):
         icon="mdi:counter",
         value_template="{{ value_json.gol_show_gens.value }}",
         availability_template="{{ value_json.gol_show_gens.available }}",
+        use_shared_topic=True,
+    )
+
+    mqtt.add_subscriber_only(
+        name="Nowspinning Weather Forecast",
+        unique_id="nowspinning_weather_forecast",
+        callback=callbacks.weather,
+        sub_topic="weather-forecast/all",
+        start_topic="weather-forecast/start",
+    )
+
+    mqtt.add_select(
+        name="Forecast Type",
+        callback=callbacks.update_forecast_type,
+        unique_id="nowspinning_forecast_type",
+        options=list(FORECAST_TYPE),
+        value_template="{{ value_json.forecast_type.value }}",
+        availability_template="{{ value_json.forecast_type.available }}",
         use_shared_topic=True,
     )
 

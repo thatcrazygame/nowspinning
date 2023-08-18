@@ -12,6 +12,7 @@ class View(AutoValue):
     MUSIC = auto()
     SCOREBOARD = auto()
     GAME_OF_LIFE = auto()
+    WEATHER = auto()
 
 
 class GameState(Enum):
@@ -26,3 +27,7 @@ class GameState(Enum):
 
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
+
+HOURLY = "Hourly"
+DAILY = "Daily"
+FORECAST_TYPE = {HOURLY, DAILY}

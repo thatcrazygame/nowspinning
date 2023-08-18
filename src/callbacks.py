@@ -1,7 +1,7 @@
 import json
 from typing import TypedDict, Dict
 
-from constants import GameState, View
+from constants import DAILY, FORECAST_TYPE, GameState, View
 
 # from customdiscoverable import Select
 from data import Data
@@ -152,3 +152,18 @@ def game_of_life_gens_switch(
 ):
     state = str(message.payload.decode("UTF-8"))
     user_data["data"].game_of_life_show_gens = state == "ON"
+
+
+def weather(client: Client, user_data: __UserData, message: MQTTMessage):
+    payload = json.loads(str(message.payload.decode("UTF-8")))
+    if "condition" not in payload:
+        return
+
+    user_data["data"].weather_forecast = payload
+
+
+def update_forecast_type(client: Client, user_data: __UserData, message: MQTTMessage):
+    f_type = str(message.payload.decode("UTF-8"))
+    if f_type not in FORECAST_TYPE:
+        f_type = DAILY
+    user_data["data"].forecast_type = f_type
