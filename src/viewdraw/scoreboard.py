@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawLine, DrawText, Font
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
-from constants.fonts import FONT_5x8, FONT_8x13, FONT_9x18, FONT_10x20, MonoFont
+from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
 from data import Data
 from scrollingtext import ScrollingText
 from sports import League, Team
@@ -15,7 +15,7 @@ AWAY = "away"
 HOCKEY = "hockey"
 BASEBALL = "baseball"
 FOOTBALL = "football"
-LOGO_SIZE = 40
+LOGO_SIZE = 36
 
 
 class Scoreboard(ViewDrawer):
@@ -128,9 +128,10 @@ class Scoreboard(ViewDrawer):
         if not score:
             return
 
-        x = self.get_inside_logos_x(homeaway, score, font.char_width, padding=2)
+        score_width = len(str(score)) * font.char_width
+        x = self.get_inside_logo_x(homeaway, score_width, padding=2)
         y = score_y
-        DrawText(canvas, font, x, y, color, score)
+        DrawText(canvas, font, x, y, color, str(score))
 
     def draw_timeouts(self, canvas, homeaway, timeouts: int, max_timeouts: int, y: int):
         if not timeouts:
@@ -154,9 +155,10 @@ class Scoreboard(ViewDrawer):
         if not shots:
             return
 
-        x = self.get_inside_logos_x(homeaway, shots, font.char_width, padding=2)
+        shots_width = len(str(shots)) * font.char_width
+        x = self.get_inside_logo_x(homeaway, shots_width, padding=2)
         y = shots_y
-        DrawText(canvas, font, x, y, color, shots)
+        DrawText(canvas, font, x, y, color, str(shots))
 
     def draw_bases(self, canvas, attributes):
         attr = attributes
@@ -313,10 +315,10 @@ class Scoreboard(ViewDrawer):
             return
 
         team_score = attr.get("team_score")
-        self.draw_score(canvas, team_score, team_homeaway, FONT_9x18, white_text)
+        self.draw_score(canvas, team_score, team_homeaway, FONT_10x20, white_text)
 
         oppo_score = attr.get("opponent_score")
-        self.draw_score(canvas, oppo_score, oppo_homeaway, FONT_9x18, white_text)
+        self.draw_score(canvas, oppo_score, oppo_homeaway, FONT_10x20, white_text)
 
         if team.game_state is not GameState.IN:
             return
