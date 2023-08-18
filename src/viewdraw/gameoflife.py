@@ -32,6 +32,10 @@ class GameOfLife(ViewDrawer):
         self.generation: int = 0
         self.grid_data = self.new_random_grid()
 
+    @property
+    def alive_cells(self) -> int:
+        return self.grid_data.sum()
+
     def new_random_grid(self, cutoff=INIT_CUTOFF):
         rng = np.random.default_rng()
 
@@ -47,7 +51,13 @@ class GameOfLife(ViewDrawer):
         return grid
 
     def get_neighbor_count_grid(self):
-        kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+        kernel = np.array(
+            [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1],
+            ]
+        )
 
         return np.asmatrix(convolve2d(self.grid_data, kernel, "same"))
 
@@ -86,9 +96,14 @@ class GameOfLife(ViewDrawer):
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
         await self.handle_commands(data.game_of_life_commands)
+
         img = Image.fromarray(np.uint8(self.get_display_grid()))
         canvas.SetImage(img, -GRID_MARGIN, -GRID_MARGIN)
-        data.game_of_life_generations = self.generation
+
         if data.game_of_life_show_gens:
             self.draw_gens_counter(canvas)
+
+        data.game_of_life_generations = self.generation
+        data.game_of_life_cells = self.alive_cells
+
         self.tick()

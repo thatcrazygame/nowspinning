@@ -41,6 +41,7 @@ class Data(object):
         self.selected_team_abbr: str = None
 
         self.game_of_life_commands = asyncio.Queue()
+        self.game_of_life_cells: int = 0
         self.game_of_life_generations: int = 0
         self.game_of_life_show_gens: bool = False
 
@@ -140,6 +141,10 @@ class Data(object):
         }
         payload["gol_generations"] = {
             "value": self._str(self.game_of_life_generations),
+            "available": "online",
+        }
+        payload["gol_cells"] = {
+            "value": self._str(self.game_of_life_cells),
             "available": "online",
         }
         payload["gol_show_gens"] = {

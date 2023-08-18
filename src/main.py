@@ -296,6 +296,17 @@ async def mqtt_loop(data: Data):
         availability_template="{{ value_json.gol_generations.available }}",
         use_shared_topic=True,
     )
+    
+    mqtt.add_sensor(
+        name="Game of Life Cells",
+        unique_id="nowspinning_gol_cells",
+        # needs units to display as graph in HA
+        unit_of_measurement="",
+        icon="mdi:dots-square",
+        value_template="{{ value_json.gol_cells.value }}",
+        availability_template="{{ value_json.gol_cells.available }}",
+        use_shared_topic=True,
+    )
 
     mqtt.add_subscriber_only(
         name="Nowspinning Weather Forecast",
