@@ -37,7 +37,7 @@ class Team(SportsOrganization):
         self.last_changes = {}
         self.league = league
         self.game_state: GameState = None
-        self._logo_url = f"{URL_BASE}/{league}/500/scoreboard/{abbr}.png"
+        self._logo_url = f"{URL_BASE}/{league}/500-dark/scoreboard/{abbr}.png"
 
     @property
     def friendly_name(self) -> str:
