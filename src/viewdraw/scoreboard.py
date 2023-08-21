@@ -34,6 +34,8 @@ class Scoreboard(ViewDrawer):
             num_spaces=3,
             scroll_speed=2,
         )
+        
+        self.cached_bases: dict[str, Image.Image] = {}
 
     def get_logo_x(self, homeaway: str) -> int:
         if homeaway == HOME:
@@ -124,7 +126,7 @@ class Scoreboard(ViewDrawer):
             league_img_x = self.get_logo_x(AWAY)
             canvas.SetImage(league_img, league_img_x, logo_y)
 
-    def draw_score(self, canvas, score, homeaway, font: MonoFont, color, score_y=23):
+    def draw_score(self, canvas, score, homeaway, font: MonoFont, color, score_y=24):
         if not score:
             return
 
@@ -133,7 +135,9 @@ class Scoreboard(ViewDrawer):
         y = score_y
         DrawText(canvas, font, x, y, color, str(score))
 
-    def draw_timeouts(self, canvas, homeaway, timeouts: int, max_timeouts: int, y: int):
+    def draw_timeouts(
+        self, canvas, homeaway, timeouts: int, max_timeouts: int, y: int = 27
+    ):
         if not timeouts:
             return
 
@@ -165,11 +169,18 @@ class Scoreboard(ViewDrawer):
         on_first = attr.get("on_first") or False
         on_second = attr.get("on_second") or False
         on_third = attr.get("on_third") or False
-
+        
         bases_bin = f"{int(on_third)}{int(on_second)}{int(on_first)}"
-        bases_img_file = f"../img/bases/bases_{bases_bin}.png"
-        bases_img = Image.open(bases_img_file)
-        bases_img = bases_img.convert("RGB")
+        bases_img_path = f"../img/bases/bases_{bases_bin}.png"
+        bases_img = None
+        if bases_img_path in self.cached_bases:
+            bases_img = self.cached_bases[bases_img_path]
+        else:
+            bases_img = Image.open(bases_img_path)
+            if not bases_img:
+                return None
+            bases_img = bases_img.convert("RGB")
+            self.cached_bases[bases_img_path] = bases_img
 
         if not bases_img:
             return
@@ -219,7 +230,7 @@ class Scoreboard(ViewDrawer):
         self.play_scroll.draw(canvas, last_play)
 
     def draw_down_distance_yard(
-        self, canvas, down_distance: str, font: MonoFont, color, y=36
+        self, canvas, down_distance: str, font: MonoFont, color, y: int = 37
     ):
         if not down_distance:
             return
@@ -349,6 +360,5 @@ class Scoreboard(ViewDrawer):
             team_timeouts = attr.get("team_timeouts")
             oppo_timeouts = attr.get("opponent_timeouts")
             max_timeouts = 3
-            y = 26
-            self.draw_timeouts(canvas, team_homeaway, team_timeouts, max_timeouts, y)
-            self.draw_timeouts(canvas, oppo_homeaway, oppo_timeouts, max_timeouts, y)
+            self.draw_timeouts(canvas, team_homeaway, team_timeouts, max_timeouts)
+            self.draw_timeouts(canvas, oppo_homeaway, oppo_timeouts, max_timeouts)

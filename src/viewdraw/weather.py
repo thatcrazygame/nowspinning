@@ -48,7 +48,7 @@ COMPASS = [
     "WNW",
     "NW",
     "NNW",
-    "N"
+    "N",
 ]
 TOTAL_DEGREES = 360.0
 SECTION_DEGREES = 22.5
@@ -56,8 +56,16 @@ NUM_FORECASTS = 4
 
 WHITE = Color(255, 255, 255)
 
+UTC = ZoneInfo("UTC")
+LOCALTZ = ZoneInfo("localtime")
+
 
 class Weather(ViewDrawer):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.cached_conditions: dict[str, Image.Image] = {}
+
     def get_condition_img(self, condition: str, size: int) -> Image.Image:
         if condition not in CONDITION:
             raise ValueError(f"'{condition}' is not a valid weather condition")
@@ -65,13 +73,17 @@ class Weather(ViewDrawer):
         if size not in CONDITION_SIZE:
             raise ValueError("Condition img size must be 16 or 32")
 
-        condtion_file = f"{IMG_PATH}/{size}/{condition}.png"
-        condition_img = Image.open(condtion_file)
+        condition_path = f"{IMG_PATH}/{size}/{condition}.png"
+        condition_img = None
+        if condition_path in self.cached_conditions:
+            condition_img = self.cached_conditions[condition_path]
+        else:
+            condition_img = Image.open(condition_path)
+            if not condition_img:
+                return None
+            condition_img = condition_img.convert("RGB")
+            self.cached_conditions[condition_path] = condition_img
 
-        if not condition_img:
-            return None
-
-        condition_img = condition_img.convert("RGB")
         return condition_img
 
     def get_compass(self, degrees) -> str:
@@ -105,9 +117,9 @@ class Weather(ViewDrawer):
             today = daily[0]
             high = today.get("temperature")
             low = today.get("templow")
-            high_low = f"{high}°/{low}°"
+            low_high = f"{low}° {high}°"
             y = condition_img.height - 2
-            DrawText(canvas, FONT_5x8, x + 1, y, WHITE, high_low)
+            DrawText(canvas, FONT_5x8, x + 1, y, WHITE, low_high)
 
         x += temp_width
         y = FONT_5x8.height + 1
@@ -141,10 +153,8 @@ class Weather(ViewDrawer):
         condition_img = self.get_condition_img(condition, SMALL)
 
         forecast_dt = datetime.fromisoformat(forecast.get("datetime"))
-        utc = ZoneInfo("UTC")
-        localtz = ZoneInfo("localtime")
-        forecast_dt = forecast_dt.replace(tzinfo=utc)
-        forecast_dt = forecast_dt.astimezone(localtz)
+        forecast_dt = forecast_dt.replace(tzinfo=UTC)
+        forecast_dt = forecast_dt.astimezone(LOCALTZ)
 
         high = forecast.get("temperature")
         low = forecast.get("templow")
@@ -154,7 +164,7 @@ class Weather(ViewDrawer):
         info = ""
         if forecast_type == DAILY:
             label = forecast_dt.strftime("%a")
-            info = f"{high}°/{low}°"
+            info = f"{low}° {high}°"
         elif forecast_type == HOURLY:
             label = forecast_dt.strftime("%-I%p")
             info = f"{high}° {humidity}%"
