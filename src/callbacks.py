@@ -14,9 +14,15 @@ class __UserData(TypedDict):
     data: Data
     entities: Dict[str, Discoverable]
 
+def __payload_decode(message: MQTTMessage, is_json: bool = False):
+    payload = str(message.payload.decode("UTF-8"))
+    if is_json:
+        return json.loads(payload)
+    else:
+        return payload
 
 def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = json.loads(str(message.payload.decode("UTF-8")))
+    payload = __payload_decode(message, is_json=True)
     if "teams" not in payload:
         return
 
@@ -65,7 +71,7 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
     if selected_league_abbr not in user_data["data"].sports:
         selected_league_abbr = list(user_data["data"].sports.keys())[0]
         user_data["data"].selected_league_abbr = selected_league_abbr
-    selected_league = user_data["data"].sports[selected_league_abbr]
+    selected_league = user_data["data"].selected_league
 
     # mark game state of unused teams None which removes it from the select options
     for l_abbr, league in user_data["data"].sports.items():
@@ -92,11 +98,11 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def update_team(client: Client, user_data: __UserData, message: MQTTMessage):
-    selected_name = str(message.payload.decode("UTF-8"))
+    selected_name = __payload_decode(message)
     if not (selected_name and user_data["data"].selected_league_abbr):
         return
 
-    league = user_data["data"].sports[user_data["data"].selected_league_abbr]
+    league = user_data["data"].selected_league
     for team in league.teams.values():
         team_name = team.friendly_name
         if team_name and team_name == selected_name:
@@ -105,12 +111,12 @@ def update_team(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def update_league(client: Client, user_data: __UserData, message: MQTTMessage):
-    league_abbr = str(message.payload.decode("UTF-8"))
+    league_abbr = __payload_decode(message)
 
     diff_league = user_data["data"].selected_league_abbr != league_abbr
     if league_abbr in user_data["data"].sports and diff_league:
         user_data["data"].selected_league_abbr = league_abbr
-        league: League = user_data["data"].sports[league_abbr]
+        league: League = user_data["data"].selected_league
         if not league.teams:
             return
 
@@ -118,24 +124,23 @@ def update_league(client: Client, user_data: __UserData, message: MQTTMessage):
         teams.sort(key=Team.by_game_state, reverse=True)
         first_team = teams[0]
         user_data["data"].selected_team_abbr = first_team.abbr
-        # team_select = mqtt.entities["Team"]
         team_names = league.friendly_team_names
         user_data["entities"]["Team"].update_options(team_names)
         user_data["entities"]["Team"].set_selection(None)  # Maybe helps reset?
 
 
 def update_view(client: Client, user_data: __UserData, message: MQTTMessage):
-    view = str(message.payload.decode("UTF-8"))
+    view = __payload_decode(message)
     user_data["data"].view = View(view)
 
 
 def music_switch(client: Client, user_data: __UserData, message: MQTTMessage):
-    state = str(message.payload.decode("UTF-8"))
+    state = __payload_decode(message)
     user_data["data"].switch_to_music = state == "ON"
 
 
 def averages(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = json.loads(str(message.payload.decode("UTF-8")))
+    payload = __payload_decode(message, is_json=True)
     if "averages" not in payload:
         return
 
@@ -143,19 +148,19 @@ def averages(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def game_of_life_buttons(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = str(message.payload.decode("UTF-8"))
+    payload = __payload_decode(message)
     user_data["data"].game_of_life_commands.put_nowait(payload)
 
 
 def game_of_life_gens_switch(
     client: Client, user_data: __UserData, message: MQTTMessage
 ):
-    state = str(message.payload.decode("UTF-8"))
+    state = __payload_decode(message)
     user_data["data"].game_of_life_show_gens = state == "ON"
 
 
 def weather(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = json.loads(str(message.payload.decode("UTF-8")))
+    payload = __payload_decode(message, is_json=True)
     if "condition" not in payload:
         return
 
@@ -163,7 +168,7 @@ def weather(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def update_forecast_type(client: Client, user_data: __UserData, message: MQTTMessage):
-    f_type = str(message.payload.decode("UTF-8"))
+    f_type = __payload_decode(message)
     if f_type not in FORECAST_TYPE:
         f_type = DAILY
     user_data["data"].forecast_type = f_type
