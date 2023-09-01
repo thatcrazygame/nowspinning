@@ -18,6 +18,7 @@ CONDITION = {
     "lightning",
     "lightning-rainy",
     "partlycloudy",
+    "partlycloudy-night",
     "pouring",
     "rainy",
     "snowy",
@@ -117,9 +118,9 @@ class Weather(ViewDrawer):
             today = daily[0]
             high = today.get("temperature")
             low = today.get("templow")
-            low_high = f"{low}° {high}°"
+            high_low = f"{high}° {low}°"
             y = condition_img.height - 2
-            DrawText(canvas, FONT_5x8, x + 1, y, WHITE, low_high)
+            DrawText(canvas, FONT_5x8, x + 1, y, WHITE, high_low)
 
         x += temp_width
         y = FONT_5x8.height + 1
@@ -164,7 +165,7 @@ class Weather(ViewDrawer):
         info = ""
         if forecast_type == DAILY:
             label = forecast_dt.strftime("%a")
-            info = f"{low}° {high}°"
+            info = f"{high}° {low}°"
         elif forecast_type == HOURLY:
             label = forecast_dt.strftime("%-I%p")
             info = f"{high}° {humidity}%"
@@ -201,4 +202,4 @@ class Weather(ViewDrawer):
             self.draw_forecast(canvas, x, y, f_width, forecast, forecast_type)
             x += f_width
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.25)
