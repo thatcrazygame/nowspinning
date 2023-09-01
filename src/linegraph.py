@@ -1,9 +1,12 @@
+import logging
 from typing import Tuple
 
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawText, Font
 
 from img_funcs import get_gradient_img, adjust_lightness
+
+logger = logging.getLogger(__name__)
 
 
 class LineGraph(object):
@@ -94,7 +97,7 @@ class LineGraph(object):
         points.pop()
         # draw line on top of the polygon fill
         draw.line(points, fill=self.line_color)
-        # print(points)
+        logger.debug(points)
 
         # y coordinates are top to bottom in PIL images
         img = img.transpose(method=Image.Transpose.FLIP_TOP_BOTTOM)

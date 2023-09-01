@@ -55,7 +55,8 @@ class EQStream(object):
     def get_eq_bins(self, max_height: int, num_bins: int):
         fft_data = np.fft.rfft(self.frame_buffer)
         fft_data = np.absolute(fft_data)
-        fft_data = np.log10(fft_data) * 10
+        with np.errstate(divide="ignore"):
+            fft_data = np.log10(fft_data) * 10
 
         weights = [1.0 / 2.0**i for i in range(BUFFER_FRAMES)]
         fft_data = np.average(fft_data, axis=0, weights=weights)

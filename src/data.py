@@ -2,6 +2,7 @@ import asyncio
 from base64 import b64decode
 from io import BytesIO
 import json
+import logging
 from time import perf_counter
 
 from dbus_next.errors import DBusError
@@ -14,6 +15,8 @@ from sports import League, Team
 from viewdraw import ViewDrawer
 
 SONGREC_TIMEOUT_SECS = 30.0 * 60.0
+
+logger = logging.getLogger(__name__)
 
 
 class Data(object):
@@ -49,6 +52,7 @@ class Data(object):
         self.forecast_type: str = DAILY
 
     def reset_music(self):
+        logger.info("Reset music")
         self._artists: list[str] = None
         self.title = "Listening..."
         self.album = None
@@ -57,7 +61,7 @@ class Data(object):
         self.music_last_updated = None
 
     def stop(self, signum, frame):
-        print("Stopping...")
+        logger.info("Stopping...")
         self.eq_stream.stop()
         self.is_running = False
 
@@ -176,7 +180,7 @@ class Data(object):
         except DBusError as e:
             self.album_art = Image.open("../img/microphone-off.jpeg")
             self.title = "Service unavailable"
-            # print(e.text)
+            logger.exception("DBUS Error")
             return
 
         if not metadata:
@@ -205,6 +209,10 @@ class Data(object):
             if art_changed or self.album_art_colors is None:
                 colors = get_dominant_colors(art_image)
                 self.album_art_colors = get_min_constrast_colors(colors)
+
+        logger.info(
+            f"Refresh music - artist(s): {self.artists} title: {self.title} album: {self.album}"
+        )
 
         if self.switch_to_music:
             self.view = View.MUSIC

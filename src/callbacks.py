@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import TypedDict, Dict
 
 from constants import DAILY, FORECAST_TYPE, GameState, View
@@ -9,10 +10,13 @@ from mqttdevice import Discoverable
 from paho.mqtt.client import Client, MQTTMessage
 from sports import League, Team
 
+logger = logging.getLogger(__name__)
+
 
 class __UserData(TypedDict):
     data: Data
     entities: Dict[str, Discoverable]
+
 
 def __payload_decode(message: MQTTMessage, is_json: bool = False):
     payload = str(message.payload.decode("UTF-8"))
@@ -20,6 +24,7 @@ def __payload_decode(message: MQTTMessage, is_json: bool = False):
         return json.loads(payload)
     else:
         return payload
+
 
 def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
     payload = __payload_decode(message, is_json=True)
@@ -42,7 +47,7 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
         try:
             state = GameState[team["state"].upper()]
         except KeyError:
-            continue
+            logger.warning(f"Invalid GameState: {team['state'].upper()}")
 
         new_attr: dict = team["attributes"]
 

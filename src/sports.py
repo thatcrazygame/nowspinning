@@ -1,4 +1,5 @@
 from io import BytesIO
+import logging
 
 from PIL import Image
 import requests
@@ -6,6 +7,8 @@ import requests
 from constants import GameState
 
 URL_BASE = "https://a.espncdn.com/i/teamlogos"
+
+logger = logging.getLogger(__name__)
 
 
 class SportsOrganization(object):
@@ -24,8 +27,8 @@ class SportsOrganization(object):
                 img = Image.alpha_composite(background, img)
                 img = img.convert("RGB")
                 self._logo_img = img
-            # else:
-            #     print(vars(response))
+            else:
+                logger.warning(vars(response))
 
         return self._logo_img
 

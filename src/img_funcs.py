@@ -1,4 +1,5 @@
 import colorsys
+import logging
 
 import numpy as np
 from PIL import Image
@@ -10,6 +11,8 @@ LIGHTNESS_BUMP = 0.14
 RGB_MAX = 255.0
 IS_HORIZONTAL = (True, True, True)
 IS_VERTICAL = (False, False, False)
+
+logger = logging.getLogger(__name__)
 
 
 def __normalize(rgb_component: int | float) -> float:
@@ -110,4 +113,6 @@ def get_gradient_img(
         else:
             gradient_array = np.concatenate((gradient, gradient_array))
 
-    return Image.fromarray(np.uint8(gradient_array))
+    with np.errstate(invalid="ignore"):
+        np_array = np.uint8(gradient_array)
+        return Image.fromarray(np_array)

@@ -1,11 +1,17 @@
 import asyncio
 from gpiozero import PWMOutputDevice
+import logging
+import logging.config
 import os
 import signal
 import subprocess
 import sys
-import traceback
 import xml.etree.ElementTree as ET
+import yaml
+
+with open("logging.yaml", "r") as f:
+    config = yaml.safe_load(f.read())
+    logging.config.dictConfig(config)
 
 from adafruit_sgp40 import SGP40
 from adafruit_scd30 import SCD30
@@ -38,10 +44,13 @@ FAN_PIN = 25
 METERS_ABOVE_SEA_LEVEL = 274
 TEMPERATURE_OFFSET = 6.0
 
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 
 
 async def matrix_loop(matrix: RGBMatrix, data: Data):
+    logger.info("Init matrix loop")
     canvas = matrix.CreateFrameCanvas()
 
     data.view_drawers[View.OFF] = Off()
@@ -50,6 +59,9 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
     data.view_drawers[View.DASHBOARD] = Dashboard()
     data.view_drawers[View.GAME_OF_LIFE] = GameOfLife()
     data.view_drawers[View.WEATHER] = Weather()
+
+    view_names = [v.name for v in data.view_drawers]
+    logger.info(f"Init views: {','.join(view_names)}")
     while data.is_running:
         canvas.Clear()
         data.check_songrec_timeout()
@@ -65,6 +77,7 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
 
 
 async def air_loop(data: Data):
+    logger.info("Init air sensors")
     sgp = SGP40(I2C)
     scd = SCD30(I2C)
     scd.temperature_offset = TEMPERATURE_OFFSET
@@ -89,8 +102,7 @@ async def air_loop(data: Data):
                 data.voc = await voc
                 data.raw_gas = await gas
         except Exception as e:
-            print(f"ERROR: {e}")
-            traceback.print_exc()
+            logger.exception("Error getting air data")
 
         # The voc algorithm expects a 1Hz sampling rate
         await asyncio.sleep(1)
@@ -103,8 +115,9 @@ async def mqtt_loop(data: Data):
     address.wait()
     mac = address.stdout.read().strip()
 
-    password = os.environ.get("MQTT_PASSWORD")
+    logger.info("Init MQTT")
 
+    password = os.environ.get("MQTT_PASSWORD")
     mqtt_settings = Settings.MQTT(
         host="172.16.1.2", username="nowspinning", password=password
     )
@@ -285,7 +298,7 @@ async def mqtt_loop(data: Data):
         availability_template="{{ value_json.gol_show_gens.available }}",
         use_shared_topic=True,
     )
-    
+
     mqtt.add_sensor(
         name="Game of Life Generations",
         unique_id="nowspinning_gol_generations",
@@ -296,7 +309,7 @@ async def mqtt_loop(data: Data):
         availability_template="{{ value_json.gol_generations.available }}",
         use_shared_topic=True,
     )
-    
+
     mqtt.add_sensor(
         name="Game of Life Cells",
         unique_id="nowspinning_gol_cells",
@@ -350,6 +363,7 @@ async def mqtt_loop(data: Data):
 
 
 def init_matrix():
+    logger.info("Init matrix")
     options = RGBMatrixOptions()
     options.rows = PANEL_WIDTH
     options.cols = PANEL_HEIGHT
@@ -367,6 +381,7 @@ def init_matrix():
 
 
 async def init_mpris() -> tuple[MessageBus, ProxyInterface, ProxyInterface]:
+    logger.info("Init mpris")
     # The matrix has to run as root
     # but the songrec mpris only updates on session
     # So manually set it here
@@ -405,10 +420,12 @@ async def loops(data: Data):
 
 
 def main():
+    logger.info("Init Data")
     data = Data()
     signal.signal(signal.SIGINT, data.stop)
     signal.signal(signal.SIGTERM, data.stop)
 
+    logger.info("Start fan")
     fan = PWMOutputDevice(FAN_PIN)
     fan.value = 0.7
 
