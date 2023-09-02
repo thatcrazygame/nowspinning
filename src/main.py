@@ -3,11 +3,33 @@ from gpiozero import PWMOutputDevice
 import logging
 import logging.config
 import os
+from shutil import chown
 import signal
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 import yaml
+
+
+def owned_file_handler(
+    filename,
+    mode="a",
+    maxBytes=0,
+    backupCount=0,
+    encoding=None,
+    owner=None,
+    *args,
+    **kwargs,
+):
+    if owner:
+        if not os.path.exists(filename):
+            open(filename, mode).close()
+        chown(filename, *owner)
+    print(filename, mode, encoding)
+    return logging.handlers.RotatingFileHandler(
+        filename, mode, maxBytes, backupCount, encoding
+    )
+
 
 with open("logging.yaml", "r") as f:
     config = yaml.safe_load(f.read())

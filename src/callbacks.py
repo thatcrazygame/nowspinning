@@ -11,6 +11,7 @@ from paho.mqtt.client import Client, MQTTMessage
 from sports import League, Team
 
 logger = logging.getLogger(__name__)
+INFO_PAYLOAD_LEN = 50
 
 
 class __UserData(TypedDict):
@@ -18,16 +19,27 @@ class __UserData(TypedDict):
     entities: Dict[str, Discoverable]
 
 
-def __payload_decode(message: MQTTMessage, is_json: bool = False):
+def __process_message(message: MQTTMessage, is_json: bool = False):
     payload = str(message.payload.decode("UTF-8"))
+
+    log = f"MQTT Message: {message.topic} >"
+    payload_short = " ".join(payload.split())[:INFO_PAYLOAD_LEN]
+    ellipsis = "..." if len(payload) > INFO_PAYLOAD_LEN else ""
+
+    logger.info(f"{log} {payload_short}{ellipsis}")
+    logger.debug(f"{log} {payload}")
     if is_json:
-        return json.loads(payload)
-    else:
-        return payload
+        try:
+            payload = json.loads(payload)
+        except json.JSONDecodeError:
+            logger.exception(f"Invalid json payload: {payload}")
+            payload = json.loads("{}")
+
+    return payload
 
 
 def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __payload_decode(message, is_json=True)
+    payload = __process_message(message, is_json=True)
     if "teams" not in payload:
         return
 
@@ -48,6 +60,7 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
             state = GameState[team["state"].upper()]
         except KeyError:
             logger.warning(f"Invalid GameState: {team['state'].upper()}")
+            continue
 
         new_attr: dict = team["attributes"]
 
@@ -103,7 +116,7 @@ def teamtracker(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def update_team(client: Client, user_data: __UserData, message: MQTTMessage):
-    selected_name = __payload_decode(message)
+    selected_name = __process_message(message)
     if not (selected_name and user_data["data"].selected_league_abbr):
         return
 
@@ -116,7 +129,7 @@ def update_team(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def update_league(client: Client, user_data: __UserData, message: MQTTMessage):
-    league_abbr = __payload_decode(message)
+    league_abbr = __process_message(message)
 
     diff_league = user_data["data"].selected_league_abbr != league_abbr
     if league_abbr in user_data["data"].sports and diff_league:
@@ -135,17 +148,17 @@ def update_league(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def update_view(client: Client, user_data: __UserData, message: MQTTMessage):
-    view = __payload_decode(message)
+    view = __process_message(message)
     user_data["data"].view = View(view)
 
 
 def music_switch(client: Client, user_data: __UserData, message: MQTTMessage):
-    state = __payload_decode(message)
+    state = __process_message(message)
     user_data["data"].switch_to_music = state == "ON"
 
 
 def averages(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __payload_decode(message, is_json=True)
+    payload = __process_message(message, is_json=True)
     if "averages" not in payload:
         return
 
@@ -153,19 +166,19 @@ def averages(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def game_of_life_buttons(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __payload_decode(message)
+    payload = __process_message(message)
     user_data["data"].game_of_life_commands.put_nowait(payload)
 
 
 def game_of_life_gens_switch(
     client: Client, user_data: __UserData, message: MQTTMessage
 ):
-    state = __payload_decode(message)
+    state = __process_message(message)
     user_data["data"].game_of_life_show_gens = state == "ON"
 
 
 def weather(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __payload_decode(message, is_json=True)
+    payload = __process_message(message, is_json=True)
     if "condition" not in payload:
         return
 
@@ -173,7 +186,7 @@ def weather(client: Client, user_data: __UserData, message: MQTTMessage):
 
 
 def update_forecast_type(client: Client, user_data: __UserData, message: MQTTMessage):
-    f_type = __payload_decode(message)
+    f_type = __process_message(message)
     if f_type not in FORECAST_TYPE:
         f_type = DAILY
     user_data["data"].forecast_type = f_type
