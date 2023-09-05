@@ -1,39 +1,14 @@
+from utils import init_logging
+
+init_logging()
+
 import asyncio
 from gpiozero import PWMOutputDevice
 import logging
-import logging.config
 import os
-from shutil import chown
 import signal
-import subprocess
 import sys
 import xml.etree.ElementTree as ET
-import yaml
-
-
-def owned_file_handler(
-    filename,
-    mode="a",
-    maxBytes=0,
-    backupCount=0,
-    encoding=None,
-    owner=None,
-    *args,
-    **kwargs,
-):
-    if owner:
-        if not os.path.exists(filename):
-            open(filename, mode).close()
-        chown(filename, *owner)
-    print(filename, mode, encoding)
-    return logging.handlers.RotatingFileHandler(
-        filename, mode, maxBytes, backupCount, encoding
-    )
-
-
-with open("logging.yaml", "r") as f:
-    config = yaml.safe_load(f.read())
-    logging.config.dictConfig(config)
 
 from adafruit_sgp40 import SGP40
 from adafruit_scd30 import SCD30
@@ -49,6 +24,7 @@ from constants import FORECAST_TYPE, PANEL_WIDTH, PANEL_HEIGHT, View
 from data import Data
 from mqttdevice import MQTTDevice, Discoverable
 from sports import League, Team
+from utils import get_mac_address
 from viewdraw import ViewDrawer
 from viewdraw.dashboard import Dashboard
 from viewdraw.musicinfo import MusicInfo
@@ -131,11 +107,8 @@ async def air_loop(data: Data):
 
 
 async def mqtt_loop(data: Data):
-    address = subprocess.Popen(
-        ["cat", "/sys/class/net/eth0/address"], stdout=subprocess.PIPE, text=True
-    )
-    address.wait()
-    mac = address.stdout.read().strip()
+    # this should probably be wlan0 since it's connected to wifi, but not going to change it now
+    mac = get_mac_address("eth0")
 
     logger.info("Init MQTT")
 

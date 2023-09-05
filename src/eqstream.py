@@ -4,7 +4,7 @@ import numpy as np
 from PIL import ImageDraw
 from pyaudio import paContinue, paInt16, PyAudio, Stream
 
-from img_funcs import get_gradient_img
+from utils.images import get_gradient_img
 
 CHUNK = 256  # Samples: 1024,  512, 256, 128
 RATE = 44100  # Equivalent to Human Hearing at 40 kHz

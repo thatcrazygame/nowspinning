@@ -10,7 +10,7 @@ from PIL import Image, ImageChops
 
 from constants import View, HOURLY, DAILY
 from eqstream import EQStream
-from img_funcs import get_dominant_colors, get_min_constrast_colors
+from utils.images import get_dominant_colors, get_min_constrast_colors
 from sports import League, Team
 from viewdraw import ViewDrawer
 

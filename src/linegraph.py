@@ -4,7 +4,7 @@ from typing import Tuple
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawText, Font
 
-from img_funcs import get_gradient_img, adjust_lightness
+from utils.images import get_gradient_img, adjust_lightness
 
 logger = logging.getLogger(__name__)
 
