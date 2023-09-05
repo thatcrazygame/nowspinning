@@ -6,6 +6,26 @@ import subprocess
 import yaml
 
 
+class FilterMQTTPayload(logging.Filter):
+    def __init__(self, level):
+        self.level = level
+
+    def filter(self, record):
+        if "MQTT Message:" in record.msg and record.levelname == "INFO":
+            return False
+        else:
+            return True
+
+
+class LevelFilter(logging.Filter):
+    def __init__(self, level):
+        self.level = level
+
+    def filter(self, record):
+        if record.levelname == self.level:
+            return True
+
+
 def owned_file_handler(
     filename,
     mode="a",

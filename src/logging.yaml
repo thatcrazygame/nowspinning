@@ -5,14 +5,22 @@ formatters:
     format: "%(asctime)s | %(name)s | %(levelname)s :: %(message)s"
   error:
     format: "%(asctime)s | %(name)s | %(filename)s:%(lineno)s | %(levelname)s :: %(message)s"
+filters:
+  MQTTPayload:
+    (): "ext://utils.FilterMQTTPayload"
+    level: DEBUG
+  InfoOnly:
+    (): "ext://utils.LevelFilter"
+    level: INFO
 handlers:
   console:
     class: logging.StreamHandler
     level: DEBUG
     formatter: standard
     stream: ext://sys.stdout
+    filters: [MQTTPayload]
   info_file_handler:
-    (): 'ext://utils.owned_file_handler' 
+    (): "ext://utils.owned_file_handler"
     class: logging.handlers.RotatingFileHandler
     level: INFO
     formatter: standard
@@ -21,10 +29,11 @@ handlers:
     backupCount: 10
     encoding: utf8
     owner: [dj, dj]
+    filters: [InfoOnly]
   error_file_handler:
-    (): 'ext://utils.owned_file_handler' 
+    (): "ext://utils.owned_file_handler"
     class: logging.handlers.RotatingFileHandler
-    level: ERROR
+    level: WARNING
     formatter: error
     filename: ../logs/error.log
     maxBytes: 5242880 # 5MB

@@ -60,6 +60,8 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
 
     view_names = [v.name for v in data.view_drawers]
     logger.info(f"Init views: {','.join(view_names)}")
+    max_unexpected_errors = 5
+    unexpected_errors = 0
     while data.is_running:
         canvas.Clear()
         data.check_songrec_timeout()
@@ -68,7 +70,24 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
             data.view = View.DASHBOARD
 
         view: ViewDrawer = data.view_drawers[data.view]
-        await view.draw(canvas, data)
+        try:
+            await view.draw(canvas, data)
+            unexpected_errors = 0  # reset if we got this here
+        except Exception as e:
+            if unexpected_errors >= max_unexpected_errors:
+                continue
+
+            logger.critical(
+                f"Unexpected error drawing {data.view.value} view", exc_info=True
+            )
+
+            unexpected_errors += 1
+            if unexpected_errors >= max_unexpected_errors:
+                logger.critical(
+                    f"Max errors ({max_unexpected_errors}) reached. The previous error will not be logged again until resolved or restarted."
+                )
+
+            asyncio.sleep(1)
 
         canvas = matrix.SwapOnVSync(canvas)
         await asyncio.sleep(0.05)
