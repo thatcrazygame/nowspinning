@@ -41,6 +41,6 @@ handlers:
     encoding: utf8
     owner: [dj, dj]
 root:
-  level: DEBUG
+  level: WARNING
   handlers: [console,info_file_handler,error_file_handler]
   propogate: yes

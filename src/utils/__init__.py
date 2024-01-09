@@ -46,8 +46,8 @@ def owned_file_handler(
     )
 
 
-def init_logging():
-    with open("logging.yaml", "r") as f:
+def init_logging(log_config_file: str):
+    with open(log_config_file, "r") as f:
         config = yaml.safe_load(f.read())
         logging.config.dictConfig(config)
 

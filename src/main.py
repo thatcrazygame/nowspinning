@@ -1,6 +1,6 @@
 from utils import init_logging
 
-init_logging()
+init_logging("logging.yaml")
 
 import asyncio
 from gpiozero import PWMOutputDevice
@@ -43,7 +43,6 @@ METERS_ABOVE_SEA_LEVEL = 274
 TEMPERATURE_OFFSET = 6.0
 
 logger = logging.getLogger(__name__)
-
 load_dotenv()
 
 
@@ -72,7 +71,7 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
         view: ViewDrawer = data.view_drawers[data.view]
         try:
             await view.draw(canvas, data)
-            unexpected_errors = 0  # reset if we got this here
+            unexpected_errors = 0  # reset if we got here
         except Exception as e:
             if unexpected_errors >= max_unexpected_errors:
                 continue
@@ -133,7 +132,7 @@ async def mqtt_loop(data: Data):
 
     password = os.environ.get("MQTT_PASSWORD")
     mqtt_settings = Settings.MQTT(
-        host="172.16.1.2", username="nowspinning", password=password
+        host="172.16.1.3", username="nowspinning", password=password
     )
 
     device_info = DeviceInfo(
