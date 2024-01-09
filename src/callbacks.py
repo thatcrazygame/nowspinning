@@ -196,3 +196,7 @@ def songrec_reset_button(client: Client, user_data: __UserData, message: MQTTMes
     payload = __process_message(message)
     if payload == "RESET":
         user_data["data"].reset_music()
+
+def music_timeout_number(client: Client, user_data: __UserData, message: MQTTMessage):
+    seconds = __process_message(message)
+    user_data["data"].music_timeout = seconds

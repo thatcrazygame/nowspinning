@@ -14,6 +14,8 @@ from .custom import (
     BinarySensor,
     ButtonInfo,
     Button,
+    NumberInfo,
+    Number,
     SelectInfo,
     Select,
     SensorInfo,
@@ -276,3 +278,17 @@ class MQTTDevice(object):
         self.add_connect_callback(subscribe_only_callback)
 
         return sub
+
+    def add_number(
+        self,
+        manual_availability=None,
+        use_shared_topic=False,
+        **entity_info,
+    ) -> Number:
+        return self._add_entity(
+            Number,
+            NumberInfo,
+            manual_availability,
+            use_shared_topic=use_shared_topic,
+            **entity_info,
+        )

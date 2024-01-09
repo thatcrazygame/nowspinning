@@ -63,7 +63,6 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
     unexpected_errors = 0
     while data.is_running:
         canvas.Clear()
-        data.check_songrec_timeout()
 
         if data.view not in data.view_drawers:
             data.view = View.DASHBOARD
@@ -265,7 +264,19 @@ async def mqtt_loop(data: Data):
         availability_template="{{ value_json.music_switch.available }}",
         use_shared_topic=True,
     )
-    
+
+    mqtt.add_number(
+        name="Music Timeout",
+        callback=callbacks.music_timeout_number,
+        unique_id="nowspinning_music_timeout",
+        icon="mdi:timer-refresh",
+        value_template="{{ value_json.music_timeout.value }}",
+        availability_template="{{ value_json.music_timeout.available }}",
+        use_shared_topic=True,
+        mode="box",
+        max=7200,
+    )
+
     mqtt.add_button(
         name="Songrec Reset",
         unique_id="nowspinning_songrec_reset",

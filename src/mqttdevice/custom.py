@@ -247,6 +247,38 @@ class SelectInfo(EntityInfo):
     availability_template: str = None
 
 
+class NumberInfo(EntityInfo):
+    """Information about the 'number' entity"""
+
+    component: str = "number"
+
+    max: float | int = 100
+    """The maximum value of the number (defaults to 100)"""
+    min: float | int = 1
+    """The maximum value of the number (defaults to 1)"""
+    mode: Optional[str] = None
+    """Control how the number should be displayed in the UI. Can be set to box
+    or slider to force a display mode."""
+    optimistic: Optional[bool] = None
+    """Flag that defines if switch works in optimistic mode.
+    Default: true if no state_topic defined, else false."""
+    payload_reset: Optional[str] = None
+    """A special payload that resets the state to None when received on the
+    state_topic."""
+    retain: Optional[bool] = None
+    """If the published message should have the retain flag on or not"""
+    state_topic: Optional[str] = None
+    """The MQTT topic subscribed to receive state updates."""
+    step: Optional[float] = None
+    """Step value. Smallest acceptable value is 0.001. Defaults to 1.0."""
+    unit_of_measurement: Optional[str] = None
+    """Defines the unit of measurement of the sensor, if any. The
+    unit_of_measurement can be null."""
+
+    value_template: str = None
+    availability_template: str = None
+
+
 class BinarySensor(Discoverable[BinarySensorInfo]):
     def off(self):
         """
@@ -383,3 +415,23 @@ class Select(Subscriber[SelectInfo]):
             availability = has_opts
 
         super().set_availability(availability)
+
+
+class Number(Subscriber[NumberInfo]):
+    """Implements an MQTT number:
+    https://www.home-assistant.io/integrations/number.mqtt/
+    """
+
+    def set_value(self, value: float) -> None:
+        """
+        Update the numeric value. Raises an error if not within the acceptable range.
+
+        Args:
+            text(str): Value of the text configured for this entity
+        """
+        if not self._entity.min <= value <= self._entity.max:
+            bound = f"[{self._entity.min}, {self._entity.max}]"
+            raise RuntimeError(f"Value is not within configured boundaries {bound}")
+
+        logger.info(f"Setting {self._entity.name} to {value} using {self.state_topic}")
+        self._state_helper(value)

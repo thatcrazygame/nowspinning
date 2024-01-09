@@ -29,6 +29,7 @@ class Data(object):
         self.switch_to_music: bool = False
 
         self.reset_music()
+        self.music_timeout: int = 1800
         self.eq_stream: EQStream = EQStream()
         self.eq_stream.listen()
 
@@ -143,10 +144,11 @@ class Data(object):
             "value": self._on_off(self.switch_to_music).upper(),
             "available": "online",
         }
-        payload["songrec_reset"] = {
-            "value": None,
+        payload["music_timeout"] = {
+            "value": self.music_timeout,
             "available": "online",
         }
+        payload["songrec_reset"] = {"value": None, "available": "online"}
         payload["gol_generations"] = {
             "value": self._str(self.game_of_life_generations),
             "available": "online",
@@ -230,20 +232,3 @@ class Data(object):
         views.sort(key=lambda v: v[0], reverse=True)
         views = [view[1] for view in views]
         return views
-
-    def check_songrec_timeout(self):
-        recognized = self.music_last_updated is not None
-        if not recognized:
-            return
-
-        now = perf_counter()
-        timedout = (now - self.music_last_updated) >= SONGREC_TIMEOUT_SECS
-
-        if not timedout:
-            return
-
-        if self.view is View.MUSIC and self.switch_to_music:
-            sorted_views = self.views_by_last_drawn()
-            self.view = sorted_views[0]
-
-        self.reset_music()
