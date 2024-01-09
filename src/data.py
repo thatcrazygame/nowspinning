@@ -143,6 +143,10 @@ class Data(object):
             "value": self._on_off(self.switch_to_music).upper(),
             "available": "online",
         }
+        payload["songrec_reset"] = {
+            "value": None,
+            "available": "online",
+        }
         payload["gol_generations"] = {
             "value": self._str(self.game_of_life_generations),
             "available": "online",

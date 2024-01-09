@@ -190,3 +190,9 @@ def update_forecast_type(client: Client, user_data: __UserData, message: MQTTMes
     if f_type not in FORECAST_TYPE:
         f_type = DAILY
     user_data["data"].forecast_type = f_type
+
+
+def songrec_reset_button(client: Client, user_data: __UserData, message: MQTTMessage):
+    payload = __process_message(message)
+    if payload == "RESET":
+        user_data["data"].reset_music()

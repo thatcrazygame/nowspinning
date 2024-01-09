@@ -265,6 +265,16 @@ async def mqtt_loop(data: Data):
         availability_template="{{ value_json.music_switch.available }}",
         use_shared_topic=True,
     )
+    
+    mqtt.add_button(
+        name="Songrec Reset",
+        unique_id="nowspinning_songrec_reset",
+        payload_press="RESET",
+        callback=callbacks.songrec_reset_button,
+        icon="mdi:refresh",
+        availability_template="{{ value_json.songrec_reset.available }}",
+        use_shared_topic=True,
+    )
 
     mqtt.add_subscriber_only(
         name="Sports Sub",
