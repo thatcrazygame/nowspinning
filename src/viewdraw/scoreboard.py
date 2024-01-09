@@ -3,7 +3,7 @@ from math import floor
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import Color, DrawLine, DrawText, Font
 
-from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
+from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState, WHITE, DARKGRAY
 from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
 from data import Data
 from scrollingtext import ScrollingText
@@ -22,11 +22,9 @@ class Scoreboard(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
 
-        self.white_text = Color(255, 255, 255)
-
         self.play_scroll = ScrollingText(
             FONT_8x13,
-            self.white_text,
+            WHITE,
             0,
             PANEL_HEIGHT - 2,
             0,
@@ -34,7 +32,7 @@ class Scoreboard(ViewDrawer):
             num_spaces=3,
             scroll_speed=2,
         )
-        
+
         self.cached_bases: dict[str, Image.Image] = {}
 
     def get_logo_x(self, homeaway: str) -> int:
@@ -146,7 +144,7 @@ class Scoreboard(ViewDrawer):
         max_width = line_width * max_timeouts + space * (max_timeouts - 1)
         x = self.get_inside_logo_x(homeaway, max_width, padding=2)
         for _ in range(timeouts):
-            DrawLine(canvas, x, y, x + line_width, y, self.white_text)
+            DrawLine(canvas, x, y, x + line_width, y, WHITE)
             x = x + line_width + space
 
     def draw_shots_label(self, canvas, font: MonoFont, color, y=35):
@@ -169,7 +167,7 @@ class Scoreboard(ViewDrawer):
         on_first = attr.get("on_first") or False
         on_second = attr.get("on_second") or False
         on_third = attr.get("on_third") or False
-        
+
         bases_bin = f"{int(on_third)}{int(on_second)}{int(on_first)}"
         bases_img_path = f"../img/bases/bases_{bases_bin}.png"
         bases_img = None
@@ -271,8 +269,6 @@ class Scoreboard(ViewDrawer):
         league: League = None
         team: Team = None
 
-        white_text = self.white_text
-
         if data.selected_league_abbr in data.sports:
             league = data.sports[data.selected_league_abbr]
 
@@ -303,7 +299,7 @@ class Scoreboard(ViewDrawer):
             canvas,
             clock,
             FONT_5x8,
-            white_text,
+            WHITE,
             show_possession,
             possession_homeaway,
         )
@@ -315,21 +311,31 @@ class Scoreboard(ViewDrawer):
             team_record = attr.get("team_record")
             oppo_record = attr.get("opponent_record")
             y = logo_y + LOGO_SIZE + FONT_5x8.height + 2
-            self.draw_record(
-                canvas, team_homeaway, team_record, FONT_5x8, white_text, y
-            )
-            self.draw_record(
-                canvas, oppo_homeaway, oppo_record, FONT_5x8, white_text, y
-            )
+            self.draw_record(canvas, team_homeaway, team_record, FONT_5x8, WHITE, y)
+            self.draw_record(canvas, oppo_homeaway, oppo_record, FONT_5x8, WHITE, y)
 
         if team.game_state not in [GameState.IN, GameState.POST]:
             return
 
+        score_y = 24
+        team_color = WHITE
+        oppo_color = WHITE
+        if team.game_state is GameState.POST:
+            score_y = 32
+            if attr.get("team_winner"):
+                oppo_color = DARKGRAY
+            else:
+                team_color = DARKGRAY
+
         team_score = attr.get("team_score")
-        self.draw_score(canvas, team_score, team_homeaway, FONT_10x20, white_text)
+        self.draw_score(
+            canvas, team_score, team_homeaway, FONT_10x20, team_color, score_y
+        )
 
         oppo_score = attr.get("opponent_score")
-        self.draw_score(canvas, oppo_score, oppo_homeaway, FONT_10x20, white_text)
+        self.draw_score(
+            canvas, oppo_score, oppo_homeaway, FONT_10x20, oppo_color, score_y
+        )
 
         if team.game_state is not GameState.IN:
             return
@@ -342,20 +348,18 @@ class Scoreboard(ViewDrawer):
             oppo_shots = attr.get("opponent_shots_on_target")
 
             if team_shots and oppo_shots:
-                self.draw_shots_label(canvas, FONT_5x8, white_text)
+                self.draw_shots_label(canvas, FONT_5x8, WHITE)
 
-            self.draw_shots(canvas, team_shots, team_homeaway, FONT_5x8, white_text)
-            self.draw_shots(canvas, oppo_shots, oppo_homeaway, FONT_5x8, white_text)
+            self.draw_shots(canvas, team_shots, team_homeaway, FONT_5x8, WHITE)
+            self.draw_shots(canvas, oppo_shots, oppo_homeaway, FONT_5x8, WHITE)
 
         if sport == BASEBALL:
             self.draw_bases(canvas, attr)
-            self.draw_count(canvas, attr, FONT_5x8, white_text)
+            self.draw_count(canvas, attr, FONT_5x8, WHITE)
 
         if sport == FOOTBALL:
             down_distance_text = attr.get("down_distance_text")
-            self.draw_down_distance_yard(
-                canvas, down_distance_text, FONT_5x8, white_text
-            )
+            self.draw_down_distance_yard(canvas, down_distance_text, FONT_5x8, WHITE)
 
             team_timeouts = attr.get("team_timeouts")
             oppo_timeouts = attr.get("opponent_timeouts")

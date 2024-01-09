@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from rgbmatrix.graphics import Color
 
 
 class AutoValue(Enum):
@@ -31,3 +32,6 @@ PANEL_HEIGHT = 64
 HOURLY = "Hourly"
 DAILY = "Daily"
 FORECAST_TYPE = {HOURLY, DAILY}
+
+WHITE = Color(255, 255, 255)
+DARKGRAY = Color(155, 155, 155)
