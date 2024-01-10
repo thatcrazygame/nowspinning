@@ -323,10 +323,13 @@ class Scoreboard(ViewDrawer):
         oppo_color = WHITE
         if team.game_state is GameState.POST:
             score_y = 32
-            if attr.get("team_winner"):
-                oppo_color = GRAY
-            else:
+            team_winner = attr.get("team_winner")
+            if team_winner is not None and not team_winner:
                 team_color = GRAY
+
+            opponent_winner = attr.get("opponent_winner")
+            if opponent_winner is not None and not opponent_winner:
+                oppo_color = GRAY
 
         team_score = attr.get("team_score")
         self.draw_score(
