@@ -24,23 +24,23 @@ class MusicInfo(ViewDrawer):
         artist_y = y + FONT_8x13.height + linespace
 
         self.title_scroll = ScrollingText(
-            FONT_8x13,
-            WHITE,
-            x,
-            title_y,
-            PANEL_WIDTH,
-            PANEL_WIDTH * 2,
+            font=FONT_8x13,
+            color=WHITE,
+            starting_x=x,
+            y=title_y,
+            left_bound=x,
+            right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             pause_dur=2.0,
         )
 
         self.artist_scroll = ScrollingText(
-            FONT_8x13,
-            WHITE,
-            x,
-            artist_y,
-            PANEL_WIDTH,
-            PANEL_WIDTH * 2,
+            font=FONT_8x13,
+            color=WHITE,
+            starting_x=x,
+            y=artist_y,
+            left_bound=x,
+            right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             pause_dur=2.0,
         )
