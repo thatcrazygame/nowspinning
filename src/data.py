@@ -220,9 +220,6 @@ class Data(object):
             f"Refresh music - artist(s): {self.artists} title: {self.title} album: {self.album}"
         )
 
-        if self.switch_to_music:
-            self.view = View.MUSIC
-
     def views_by_last_drawn(self, exclude: list[View] = [View.MUSIC]):
         views = [
             (drawer.last_drawn, view)
