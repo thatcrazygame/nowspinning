@@ -1,9 +1,10 @@
 from math import floor
 
 from PIL import Image, ImageDraw
-from rgbmatrix.graphics import Color, DrawLine, DrawText, Font
+from rgbmatrix.graphics import DrawLine, DrawText
 
-from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState, WHITE, DARKGRAY
+from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
+from constants.colors import BLACK, WHITE, GRAY
 from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
 from data import Data
 from scrollingtext import ScrollingText
@@ -208,11 +209,11 @@ class Scoreboard(ViewDrawer):
             out_size = radius * 2
             out = Image.new("RGB", (out_size, out_size))
             draw = ImageDraw.Draw(out)
-            fill = (0, 0, 0)
+            fill = BLACK.rgb
             if outs >= o + 1:
-                fill = (255, 255, 255)
+                fill = WHITE.rgb
             draw.ellipse(
-                (0, 0, out_size - 1, out_size - 1), fill=fill, outline=(255, 255, 255)
+                (0, 0, out_size - 1, out_size - 1), fill=fill, outline=WHITE.rgb
             )
             canvas.SetImage(out, x, y)
             x += out.width + out_space
@@ -323,9 +324,9 @@ class Scoreboard(ViewDrawer):
         if team.game_state is GameState.POST:
             score_y = 32
             if attr.get("team_winner"):
-                oppo_color = DARKGRAY
+                oppo_color = GRAY
             else:
-                team_color = DARKGRAY
+                team_color = GRAY
 
         team_score = attr.get("team_score")
         self.draw_score(

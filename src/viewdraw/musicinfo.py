@@ -1,7 +1,7 @@
 from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants.colors import WHITE
 from constants.fonts import FONT_8x13
 from data import Data
-from rgbmatrix.graphics import Color
 from scrollingtext import ScrollingText
 from . import ViewDrawer
 
@@ -13,7 +13,6 @@ class MusicInfo(ViewDrawer):
     def __init__(self) -> None:
         super().__init__()
 
-        white_text = Color(255, 255, 255)
         margin = 2
         linespace = 1
 
@@ -26,7 +25,7 @@ class MusicInfo(ViewDrawer):
 
         self.title_scroll = ScrollingText(
             FONT_8x13,
-            white_text,
+            WHITE,
             x,
             title_y,
             PANEL_WIDTH,
@@ -37,7 +36,7 @@ class MusicInfo(ViewDrawer):
 
         self.artist_scroll = ScrollingText(
             FONT_8x13,
-            white_text,
+            WHITE,
             x,
             artist_y,
             PANEL_WIDTH,

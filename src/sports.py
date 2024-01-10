@@ -5,6 +5,7 @@ from PIL import Image
 import requests
 
 from constants import GameState
+from constants.colors import BLACK
 
 URL_BASE = "https://a.espncdn.com/i/teamlogos"
 
@@ -19,7 +20,7 @@ class SportsOrganization(object):
 
     def get_logo(self, size: tuple) -> Image.Image:
         if not self._logo_img and self._logo_url != "":
-            background = Image.new("RGBA", size, (0, 0, 0))
+            background = Image.new("RGBA", size, BLACK.rgb)
             response = requests.get(self._logo_url.lower())
             if response.status_code == requests.codes.ok:
                 img = Image.open(BytesIO(response.content))

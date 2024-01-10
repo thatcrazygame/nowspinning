@@ -4,6 +4,7 @@ import numpy as np
 from PIL import ImageDraw
 from pyaudio import paContinue, paInt16, PyAudio, Stream
 
+from constants.colors import BLACK
 from utils.images import get_gradient_img
 
 CHUNK = 256  # Samples: 1024,  512, 256, 128
@@ -124,7 +125,7 @@ class EQStream(object):
         for bin_val in bins:
             bar_height = max_height - bin_val
             draw.rectangle(
-                [(bar_x, 0), (bar_x + bar_width - 1, bar_height)], fill=(0, 0, 0)
+                [(bar_x, 0), (bar_x + bar_width - 1, bar_height)], fill=BLACK.rgb
             )
             bar_x += bar_width
 

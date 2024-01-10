@@ -5,6 +5,8 @@ import numpy as np
 from PIL import Image
 import wcag_contrast_ratio as contrast
 
+from constants.colors import BLACK, WHITE
+
 RGB = tuple[float, float, float] | tuple[int, int, int]
 CONSTRAST_MIN = 1.43
 LIGHTNESS_BUMP = 0.14
@@ -52,7 +54,7 @@ def normalize_rgb(color: RGB) -> tuple[float, float, float]:
     return tuple(__normalize(c) for c in color)
 
 
-def get_contrast(color: RGB, background=(0, 0, 0)) -> float:
+def get_contrast(color: RGB, background=BLACK.rgb) -> float:
     normalized_color = normalize_rgb(color)
     return contrast.rgb(background, normalized_color)
 
@@ -93,7 +95,7 @@ def get_gradient_img(
         one_color = colors
 
     if colors is None:
-        one_color = (255, 255, 255)
+        one_color = WHITE.rgb
 
     if one_color is not None:
         return Image.new("RGB", (width, height), one_color)

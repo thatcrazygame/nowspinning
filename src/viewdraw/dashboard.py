@@ -1,9 +1,20 @@
 from datetime import datetime
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants.colors import (
+    WHITE,
+    CRIMSON,
+    DARKRED,
+    COBALT,
+    NAVY,
+    SOFTGREEN,
+    DARKGREEN,
+    LIGHTGRAY,
+    DARKSLATEGRAY,
+)
 from constants.fonts import FONT_4x6, FONT_8x13
 from data import Data
-from rgbmatrix.graphics import Color, DrawText
+from rgbmatrix.graphics import DrawText
 
 from linegraph import LineGraph
 from . import ViewDrawer
@@ -16,14 +27,12 @@ class Dashboard(ViewDrawer):
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
 
-        white_text = Color(255, 255, 255)
-
         now = datetime.now()
         now_str = now.strftime("%I:%M %m/%d/%Y")
 
         x = PANEL_WIDTH - (len(now_str) * FONT_8x13.char_width) / 2
         y = FONT_8x13.height - 2
-        DrawText(canvas, FONT_8x13, x, y, white_text, now_str)
+        DrawText(canvas, FONT_8x13, x, y, WHITE, now_str)
 
         tmpr_avgs = []
         hum_avgs = []
@@ -52,29 +61,29 @@ class Dashboard(ViewDrawer):
                 units="°F",
                 data=tmpr_avgs,
                 round=1,
-                line_color=(191, 29, 0),
-                fill_color=(51, 8, 0),
+                line_color=CRIMSON.rgb,
+                fill_color=DARKRED.rgb,
             ),
             LineGraph(
                 label="Hum",
                 units="%",
                 data=hum_avgs,
                 round=1,
-                line_color=(0, 76, 191),
-                fill_color=(0, 20, 51),
+                line_color=COBALT.rgb,
+                fill_color=NAVY.rgb,
             ),
             LineGraph(
                 label="VOC",
                 data=voc_avgs,
-                line_color=(109, 191, 119),
-                fill_color=(29, 51, 32),
+                line_color=SOFTGREEN.rgb,
+                fill_color=DARKGREEN.rgb,
             ),
             LineGraph(
                 label="CO2",
                 units="ppm",
                 data=co2_avgs,
-                line_color=(187, 191, 172),
-                fill_color=(50, 51, 46),
+                line_color=LIGHTGRAY.rgb,
+                fill_color=DARKSLATEGRAY.rgb,
             ),
         ]
 
@@ -84,5 +93,5 @@ class Dashboard(ViewDrawer):
         for i, graph in enumerate(graphs):
             graph.background = background
             graph_y = PANEL_HEIGHT - graph.height * (len(graphs) - i)
-            graph.draw(canvas, FONT_4x6, graph_x, graph_y, white_text)
+            graph.draw(canvas, FONT_4x6, graph_x, graph_y, WHITE)
             background = graph.fill_color

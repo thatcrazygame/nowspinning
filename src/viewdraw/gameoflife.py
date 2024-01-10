@@ -2,11 +2,12 @@ import asyncio
 
 import numpy as np
 from PIL import Image, ImageDraw
-from rgbmatrix.graphics import Color, DrawText, Font
+from rgbmatrix.graphics import DrawText
 from scipy.signal import convolve2d
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH
 from constants.fonts import FONT_4x6
+from constants.colors import BLACK, ROYALBLUE, WHITE
 from data import Data
 from . import ViewDrawer
 
@@ -19,8 +20,8 @@ INIT_CUTOFF = 50
 
 ALIVE = 1
 DEAD = 0
-ALIVE_RGB = np.array([255, 255, 255])
-DEAD_RGB = np.array([0, 0, 0])
+ALIVE_RGB = np.array(list(WHITE.rgb))
+DEAD_RGB = np.array(list(BLACK.rgb))
 
 ADD_NOISE = "ADD_NOISE"
 RESET = "RESET"
@@ -89,9 +90,9 @@ class GameOfLife(ViewDrawer):
         padding = 2
         width = len(gens_str) * char_width + padding * 2
         height = font.height + padding * 2
-        img = Image.new("RGB", (width, height), (0, 0, 0))
+        img = Image.new("RGB", (width, height), BLACK.rgb)
         canvas.SetImage(img)
-        DrawText(canvas, font, padding, font.height, Color(45, 90, 224), gens_str)
+        DrawText(canvas, font, padding, font.height, ROYALBLUE, gens_str)
 
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()

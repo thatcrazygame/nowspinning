@@ -2,8 +2,9 @@ import logging
 from typing import Tuple
 
 from PIL import Image, ImageDraw
-from rgbmatrix.graphics import Color, DrawText, Font
+from rgbmatrix.graphics import DrawText, Font
 
+from constants.colors import BLACK, WHITE, ColorRGB
 from utils.images import get_gradient_img, adjust_lightness
 
 logger = logging.getLogger(__name__)
@@ -16,9 +17,9 @@ class LineGraph(object):
         data: list[float] = [],
         units: str = "",
         round: int = 0,
-        line_color: Tuple[int, int, int] = (255, 255, 255),
-        fill_color: Tuple[int, int, int] = (0, 0, 0),
-        background: Tuple[int, int, int] = (0, 0, 0),
+        line_color: Tuple[int, int, int] = WHITE.rgb,
+        fill_color: Tuple[int, int, int] = BLACK.rgb,
+        background: Tuple[int, int, int] = BLACK.rgb,
     ) -> None:
         self.label: str = label
         self.data: list[float] = data
@@ -72,7 +73,7 @@ class LineGraph(object):
 
         size = (self.width, self.height)
         img = Image.new("RGB", size, self.background)
-        if self.background != (0, 0, 0):
+        if self.background != BLACK.rgb:
             darker = adjust_lightness(self.background, -0.125)
             img = get_gradient_img(self.width, self.height, [self.background, darker])
 
@@ -104,7 +105,7 @@ class LineGraph(object):
 
         return img
 
-    def draw(self, canvas, font: Font, x: int, y: int, text_color: Color) -> None:
+    def draw(self, canvas, font: Font, x: int, y: int, text_color: ColorRGB) -> None:
         if not self.data:
             return
 

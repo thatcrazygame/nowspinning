@@ -4,9 +4,10 @@ from math import floor
 from zoneinfo import ZoneInfo
 
 from PIL import Image
-from rgbmatrix.graphics import Color, DrawText
+from rgbmatrix.graphics import DrawText
 
 from constants import PANEL_WIDTH, HOURLY, DAILY, FORECAST_TYPE
+from constants.colors import WHITE
 from constants.fonts import FONT_4x6, FONT_5x8, FONT_8x13, FONT_10x20
 from . import ViewDrawer
 
@@ -54,8 +55,6 @@ COMPASS = [
 TOTAL_DEGREES = 360.0
 SECTION_DEGREES = 22.5
 NUM_FORECASTS = 4
-
-WHITE = Color(255, 255, 255)
 
 UTC = ZoneInfo("UTC")
 LOCALTZ = ZoneInfo("localtime")
