@@ -23,6 +23,7 @@ from .custom import (
     SwitchInfo,
     Switch,
 )
+from utils.decorators import async_wait_for_network
 
 
 logger = logging.getLogger(__name__)
@@ -146,6 +147,7 @@ class MQTTDevice(object):
     ):
         self._on_connect_callbacks.append(callback)
 
+    @async_wait_for_network(pause=5, max_errors=5)
     def connect_client(self) -> None:
         """Connect the client to the MQTT broker, start its onw internal loop in a separate thread"""
         result = self.mqtt_client.connect(self.mqtt_settings.host)
@@ -161,6 +163,7 @@ class MQTTDevice(object):
     def shared_topic_entities(self) -> list[Discoverable]:
         return [s for s in self.entities.values() if s.state_topic == self.shared_topic]
 
+    @async_wait_for_network(pause=5, max_errors=2)
     def set_shared_state(self, state: str | int | float):
         if not self.shared_topic_entities:
             return

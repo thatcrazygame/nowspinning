@@ -373,7 +373,7 @@ async def mqtt_loop(data: Data):
         use_shared_topic=True,
     )
 
-    mqtt.connect_client()
+    await mqtt.connect_client()
 
     while data.is_running:
         team_select = mqtt.entities["Team"]
@@ -389,7 +389,7 @@ async def mqtt_loop(data: Data):
             team_opts = league.friendly_team_names
             team_select.update_options(team_opts)
 
-        mqtt.set_shared_state(data.get_json())
+        await mqtt.set_shared_state(data.get_json())
 
         await asyncio.sleep(1)
 
