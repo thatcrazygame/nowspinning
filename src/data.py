@@ -26,7 +26,7 @@ class Data(object):
         self.is_running = True
         self.view: View = View.OFF
         self.view_drawers: dict[View, ViewDrawer] = {}
-        self.switch_to_music: bool = False
+        self.switch_to_music: bool = True
 
         self.reset_music()
         self.music_timeout: int = 1800
@@ -48,6 +48,7 @@ class Data(object):
         self.game_of_life_cells: int = 0
         self.game_of_life_generations: int = 0
         self.game_of_life_show_gens: bool = False
+        self.game_of_life_seconds_per_tick: float = 0.2
 
         self.weather_forecast: dict = None
         self.forecast_type: str = DAILY
@@ -167,6 +168,10 @@ class Data(object):
         }
         payload["gol_add_noise"] = {
             "value": None,
+            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+        }
+        payload["gol_seconds_per_tick"] = {
+            "value": self._str(self.game_of_life_seconds_per_tick, round_digits=1),
             "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
         }
         payload["forecast_type"] = {

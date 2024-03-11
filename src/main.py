@@ -355,6 +355,20 @@ async def mqtt_loop(data: Data):
         use_shared_topic=True,
     )
 
+    mqtt.add_number(
+        name="Game of Life Seconds Per Tick",
+        callback=callbacks.game_of_life_spt,
+        unique_id="nowspinning_gol_seconds_per_tick",
+        icon="mdi:play-speed",
+        value_template="{{ value_json.gol_seconds_per_tick.value }}",
+        availability_template="{{ value_json.gol_seconds_per_tick.available }}",
+        use_shared_topic=True,
+        mode="slider",
+        min=0.0,
+        max=10.0,
+        step=0.1,
+    )
+
     mqtt.add_subscriber_only(
         name="Nowspinning Weather Forecast",
         unique_id="nowspinning_weather_forecast",
@@ -404,7 +418,7 @@ def init_matrix():
     options.chain_length = 2
     options.parallel = 1
     options.hardware_mapping = "adafruit-hat-pwm"
-    options.gpio_slowdown = 2
+    options.gpio_slowdown = 4
     # options.pwm_lsb_nanoseconds = 50
     # options.brightness = 50
     # options.pwm_bits = 8

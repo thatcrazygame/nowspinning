@@ -1,4 +1,5 @@
 import asyncio
+from time import perf_counter
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -32,6 +33,7 @@ class GameOfLife(ViewDrawer):
         super().__init__()
         self.generation: int = 0
         self.grid_data = self.new_random_grid()
+        self.last_tick = perf_counter()
 
     @property
     def alive_cells(self) -> int:
@@ -82,6 +84,7 @@ class GameOfLife(ViewDrawer):
         new_grid = np.asarray(new_grid.astype(int))
 
         self.grid_data = new_grid
+        self.last_tick = perf_counter()
 
     def draw_gens_counter(self, canvas):
         gens_str = f"gen: {self.generation}"
@@ -107,4 +110,5 @@ class GameOfLife(ViewDrawer):
         data.game_of_life_generations = self.generation
         data.game_of_life_cells = self.alive_cells
 
-        self.tick()
+        if perf_counter() - self.last_tick >= data.game_of_life_seconds_per_tick:
+            self.tick()

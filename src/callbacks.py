@@ -177,6 +177,11 @@ def game_of_life_gens_switch(
     user_data["data"].game_of_life_show_gens = state == "ON"
 
 
+def game_of_life_spt(client: Client, user_data: __UserData, message: MQTTMessage):
+    seconds = __process_message(message)
+    user_data["data"].game_of_life_seconds_per_tick = float(seconds)
+
+
 def weather(client: Client, user_data: __UserData, message: MQTTMessage):
     payload = __process_message(message, is_json=True)
     if "condition" not in payload:
@@ -196,6 +201,7 @@ def songrec_reset_button(client: Client, user_data: __UserData, message: MQTTMes
     payload = __process_message(message)
     if payload == "RESET":
         user_data["data"].reset_music()
+
 
 def music_timeout_number(client: Client, user_data: __UserData, message: MQTTMessage):
     seconds = __process_message(message)
