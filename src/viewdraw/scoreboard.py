@@ -87,6 +87,12 @@ class Scoreboard(ViewDrawer):
         x = logo_x + floor(LOGO_SIZE / 2) - floor(width / 2)
         return x
 
+    def get_outer_x(self, homeaway: str, width: int, padding: int = 0):
+        if homeaway == HOME:
+            return PANEL_WIDTH * 2 - width - padding
+        else:
+            return 0 + padding
+
     def get_possession_homeaway(self, possession_id, team_id, team_homeaway) -> str:
         if not possession_id:
             return None
@@ -291,7 +297,11 @@ class Scoreboard(ViewDrawer):
             return
 
         record_width = len(record) * font.char_width
-        x = self.get_middle_logo_x(homeaway, record_width)
+        x = 0
+        if record_width > LOGO_SIZE:
+            x = self.get_outer_x(homeaway, record_width, padding=1)
+        else:
+            x = self.get_middle_logo_x(homeaway, record_width)
         DrawText(canvas, font, x, y, color, record)
 
     async def draw(self, canvas, data: Data):
@@ -307,7 +317,7 @@ class Scoreboard(ViewDrawer):
         team_homeaway = game.get("team_homeaway") or HOME
         oppo_homeaway = game.get("opponent_homeaway") or AWAY
 
-        clock = game.get("clock")
+        clock = game.get("clock") or "No Game Available"
 
         show_possession = False
         possession_homeaway = None
