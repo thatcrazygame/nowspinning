@@ -11,6 +11,12 @@ URL_BASE = "https://a.espncdn.com/i/teamlogos"
 
 logger = logging.getLogger(__name__)
 
+"""
+*******************
+    DEPRECATED
+*******************
+"""
+
 
 class SportsOrganization(object):
     def __init__(self, abbr: str) -> None:

@@ -23,7 +23,7 @@ import callbacks
 from constants import FORECAST_TYPE, PANEL_WIDTH, PANEL_HEIGHT, View
 from data import Data
 from mqttdevice import MQTTDevice, Discoverable
-from sports import League, Team
+
 from utils import get_mac_address
 from viewdraw import ViewDrawer
 from viewdraw.dashboard import Dashboard
@@ -138,7 +138,7 @@ async def mqtt_loop(data: Data):
         name="nowspinning",
         identifiers=mac,
         manufacturer="Raspberry Pi Foundation",
-        viewl="Raspberry Pi 3B+",
+        model="Raspberry Pi 3B+",
     )
 
     mqtt = MQTTDevice(
@@ -226,35 +226,6 @@ async def mqtt_loop(data: Data):
         use_shared_topic=True,
     )
 
-    team_opts = []
-    if data.selected_league_abbr:
-        league = data.sports[data.selected_league_abbr]
-        team_opts = league.friendly_team_names
-
-    mqtt.add_select(
-        name="Team",
-        callback=callbacks.update_team,
-        unique_id="nowspinning_team",
-        options=team_opts,
-        value_template="{{ value_json.team.value }}",
-        availability_template="{{ value_json.team.available }}",
-        use_shared_topic=True,
-    )
-
-    league_opts = []
-    if data.sports:
-        league_opts = list(data.sports.keys())
-
-    mqtt.add_select(
-        name="League",
-        callback=callbacks.update_league,
-        unique_id="nowspinning_league",
-        options=league_opts,
-        value_template="{{ value_json.league.value }}",
-        availability_template="{{ value_json.league.available }}",
-        use_shared_topic=True,
-    )
-
     mqtt.add_switch(
         name="Switch to Music",
         callback=callbacks.music_switch,
@@ -288,10 +259,10 @@ async def mqtt_loop(data: Data):
     )
 
     mqtt.add_subscriber_only(
-        name="Sports Sub",
-        unique_id="nowspinning_sports_sub",
-        callback=callbacks.teamtracker,
-        sub_topic="teamtracker/all",
+        name="Game Sub",
+        unique_id="nowspinning_game_sub",
+        callback=callbacks.teamtracker_selected_game,
+        sub_topic="teamtracker/selected_game",
         start_topic="teamtracker/start",
     )
 
@@ -390,21 +361,7 @@ async def mqtt_loop(data: Data):
     await mqtt.connect_client()
 
     while data.is_running:
-        team_select = mqtt.entities["Team"]
-        league_select = mqtt.entities["League"]
-        league_opts = list(data.sports.keys())
-        league_select.update_options(league_opts)
-
-        if data.selected_league_abbr is None and league_opts:
-            data.selected_league_abbr = league_opts[0]
-
-        if data.selected_league:
-            league = data.selected_league
-            team_opts = league.friendly_team_names
-            team_select.update_options(team_opts)
-
         await mqtt.set_shared_state(data.get_json())
-
         await asyncio.sleep(1)
 
     mqtt.set_all_availability(False)

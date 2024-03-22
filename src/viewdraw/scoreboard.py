@@ -1,14 +1,17 @@
+from io import BytesIO
+import logging
 from math import floor
 
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import DrawLine, DrawText
+import requests
 
 from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
 from constants.colors import BLACK, WHITE, GRAY
 from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
 from data import Data
 from scrollingtext import ScrollingText
-from sports import League, Team
+
 from . import ViewDrawer
 
 HOME = "home"
@@ -17,6 +20,9 @@ HOCKEY = "hockey"
 BASEBALL = "baseball"
 FOOTBALL = "football"
 LOGO_SIZE = 36
+LOGO_URL = "https://a.espncdn.com/i/teamlogos"
+
+logger = logging.getLogger(__name__)
 
 
 class Scoreboard(ViewDrawer):
@@ -35,6 +41,25 @@ class Scoreboard(ViewDrawer):
         )
 
         self.cached_bases: dict[str, Image.Image] = {}
+        self.cached_logos: dict[str, Image.Image] = {}
+
+    def get_logo(self, url: str, size: tuple) -> Image.Image:
+        url = url.lower()
+        logo_img = self.cached_logos.get(url)
+        if not logo_img:
+            background = Image.new("RGBA", size, BLACK.rgb)
+            response = requests.get(url)
+            if response.status_code == requests.codes.ok:
+                img = Image.open(BytesIO(response.content))
+                img.thumbnail(size, Image.Resampling.LANCZOS)
+                img = Image.alpha_composite(background, img)
+                img = img.convert("RGB")
+                self.cached_logos[url] = img
+                logo_img = img
+            else:
+                logger.warning(vars(response))
+
+        return logo_img
 
     def get_logo_x(self, homeaway: str) -> int:
         if homeaway == HOME:
@@ -101,14 +126,17 @@ class Scoreboard(ViewDrawer):
         y = font.height
         DrawText(canvas, font, x, y, color, clock)
 
-    def draw_logos(self, canvas, data: Data, team: Team, league: League, logo_y: int):
-        attr = team.attributes
-        team_homeaway = attr.get("team_homeaway") or HOME
-        oppo_homeaway = attr.get("opponent_homeaway") or AWAY
-        oppo_abbr = attr.get("opponent_abbr")
-
+    def draw_logos(self, canvas, data: Data, logo_y: int):
+        game = data.selected_game
+        league = game.get("league")
+        team_abbr = game.get("team_abbr")
+        oppo_abbr = game.get("opponent_abbr")
+        team_homeaway = game.get("team_homeaway") or HOME
+        oppo_homeaway = game.get("opponent_homeaway") or AWAY
+        team_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{team_abbr}.png"
         logo_size = (LOGO_SIZE, LOGO_SIZE)
-        team_img = team.get_logo(logo_size)
+
+        team_img = self.get_logo(team_url, logo_size)
         if not team_img:
             return
 
@@ -116,12 +144,17 @@ class Scoreboard(ViewDrawer):
         canvas.SetImage(team_img, team_img_x, logo_y)
 
         if oppo_abbr:
-            oppo = data.sports[league.abbr].team(oppo_abbr)
-            oppo_img = oppo.get_logo(logo_size)
+            oppo_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{oppo_abbr}.png"
+            oppo_img = self.get_logo(oppo_url, logo_size)
+            if not oppo_img:
+                return
             oppo_img_x = self.get_logo_x(oppo_homeaway)
             canvas.SetImage(oppo_img, oppo_img_x, logo_y)
         else:
-            league_img = league.get_logo(logo_size)
+            league_url = game.get("league_logo")
+            league_img = self.get_logo(league_url, logo_size)
+            if not league_img:
+                return
             league_img_x = self.get_logo_x(AWAY)
             canvas.SetImage(league_img, league_img_x, logo_y)
 
@@ -163,11 +196,10 @@ class Scoreboard(ViewDrawer):
         y = shots_y
         DrawText(canvas, font, x, y, color, str(shots))
 
-    def draw_bases(self, canvas, attributes):
-        attr = attributes
-        on_first = attr.get("on_first") or False
-        on_second = attr.get("on_second") or False
-        on_third = attr.get("on_third") or False
+    def draw_bases(self, canvas, game):
+        on_first = game.get("on_first") or False
+        on_second = game.get("on_second") or False
+        on_third = game.get("on_third") or False
 
         bases_bin = f"{int(on_third)}{int(on_second)}{int(on_first)}"
         bases_img_path = f"../img/bases/bases_{bases_bin}.png"
@@ -188,12 +220,10 @@ class Scoreboard(ViewDrawer):
         bases_y = 29
         canvas.SetImage(bases_img, bases_x, bases_y)
 
-    def draw_count(self, canvas, attributes, font, color, count_y=35):
-        attr = attributes
-
-        outs = attr.get("outs") or 0
-        balls = attr.get("balls") or 0
-        strikes = attr.get("strikes") or 0
+    def draw_count(self, canvas, game, font, color, count_y=35):
+        outs = game.get("outs") or 0
+        balls = game.get("balls") or 0
+        strikes = game.get("strikes") or 0
 
         x = PANEL_WIDTH + 3
         y = count_y
@@ -267,31 +297,24 @@ class Scoreboard(ViewDrawer):
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
 
-        league: League = None
-        team: Team = None
-
-        if data.selected_league_abbr in data.sports:
-            league = data.sports[data.selected_league_abbr]
-
-        if league is not None and data.selected_team_abbr in league.teams:
-            team = league.team(data.selected_team_abbr)
-
-        if team is None:
+        game = data.selected_game
+        if not game:
             return
 
-        attr = team.attributes
-        sport = attr.get("sport")
-        team_homeaway = attr.get("team_homeaway") or HOME
-        oppo_homeaway = attr.get("opponent_homeaway") or AWAY
+        game_state = GameState[game["state"]]
 
-        clock = attr.get("clock")
+        sport = game.get("sport")
+        team_homeaway = game.get("team_homeaway") or HOME
+        oppo_homeaway = game.get("opponent_homeaway") or AWAY
+
+        clock = game.get("clock")
 
         show_possession = False
         possession_homeaway = None
         if sport == FOOTBALL:
             show_possession = True
-            possession_id = attr.get("possession")
-            team_id = attr.get("team_id")
+            possession_id = game.get("possession")
+            team_id = game.get("team_id")
             possession_homeaway = self.get_possession_homeaway(
                 possession_id, team_id, team_homeaway
             )
@@ -306,50 +329,50 @@ class Scoreboard(ViewDrawer):
         )
 
         logo_y = FONT_5x8.height + 1
-        self.draw_logos(canvas, data, team, league, logo_y)
+        self.draw_logos(canvas, data, logo_y)
 
-        if team.game_state in [GameState.PRE, GameState.POST]:
-            team_record = attr.get("team_record")
-            oppo_record = attr.get("opponent_record")
+        if game_state in [GameState.PRE, GameState.POST]:
+            team_record = game.get("team_record")
+            oppo_record = game.get("opponent_record")
             y = logo_y + LOGO_SIZE + FONT_5x8.height + 2
             self.draw_record(canvas, team_homeaway, team_record, FONT_5x8, WHITE, y)
             self.draw_record(canvas, oppo_homeaway, oppo_record, FONT_5x8, WHITE, y)
 
-        if team.game_state not in [GameState.IN, GameState.POST]:
+        if game_state not in [GameState.IN, GameState.POST]:
             return
 
         score_y = 24
         team_color = WHITE
         oppo_color = WHITE
-        if team.game_state is GameState.POST:
+        if game_state is GameState.POST:
             score_y = 32
-            team_winner = attr.get("team_winner")
+            team_winner = game.get("team_winner")
             if team_winner is not None and not team_winner:
                 team_color = GRAY
 
-            opponent_winner = attr.get("opponent_winner")
+            opponent_winner = game.get("opponent_winner")
             if opponent_winner is not None and not opponent_winner:
                 oppo_color = GRAY
 
-        team_score = attr.get("team_score")
+        team_score = game.get("team_score")
         self.draw_score(
             canvas, team_score, team_homeaway, FONT_10x20, team_color, score_y
         )
 
-        oppo_score = attr.get("opponent_score")
+        oppo_score = game.get("opponent_score")
         self.draw_score(
             canvas, oppo_score, oppo_homeaway, FONT_10x20, oppo_color, score_y
         )
 
-        if team.game_state is not GameState.IN:
+        if game_state is not GameState.IN:
             return
 
-        last_play = attr.get("last_play")
+        last_play = game.get("last_play")
         self.draw_last_play(canvas, last_play)
 
         if sport == HOCKEY:
-            team_shots = attr.get("team_shots_on_target")
-            oppo_shots = attr.get("opponent_shots_on_target")
+            team_shots = game.get("team_shots_on_target")
+            oppo_shots = game.get("opponent_shots_on_target")
 
             if team_shots and oppo_shots:
                 self.draw_shots_label(canvas, FONT_5x8, WHITE)
@@ -358,15 +381,15 @@ class Scoreboard(ViewDrawer):
             self.draw_shots(canvas, oppo_shots, oppo_homeaway, FONT_5x8, WHITE)
 
         if sport == BASEBALL:
-            self.draw_bases(canvas, attr)
-            self.draw_count(canvas, attr, FONT_5x8, WHITE)
+            self.draw_bases(canvas, game)
+            self.draw_count(canvas, game, FONT_5x8, WHITE)
 
         if sport == FOOTBALL:
-            down_distance_text = attr.get("down_distance_text")
+            down_distance_text = game.get("down_distance_text")
             self.draw_down_distance_yard(canvas, down_distance_text, FONT_5x8, WHITE)
 
-            team_timeouts = attr.get("team_timeouts")
-            oppo_timeouts = attr.get("opponent_timeouts")
+            team_timeouts = game.get("team_timeouts")
+            oppo_timeouts = game.get("opponent_timeouts")
             max_timeouts = 3
             self.draw_timeouts(canvas, team_homeaway, team_timeouts, max_timeouts)
             self.draw_timeouts(canvas, oppo_homeaway, oppo_timeouts, max_timeouts)
