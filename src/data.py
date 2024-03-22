@@ -11,7 +11,6 @@ from PIL import Image, ImageChops
 from constants import View, HOURLY, DAILY
 from eqstream import EQStream
 from utils.images import get_dominant_colors, get_min_constrast_colors
-from sports import League, Team
 from viewdraw import ViewDrawer
 
 SONGREC_TIMEOUT_SECS = 30.0 * 60.0
@@ -40,9 +39,7 @@ class Data(object):
         self.raw_gas = None
         self.averages: dict[str, list[float]] = {}
 
-        self.sports: dict[str, League] = {}
-        self.selected_league_abbr: str = None
-        self.selected_team_abbr: str = None
+        self.selected_game: dict = {}
 
         self.game_of_life_commands = asyncio.Queue()
         self.game_of_life_cells: int = 0
@@ -91,31 +88,6 @@ class Data(object):
             artists_str = f"{','.join(self._artists)}"
         return artists_str
 
-    @property
-    def selected_league(self) -> League:
-        if not self.selected_league_abbr:
-            return None
-
-        return self.sports[self.selected_league_abbr]
-
-    @property
-    def selected_team(self) -> Team:
-        if not self.selected_league:
-            return None
-
-        league = self.selected_league
-        team: Team = None
-
-        if self.selected_team_abbr:
-            team = league.team(self.selected_team_abbr)
-        else:
-            teams = list(league.teams.values())
-            teams.sort(key=Team.by_game_state, reverse=True)
-            team = teams[0]
-            self.selected_team_abbr = team.abbr
-
-        return team
-
     def get_payload(self) -> dict:
         payload = {}
         payload["temperature"] = {
@@ -132,15 +104,6 @@ class Data(object):
         payload["album"] = {"value": self._str(self.album), "available": "online"}
         payload["title"] = {"value": self._str(self.title), "available": "online"}
         payload["view"] = {"value": self._str(self.view.value), "available": "online"}
-        payload["league"] = {
-            "value": self._str(self.selected_league_abbr),
-            "available": self._on_off(bool(self.sports), "line"),
-        }
-        team_name = self.selected_team.friendly_name if self.selected_team else ""
-        payload["team"] = {
-            "value": self._str(team_name),
-            "available": self._on_off(bool(self.sports), "line"),
-        }
         payload["music_switch"] = {
             "value": self._on_off(self.switch_to_music).upper(),
             "available": "online",
