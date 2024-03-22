@@ -1,5 +1,8 @@
 from enum import Enum, auto
+import numpy as np
 from rgbmatrix.graphics import Color
+from constants.colors import BLACK, WHITE
+from zoneinfo import ZoneInfo
 
 
 class AutoValue(Enum):
@@ -26,9 +29,105 @@ class GameState(Enum):
     IN = 4
 
 
+class Direction(Enum):
+    LEFT = -1
+    RIGHT = 1
+
+
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
 
 HOURLY = "Hourly"
 DAILY = "Daily"
 FORECAST_TYPE = {HOURLY, DAILY}
+
+FAN_PIN = 25
+METERS_ABOVE_SEA_LEVEL = 274
+TEMPERATURE_OFFSET = 6.0
+
+INFO_PAYLOAD_LEN = 50
+
+SONGREC_TIMEOUT_SECS = 30.0 * 60.0
+CHUNK = 256  # Samples: 1024,  512, 256, 128
+RATE = 44100  # Equivalent to Human Hearing at 40 kHz
+MAX_HZ = 20000  # Commonly referenced upper limit for "normal" audio range
+MAX_VOL = 200
+BUFFER_FRAMES = 4
+IS_HORIZONTAL = (True, True, True)
+IS_VERTICAL = (False, False, False)
+
+NUM_BARS = 16
+BAR_HEIGHT = 32
+
+LOGO_URL = "https://a.espncdn.com/i/teamlogos"
+
+GRID_MARGIN = 10
+GRID_HEIGHT = PANEL_HEIGHT + GRID_MARGIN * 2
+GRID_WIDTH = PANEL_WIDTH * 2 + GRID_MARGIN * 2
+
+RNG_RANGE = 100
+INIT_CUTOFF = 50
+
+ALIVE = 1
+DEAD = 0
+ALIVE_RGB = np.array(list(WHITE.rgb))
+DEAD_RGB = np.array(list(BLACK.rgb))
+
+ADD_NOISE = "ADD_NOISE"
+RESET = "RESET"
+
+HOME = "home"
+AWAY = "away"
+HOCKEY = "hockey"
+BASEBALL = "baseball"
+FOOTBALL = "football"
+LOGO_SIZE = 36
+LOGO_URL = "https://a.espncdn.com/i/teamlogos"
+
+CONDITION = {
+    "clear-night",
+    "cloudy",
+    "fog",
+    "hail",
+    "lightning",
+    "lightning-rainy",
+    "partlycloudy",
+    "partlycloudy-night",
+    "pouring",
+    "rainy",
+    "snowy",
+    "snowy-rainy",
+    "sunny",
+    "windy",
+    "windy-variant",
+    "exceptional",
+}
+SMALL = 16
+BIG = 32
+CONDITION_SIZE = {SMALL, BIG}
+IMG_PATH = "../img/weather"
+COMPASS = [
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+    "N",
+]
+TOTAL_DEGREES = 360.0
+SECTION_DEGREES = 22.5
+NUM_FORECASTS = 4
+
+UTC = ZoneInfo("UTC")
+LOCALTZ = ZoneInfo("localtime")

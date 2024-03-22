@@ -4,16 +4,15 @@ import numpy as np
 from PIL import ImageDraw
 from pyaudio import paContinue, paInt16, PyAudio, Stream
 
+from constants import (
+    CHUNK,
+    RATE,
+    MAX_HZ,
+    MAX_VOL,
+    BUFFER_FRAMES,
+)
 from constants.colors import BLACK
 from utils.images import get_gradient_img
-
-CHUNK = 256  # Samples: 1024,  512, 256, 128
-RATE = 44100  # Equivalent to Human Hearing at 40 kHz
-MAX_HZ = 20000  # Commonly referenced upper limit for "normal" audio range
-MAX_VOL = 200
-BUFFER_FRAMES = 4
-IS_HORIZONTAL = (True, True, True)
-IS_VERTICAL = (False, False, False)
 
 
 class EQStream(object):

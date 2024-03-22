@@ -6,26 +6,23 @@ from PIL import Image, ImageDraw
 from rgbmatrix.graphics import DrawText
 from scipy.signal import convolve2d
 
-from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants import (
+    GRID_MARGIN,
+    GRID_HEIGHT,
+    GRID_WIDTH,
+    RNG_RANGE,
+    INIT_CUTOFF,
+    ALIVE,
+    DEAD,
+    ALIVE_RGB,
+    DEAD_RGB,
+    ADD_NOISE,
+    RESET,
+)
 from constants.fonts import FONT_4x6
 from constants.colors import BLACK, ROYALBLUE, WHITE
 from data import Data
 from . import ViewDrawer
-
-GRID_MARGIN = 10
-GRID_HEIGHT = PANEL_HEIGHT + GRID_MARGIN * 2
-GRID_WIDTH = PANEL_WIDTH * 2 + GRID_MARGIN * 2
-
-RNG_RANGE = 100
-INIT_CUTOFF = 50
-
-ALIVE = 1
-DEAD = 0
-ALIVE_RGB = np.array(list(WHITE.rgb))
-DEAD_RGB = np.array(list(BLACK.rgb))
-
-ADD_NOISE = "ADD_NOISE"
-RESET = "RESET"
 
 
 class GameOfLife(ViewDrawer):

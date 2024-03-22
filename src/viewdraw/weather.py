@@ -1,63 +1,31 @@
 import asyncio
 from datetime import datetime
 from math import floor
-from zoneinfo import ZoneInfo
 
 from PIL import Image
 from rgbmatrix.graphics import DrawText
 
-from constants import PANEL_WIDTH, HOURLY, DAILY, FORECAST_TYPE
+from constants import (
+    PANEL_WIDTH,
+    HOURLY,
+    DAILY,
+    FORECAST_TYPE,
+    CONDITION,
+    SMALL,
+    BIG,
+    CONDITION_SIZE,
+    IMG_PATH,
+    COMPASS,
+    TOTAL_DEGREES,
+    SECTION_DEGREES,
+    NUM_FORECASTS,
+    UTC,
+    LOCALTZ,
+)
+
 from constants.colors import WHITE
 from constants.fonts import FONT_4x6, FONT_5x8, FONT_8x13, FONT_10x20
 from . import ViewDrawer
-
-CONDITION = {
-    "clear-night",
-    "cloudy",
-    "fog",
-    "hail",
-    "lightning",
-    "lightning-rainy",
-    "partlycloudy",
-    "partlycloudy-night",
-    "pouring",
-    "rainy",
-    "snowy",
-    "snowy-rainy",
-    "sunny",
-    "windy",
-    "windy-variant",
-    "exceptional",
-}
-SMALL = 16
-BIG = 32
-CONDITION_SIZE = {SMALL, BIG}
-IMG_PATH = "../img/weather"
-COMPASS = [
-    "N",
-    "NNE",
-    "NE",
-    "ENE",
-    "E",
-    "ESE",
-    "SE",
-    "SSE",
-    "S",
-    "SSW",
-    "SW",
-    "WSW",
-    "W",
-    "WNW",
-    "NW",
-    "NNW",
-    "N",
-]
-TOTAL_DEGREES = 360.0
-SECTION_DEGREES = 22.5
-NUM_FORECASTS = 4
-
-UTC = ZoneInfo("UTC")
-LOCALTZ = ZoneInfo("localtime")
 
 
 class Weather(ViewDrawer):

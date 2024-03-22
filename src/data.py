@@ -8,12 +8,11 @@ from time import perf_counter
 from dbus_next.errors import DBusError
 from PIL import Image, ImageChops
 
-from constants import View, HOURLY, DAILY
+from constants import View, HOURLY, DAILY, SONGREC_TIMEOUT_SECS
 from eqstream import EQStream
 from utils.images import get_dominant_colors, get_min_constrast_colors
 from viewdraw import ViewDrawer
 
-SONGREC_TIMEOUT_SECS = 30.0 * 60.0
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ class Data(object):
         self.switch_to_music: bool = True
 
         self.reset_music()
-        self.music_timeout: int = 1800
+        self.music_timeout: int = SONGREC_TIMEOUT_SECS
         self.eq_stream: EQStream = EQStream()
         self.eq_stream.listen()
 

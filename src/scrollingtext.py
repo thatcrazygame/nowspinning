@@ -3,13 +3,9 @@ from time import perf_counter
 
 from rgbmatrix.graphics import DrawText
 
+from constants import Direction
 from constants.colors import ColorRGB
 from constants.fonts import MonoFont
-
-
-class Direction(Enum):
-    LEFT = -1
-    RIGHT = 1
 
 
 class ScrollingText(object):

@@ -4,10 +4,9 @@ import logging
 from PIL import Image
 import requests
 
-from constants import GameState
+from constants import GameState, LOGO_URL
 from constants.colors import BLACK
 
-URL_BASE = "https://a.espncdn.com/i/teamlogos"
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +46,7 @@ class Team(SportsOrganization):
         self.last_changes = {}
         self.league = league
         self.game_state: GameState = None
-        self._logo_url = f"{URL_BASE}/{league}/500-dark/scoreboard/{abbr}.png"
+        self._logo_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{abbr}.png"
 
     @property
     def friendly_name(self) -> str:
@@ -73,7 +72,7 @@ class League(SportsOrganization):
     def __init__(self, abbr: str):
         super().__init__(abbr)
         self.sport = ""
-        self._logo_url = f"{URL_BASE}/leagues/500/{abbr}.png"
+        self._logo_url = f"{LOGO_URL}/leagues/500/{abbr}.png"
         self.teams: dict[str, Team] = {}
 
     def team(

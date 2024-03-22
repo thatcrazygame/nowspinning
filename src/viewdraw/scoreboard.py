@@ -6,7 +6,18 @@ from PIL import Image, ImageDraw
 from rgbmatrix.graphics import DrawLine, DrawText
 import requests
 
-from constants import PANEL_HEIGHT, PANEL_WIDTH, GameState
+from constants import (
+    HOME,
+    AWAY,
+    HOCKEY,
+    BASEBALL,
+    FOOTBALL,
+    LOGO_SIZE,
+    LOGO_URL,
+    PANEL_HEIGHT,
+    PANEL_WIDTH,
+    GameState,
+)
 from constants.colors import BLACK, WHITE, GRAY
 from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
 from data import Data
@@ -139,6 +150,8 @@ class Scoreboard(ViewDrawer):
         oppo_abbr = game.get("opponent_abbr")
         team_homeaway = game.get("team_homeaway") or HOME
         oppo_homeaway = game.get("opponent_homeaway") or AWAY
+        if not team_abbr and not league:
+            return
         team_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{team_abbr}.png"
         logo_size = (LOGO_SIZE, LOGO_SIZE)
 
@@ -311,7 +324,7 @@ class Scoreboard(ViewDrawer):
         if not game:
             return
 
-        game_state = GameState[game["state"]]
+        game_state = GameState[game["state"].upper()]
 
         sport = game.get("sport")
         team_homeaway = game.get("team_homeaway") or HOME

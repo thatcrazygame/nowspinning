@@ -20,7 +20,15 @@ from ha_mqtt_discoverable import Settings, DeviceInfo
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 import callbacks
-from constants import FORECAST_TYPE, PANEL_WIDTH, PANEL_HEIGHT, View
+from constants import (
+    FAN_PIN,
+    METERS_ABOVE_SEA_LEVEL,
+    TEMPERATURE_OFFSET,
+    FORECAST_TYPE,
+    PANEL_WIDTH,
+    PANEL_HEIGHT,
+    View,
+)
 from data import Data
 from mqttdevice import MQTTDevice, Discoverable
 
@@ -38,9 +46,6 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 # SCD-30 has tempremental I2C with clock stretching, datasheet recommends
 # starting at 50KHz
 I2C = I2C(SCL, SDA, frequency=50000)
-FAN_PIN = 25
-METERS_ABOVE_SEA_LEVEL = 274
-TEMPERATURE_OFFSET = 6.0
 
 logger = logging.getLogger(__name__)
 load_dotenv()

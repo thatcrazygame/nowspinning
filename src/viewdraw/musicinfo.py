@@ -1,12 +1,9 @@
-from constants import PANEL_HEIGHT, PANEL_WIDTH
+from constants import PANEL_HEIGHT, PANEL_WIDTH, NUM_BARS, BAR_HEIGHT
 from constants.colors import WHITE
 from constants.fonts import FONT_8x13
 from data import Data
 from scrollingtext import ScrollingText
 from . import ViewDrawer
-
-NUM_BARS = 16
-BAR_HEIGHT = 32
 
 
 class MusicInfo(ViewDrawer):

@@ -2,7 +2,7 @@ import json
 import logging
 from typing import TypedDict, Dict
 
-from constants import DAILY, FORECAST_TYPE, GameState, View
+from constants import DAILY, FORECAST_TYPE, INFO_PAYLOAD_LEN, GameState, View
 
 # from customdiscoverable import Select
 from data import Data
@@ -10,7 +10,6 @@ from mqttdevice import Discoverable
 from paho.mqtt.client import Client, MQTTMessage
 
 logger = logging.getLogger(__name__)
-INFO_PAYLOAD_LEN = 50
 
 
 class __UserData(TypedDict):
