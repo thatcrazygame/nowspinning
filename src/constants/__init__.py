@@ -1,13 +1,7 @@
-from enum import Enum, auto
+from enum import Enum
 import numpy as np
-from rgbmatrix.graphics import Color
 from constants.colors import BLACK, WHITE
 from zoneinfo import ZoneInfo
-
-
-class AutoValue(Enum):
-    def _generate_next_value_(name, start, count, last_values):
-        return name.replace("_", " ").title()
 
 
 class GameState(Enum):
@@ -25,22 +19,25 @@ class Direction(Enum):
     RIGHT = 1
 
 
+""" Device and Default settings """
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
-
 DEFAULT_VIEW = "Off"
-
-HOURLY = "Hourly"
-DAILY = "Daily"
-FORECAST_TYPE = {HOURLY, DAILY}
-
 FAN_PIN = 25
 METERS_ABOVE_SEA_LEVEL = 274
 TEMPERATURE_OFFSET = 6.0
-
 INFO_PAYLOAD_LEN = 50
-
 SONGREC_TIMEOUT_SECS = 30.0 * 60.0
+
+""" Image Utils """
+RGB = tuple[float, float, float] | tuple[int, int, int]
+CONSTRAST_MIN = 1.43
+LIGHTNESS_BUMP = 0.14
+RGB_MAX = 255.0
+IS_HORIZONTAL = (True, True, True)
+IS_VERTICAL = (False, False, False)
+
+""" EQ Stream """
 CHUNK = 256  # Samples: 1024,  512, 256, 128
 RATE = 44100  # Equivalent to Human Hearing at 40 kHz
 MAX_HZ = 20000  # Commonly referenced upper limit for "normal" audio range
@@ -48,27 +45,23 @@ MAX_VOL = 200
 BUFFER_FRAMES = 4
 IS_HORIZONTAL = (True, True, True)
 IS_VERTICAL = (False, False, False)
-
 NUM_BARS = 16
 BAR_HEIGHT = 32
 
-LOGO_URL = "https://a.espncdn.com/i/teamlogos"
-
+""" Game of Life """
 GRID_MARGIN = 10
 GRID_HEIGHT = PANEL_HEIGHT + GRID_MARGIN * 2
 GRID_WIDTH = PANEL_WIDTH * 2 + GRID_MARGIN * 2
-
 RNG_RANGE = 100
 INIT_CUTOFF = 50
-
 ALIVE = 1
 DEAD = 0
 ALIVE_RGB = np.array(list(WHITE.rgb))
 DEAD_RGB = np.array(list(BLACK.rgb))
-
 ADD_NOISE = "ADD_NOISE"
 RESET = "RESET"
 
+""" Sports """
 HOME = "home"
 AWAY = "away"
 HOCKEY = "hockey"
@@ -77,6 +70,11 @@ FOOTBALL = "football"
 LOGO_SIZE = 36
 LOGO_URL = "https://a.espncdn.com/i/teamlogos"
 
+
+""" Weather """
+HOURLY = "Hourly"
+DAILY = "Daily"
+FORECAST_TYPE = {HOURLY, DAILY}
 CONDITION = {
     "clear-night",
     "cloudy",
@@ -121,6 +119,5 @@ COMPASS = [
 TOTAL_DEGREES = 360.0
 SECTION_DEGREES = 22.5
 NUM_FORECASTS = 4
-
 UTC = ZoneInfo("UTC")
 LOCALTZ = ZoneInfo("localtime")

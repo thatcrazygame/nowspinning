@@ -5,14 +5,16 @@ import numpy as np
 from PIL import Image
 import wcag_contrast_ratio as contrast
 
+from constants import (
+    CONSTRAST_MIN,
+    IS_HORIZONTAL,
+    IS_VERTICAL,
+    LIGHTNESS_BUMP,
+    RGB,
+    RGB_MAX,
+)
 from constants.colors import BLACK, WHITE
 
-RGB = tuple[float, float, float] | tuple[int, int, int]
-CONSTRAST_MIN = 1.43
-LIGHTNESS_BUMP = 0.14
-RGB_MAX = 255.0
-IS_HORIZONTAL = (True, True, True)
-IS_VERTICAL = (False, False, False)
 
 logger = logging.getLogger(__name__)
 
