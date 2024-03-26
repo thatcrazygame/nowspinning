@@ -21,10 +21,10 @@ class EQStream(object):
         self.stream: Stream = None
         self.frame_buffer = None
         self.max_val = None
-        self.__gradient_img = None
-        self.__bar_colors = None
+        self._gradient_img = None
+        self._bar_colors = None
 
-    def __callback(self, in_data, frame_count, time_info, status):
+    def _callback(self, in_data, frame_count, time_info, status):
         frame = np.frombuffer(in_data, dtype=np.int16).reshape((1, CHUNK))
 
         if self.frame_buffer is None:
@@ -43,7 +43,7 @@ class EQStream(object):
             input=True,
             input_device_index=0,
             frames_per_buffer=CHUNK,
-            stream_callback=self.__callback,
+            stream_callback=self._callback,
         )
         self.stream.start_stream()
 
@@ -89,20 +89,20 @@ class EQStream(object):
 
         return bins
 
-    def __get_gradient_img(self, width, height, colors=None):
+    def _get_gradient_img(self, width, height, colors=None):
         colors_changed = (
-            self.__bar_colors is None
+            self._bar_colors is None
             or colors is None
-            or set(colors) != set(self.__bar_colors)
+            or set(colors) != set(self._bar_colors)
         )
-        self.__bar_colors = colors
+        self._bar_colors = colors
 
-        if self.__gradient_img is not None and not colors_changed:
-            return self.__gradient_img
+        if self._gradient_img is not None and not colors_changed:
+            return self._gradient_img
 
-        self.__gradient_img = get_gradient_img(width, height, colors)
+        self._gradient_img = get_gradient_img(width, height, colors)
 
-        return self.__gradient_img
+        return self._gradient_img
 
     def draw_eq(
         self,
@@ -115,7 +115,7 @@ class EQStream(object):
         colors=None,
     ):
         width = num_bars * bar_width
-        img = self.__get_gradient_img(width, max_height, colors).copy()
+        img = self._get_gradient_img(width, max_height, colors).copy()
         draw = ImageDraw.Draw(img)
 
         bins = self.get_eq_bins(max_height, num_bars)

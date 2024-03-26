@@ -12,12 +12,12 @@ from paho.mqtt.client import Client, MQTTMessage
 logger = logging.getLogger(__name__)
 
 
-class __UserData(TypedDict):
+class _UserData(TypedDict):
     data: Data
     entities: Dict[str, Discoverable]
 
 
-def __process_message(message: MQTTMessage, is_json: bool = False):
+def _process_message(message: MQTTMessage, is_json: bool = False):
     payload = str(message.payload.decode("UTF-8"))
 
     log = f"MQTT Message: {message.topic} >"
@@ -37,68 +37,68 @@ def __process_message(message: MQTTMessage, is_json: bool = False):
 
 
 def teamtracker_selected_game(
-    client: Client, user_data: __UserData, message: MQTTMessage
+    client: Client, user_data: _UserData, message: MQTTMessage
 ):
-    payload = __process_message(message, is_json=True)
+    payload = _process_message(message, is_json=True)
     user_data["data"].selected_game = payload
 
 
-def update_view(client: Client, user_data: __UserData, message: MQTTMessage):
-    view = __process_message(message)
+def update_view(client: Client, user_data: _UserData, message: MQTTMessage):
+    view = _process_message(message)
     user_data["data"].view = view
 
 
-def music_switch(client: Client, user_data: __UserData, message: MQTTMessage):
-    state = __process_message(message)
+def music_switch(client: Client, user_data: _UserData, message: MQTTMessage):
+    state = _process_message(message)
     user_data["data"].switch_to_music = state == "ON"
 
 
-def averages(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __process_message(message, is_json=True)
+def averages(client: Client, user_data: _UserData, message: MQTTMessage):
+    payload = _process_message(message, is_json=True)
     if "averages" not in payload:
         return
 
     user_data["data"].averages = payload["averages"]
 
 
-def game_of_life_buttons(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __process_message(message)
+def game_of_life_buttons(client: Client, user_data: _UserData, message: MQTTMessage):
+    payload = _process_message(message)
     user_data["data"].game_of_life_commands.put_nowait(payload)
 
 
 def game_of_life_gens_switch(
-    client: Client, user_data: __UserData, message: MQTTMessage
+    client: Client, user_data: _UserData, message: MQTTMessage
 ):
-    state = __process_message(message)
+    state = _process_message(message)
     user_data["data"].game_of_life_show_gens = state == "ON"
 
 
-def game_of_life_spt(client: Client, user_data: __UserData, message: MQTTMessage):
-    seconds = __process_message(message)
+def game_of_life_spt(client: Client, user_data: _UserData, message: MQTTMessage):
+    seconds = _process_message(message)
     user_data["data"].game_of_life_seconds_per_tick = float(seconds)
 
 
-def weather(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __process_message(message, is_json=True)
+def weather(client: Client, user_data: _UserData, message: MQTTMessage):
+    payload = _process_message(message, is_json=True)
     if "condition" not in payload:
         return
 
     user_data["data"].weather_forecast = payload
 
 
-def update_forecast_type(client: Client, user_data: __UserData, message: MQTTMessage):
-    f_type = __process_message(message)
+def update_forecast_type(client: Client, user_data: _UserData, message: MQTTMessage):
+    f_type = _process_message(message)
     if f_type not in FORECAST_TYPE:
         f_type = DAILY
     user_data["data"].forecast_type = f_type
 
 
-def songrec_reset_button(client: Client, user_data: __UserData, message: MQTTMessage):
-    payload = __process_message(message)
+def songrec_reset_button(client: Client, user_data: _UserData, message: MQTTMessage):
+    payload = _process_message(message)
     if payload == "RESET":
         user_data["data"].reset_music()
 
 
-def music_timeout_number(client: Client, user_data: __UserData, message: MQTTMessage):
-    seconds = __process_message(message)
+def music_timeout_number(client: Client, user_data: _UserData, message: MQTTMessage):
+    seconds = _process_message(message)
     user_data["data"].music_timeout = seconds

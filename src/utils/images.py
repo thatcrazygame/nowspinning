@@ -17,11 +17,11 @@ IS_VERTICAL = (False, False, False)
 logger = logging.getLogger(__name__)
 
 
-def __normalize(rgb_component: int | float) -> float:
+def _normalize(rgb_component: int | float) -> float:
     return float(rgb_component) / RGB_MAX
 
 
-def __unnormalize(rgb_component: float) -> int:
+def _unnormalize(rgb_component: float) -> int:
     return int(min(RGB_MAX, round(rgb_component * RGB_MAX)))
 
 
@@ -51,7 +51,7 @@ def get_min_constrast_colors(colors: list[RGB]) -> list[RGB]:
 
 
 def normalize_rgb(color: RGB) -> tuple[float, float, float]:
-    return tuple(__normalize(c) for c in color)
+    return tuple(_normalize(c) for c in color)
 
 
 def get_contrast(color: RGB, background=BLACK.rgb) -> float:
@@ -63,23 +63,23 @@ def adjust_lightness(color: RGB, amount=LIGHTNESS_BUMP) -> RGB:
     normalized_color = normalize_rgb(color)
     h, l, s = colorsys.rgb_to_hls(*normalized_color)
     l = min(l + amount, 1.0)
-    r, g, b = (__unnormalize(c) for c in colorsys.hls_to_rgb(h, l, s))
+    r, g, b = (_unnormalize(c) for c in colorsys.hls_to_rgb(h, l, s))
     return r, g, b
 
 
-def __get_gradient_2d(start, stop, width, height, is_horizontal):
+def _get_gradient_2d(start, stop, width, height, is_horizontal):
     if is_horizontal:
         return np.tile(np.linspace(start, stop, width), (height, 1))
     else:
         return np.tile(np.linspace(start, stop, height), (width, 1)).T
 
 
-def __get_gradient_3d(width, height, start_list, stop_list, is_horizontal_list):
+def _get_gradient_3d(width, height, start_list, stop_list, is_horizontal_list):
     result = np.zeros((height, width, len(start_list)), dtype=np.float64)
 
     gradient_components = enumerate(zip(start_list, stop_list, is_horizontal_list))
     for i, (start, stop, is_horizontal) in gradient_components:
-        result[:, :, i] = __get_gradient_2d(start, stop, width, height, is_horizontal)
+        result[:, :, i] = _get_gradient_2d(start, stop, width, height, is_horizontal)
 
     return result
 
@@ -107,7 +107,7 @@ def get_gradient_img(
         if i == num_gradients - 1:
             gradient_height += extra
 
-        gradient = __get_gradient_3d(
+        gradient = _get_gradient_3d(
             width, gradient_height, colors[i + 1], colors[i], direction
         )
         if gradient_array is None:
