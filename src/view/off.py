@@ -1,9 +1,10 @@
 import asyncio
 
-from . import ViewDrawer
+from view.viewbase import View, register
 
 
-class Off(ViewDrawer):
+@register
+class Off(View):
     async def draw(self, canvas, data):
         self.update_last_drawn()
         await asyncio.sleep(1)

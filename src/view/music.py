@@ -3,10 +3,11 @@ from constants.colors import WHITE
 from constants.fonts import FONT_8x13
 from data import Data
 from scrollingtext import ScrollingText
-from . import ViewDrawer
+from view.viewbase import View, register
 
 
-class MusicInfo(ViewDrawer):
+@register
+class Music(View):
     def __init__(self) -> None:
         super().__init__()
 

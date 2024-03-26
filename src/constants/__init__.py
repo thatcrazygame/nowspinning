@@ -10,15 +10,6 @@ class AutoValue(Enum):
         return name.replace("_", " ").title()
 
 
-class View(AutoValue):
-    OFF = auto()
-    DASHBOARD = auto()
-    MUSIC = auto()
-    SCOREBOARD = auto()
-    GAME_OF_LIFE = auto()
-    WEATHER = auto()
-
-
 class GameState(Enum):
     # values represent priority, not chronological order
     UNAVAILABLE = -1
@@ -36,6 +27,8 @@ class Direction(Enum):
 
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
+
+DEFAULT_VIEW = "Off"
 
 HOURLY = "Hourly"
 DAILY = "Daily"

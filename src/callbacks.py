@@ -2,7 +2,7 @@ import json
 import logging
 from typing import TypedDict, Dict
 
-from constants import DAILY, FORECAST_TYPE, INFO_PAYLOAD_LEN, GameState, View
+from constants import DAILY, FORECAST_TYPE, INFO_PAYLOAD_LEN, GameState
 
 # from customdiscoverable import Select
 from data import Data
@@ -45,7 +45,7 @@ def teamtracker_selected_game(
 
 def update_view(client: Client, user_data: __UserData, message: MQTTMessage):
     view = __process_message(message)
-    user_data["data"].view = View(view)
+    user_data["data"].view = view
 
 
 def music_switch(client: Client, user_data: __UserData, message: MQTTMessage):

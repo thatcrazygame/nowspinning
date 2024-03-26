@@ -25,10 +25,11 @@ from constants import (
 
 from constants.colors import WHITE
 from constants.fonts import FONT_4x6, FONT_5x8, FONT_8x13, FONT_10x20
-from . import ViewDrawer
+from view.viewbase import View, register
 
 
-class Weather(ViewDrawer):
+@register
+class Weather(View):
     def __init__(self) -> None:
         super().__init__()
 

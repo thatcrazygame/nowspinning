@@ -22,10 +22,13 @@ from constants import (
 from constants.fonts import FONT_4x6
 from constants.colors import BLACK, ROYALBLUE, WHITE
 from data import Data
-from . import ViewDrawer
+from view.viewbase import View, register
 
 
-class GameOfLife(ViewDrawer):
+@register
+class GameOfLife(View):
+    name: str = "Game of Life"
+
     def __init__(self) -> None:
         super().__init__()
         self.generation: int = 0

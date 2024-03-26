@@ -8,10 +8,9 @@ from time import perf_counter
 from dbus_next.errors import DBusError
 from PIL import Image, ImageChops
 
-from constants import View, HOURLY, DAILY, SONGREC_TIMEOUT_SECS
+from constants import DEFAULT_VIEW, HOURLY, DAILY, SONGREC_TIMEOUT_SECS
 from eqstream import EQStream
 from utils.images import get_dominant_colors, get_min_constrast_colors
-from viewdraw import ViewDrawer
 
 
 logger = logging.getLogger(__name__)
@@ -22,8 +21,7 @@ class Data(object):
 
     def __init__(self):
         self.is_running = True
-        self.view: View = View.OFF
-        self.view_drawers: dict[View, ViewDrawer] = {}
+        self.view: str = DEFAULT_VIEW
         self.switch_to_music: bool = True
 
         self.reset_music()
@@ -102,7 +100,7 @@ class Data(object):
         payload["artist"] = {"value": self.artists, "available": "online"}
         payload["album"] = {"value": self._str(self.album), "available": "online"}
         payload["title"] = {"value": self._str(self.title), "available": "online"}
-        payload["view"] = {"value": self._str(self.view.value), "available": "online"}
+        payload["view"] = {"value": self._str(self.view), "available": "online"}
         payload["music_switch"] = {
             "value": self._on_off(self.switch_to_music).upper(),
             "available": "online",
@@ -122,19 +120,19 @@ class Data(object):
         }
         payload["gol_show_gens"] = {
             "value": self._on_off(self.game_of_life_show_gens).upper(),
-            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+            "available": self._on_off(self.view == "Game Of Life", "line"),
         }
         payload["gol_reset"] = {
             "value": None,
-            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+            "available": self._on_off(self.view == "Game Of Life", "line"),
         }
         payload["gol_add_noise"] = {
             "value": None,
-            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+            "available": self._on_off(self.view == "Game Of Life", "line"),
         }
         payload["gol_seconds_per_tick"] = {
             "value": self._str(self.game_of_life_seconds_per_tick, round_digits=1),
-            "available": self._on_off(self.view is View.GAME_OF_LIFE, "line"),
+            "available": self._on_off(self.view == "Game Of Life", "line"),
         }
         payload["forecast_type"] = {
             "value": self._str(self.forecast_type),
@@ -186,13 +184,3 @@ class Data(object):
         logger.info(
             f"Refresh music - artist(s): {self.artists} title: {self.title} album: {self.album}"
         )
-
-    def views_by_last_drawn(self, exclude: list[View] = [View.MUSIC]):
-        views = [
-            (drawer.last_drawn, view)
-            for view, drawer in self.view_drawers.items()
-            if view not in exclude
-        ]
-        views.sort(key=lambda v: v[0], reverse=True)
-        views = [view[1] for view in views]
-        return views

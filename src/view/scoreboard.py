@@ -23,7 +23,7 @@ from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
 from data import Data
 from scrollingtext import ScrollingText
 
-from . import ViewDrawer
+from view.viewbase import View, register
 
 HOME = "home"
 AWAY = "away"
@@ -35,8 +35,8 @@ LOGO_URL = "https://a.espncdn.com/i/teamlogos"
 
 logger = logging.getLogger(__name__)
 
-
-class Scoreboard(ViewDrawer):
+@register
+class Scoreboard(View):
     def __init__(self) -> None:
         super().__init__()
 

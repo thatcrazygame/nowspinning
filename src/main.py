@@ -21,25 +21,19 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 import callbacks
 from constants import (
+    DEFAULT_VIEW,
     FAN_PIN,
     METERS_ABOVE_SEA_LEVEL,
     TEMPERATURE_OFFSET,
     FORECAST_TYPE,
     PANEL_WIDTH,
     PANEL_HEIGHT,
-    View,
 )
 from data import Data
 from mqttdevice import MQTTDevice, Discoverable
 
 from utils import get_mac_address
-from viewdraw import ViewDrawer
-from viewdraw.dashboard import Dashboard
-from viewdraw.musicinfo import MusicInfo
-from viewdraw.off import Off
-from viewdraw.scoreboard import Scoreboard
-from viewdraw.gameoflife import GameOfLife
-from viewdraw.weather import Weather
+from view import View, VIEWS
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 
@@ -55,24 +49,17 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
     logger.info("Init matrix loop")
     canvas = matrix.CreateFrameCanvas()
 
-    data.view_drawers[View.OFF] = Off()
-    data.view_drawers[View.MUSIC] = MusicInfo()
-    data.view_drawers[View.SCOREBOARD] = Scoreboard()
-    data.view_drawers[View.DASHBOARD] = Dashboard()
-    data.view_drawers[View.GAME_OF_LIFE] = GameOfLife()
-    data.view_drawers[View.WEATHER] = Weather()
-
-    view_names = [v.name for v in data.view_drawers]
+    view_names = [v for v in VIEWS.keys()]
     logger.info(f"Init views: {','.join(view_names)}")
     max_unexpected_errors = 5
     unexpected_errors = 0
     while data.is_running:
         canvas.Clear()
 
-        if data.view not in data.view_drawers:
-            data.view = View.DASHBOARD
+        if data.view not in VIEWS:
+            data.view = DEFAULT_VIEW
 
-        view: ViewDrawer = data.view_drawers[data.view]
+        view: View = VIEWS[data.view]
         try:
             await view.draw(canvas, data)
             unexpected_errors = 0  # reset if we got here
@@ -80,9 +67,7 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
             if unexpected_errors >= max_unexpected_errors:
                 continue
 
-            logger.critical(
-                f"Unexpected error drawing {data.view.value} view", exc_info=True
-            )
+            logger.critical(f"Unexpected error drawing {data.view} view", exc_info=True)
 
             unexpected_errors += 1
             if unexpected_errors >= max_unexpected_errors:
@@ -220,7 +205,7 @@ async def mqtt_loop(data: Data):
         use_shared_topic=True,
     )
 
-    views = [view.value for view in View]
+    views = [v for v in VIEWS.keys()]
     mqtt.add_select(
         name="View",
         callback=callbacks.update_view,

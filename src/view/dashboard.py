@@ -17,10 +17,11 @@ from data import Data
 from rgbmatrix.graphics import DrawText
 
 from linegraph import LineGraph
-from . import ViewDrawer
+from view.viewbase import View, register
 
 
-class Dashboard(ViewDrawer):
+@register
+class Dashboard(View):
     def __init__(self) -> None:
         super().__init__()
 
