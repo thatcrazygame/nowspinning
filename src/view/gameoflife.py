@@ -7,6 +7,7 @@ from rgbmatrix.graphics import DrawText
 from scipy.signal import convolve2d
 
 from constants import (
+    GAMEOFLIFE,
     GRID_MARGIN,
     GRID_HEIGHT,
     GRID_WIDTH,
@@ -27,7 +28,7 @@ from view.viewbase import View, register
 
 @register
 class GameOfLife(View):
-    name: str = "Game of Life"
+    name: str = GAMEOFLIFE
 
     def __init__(self) -> None:
         super().__init__()

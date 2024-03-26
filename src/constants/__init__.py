@@ -22,12 +22,20 @@ class Direction(Enum):
 """ Device and Default settings """
 PANEL_WIDTH = 64
 PANEL_HEIGHT = 64
-DEFAULT_VIEW = "Off"
 FAN_PIN = 25
 METERS_ABOVE_SEA_LEVEL = 274
 TEMPERATURE_OFFSET = 6.0
 INFO_PAYLOAD_LEN = 50
 SONGREC_TIMEOUT_SECS = 30.0 * 60.0
+
+""" VIEW NAMES """
+DASHBOARD = "Dashboard"
+GAMEOFLIFE = "Game of Life"
+MUSIC = "Music"
+OFF = "Off"
+SCOREBOARD = "Scoreboard"
+WEATEHR = "Weather"
+DEFAULT_VIEW = OFF
 
 """ Image Utils """
 RGB = tuple[float, float, float] | tuple[int, int, int]

@@ -8,7 +8,7 @@ from time import perf_counter
 from dbus_next.errors import DBusError
 from PIL import Image, ImageChops
 
-from constants import DEFAULT_VIEW, HOURLY, DAILY, SONGREC_TIMEOUT_SECS
+from constants import DEFAULT_VIEW, GAMEOFLIFE, HOURLY, DAILY, SONGREC_TIMEOUT_SECS
 from eqstream import EQStream
 from utils.images import get_dominant_colors, get_min_constrast_colors
 
@@ -120,19 +120,19 @@ class Data(object):
         }
         payload["gol_show_gens"] = {
             "value": self._on_off(self.game_of_life_show_gens).upper(),
-            "available": self._on_off(self.view == "Game Of Life", "line"),
+            "available": self._on_off(self.view == GAMEOFLIFE, "line"),
         }
         payload["gol_reset"] = {
             "value": None,
-            "available": self._on_off(self.view == "Game Of Life", "line"),
+            "available": self._on_off(self.view == GAMEOFLIFE, "line"),
         }
         payload["gol_add_noise"] = {
             "value": None,
-            "available": self._on_off(self.view == "Game Of Life", "line"),
+            "available": self._on_off(self.view == GAMEOFLIFE, "line"),
         }
         payload["gol_seconds_per_tick"] = {
             "value": self._str(self.game_of_life_seconds_per_tick, round_digits=1),
-            "available": self._on_off(self.view == "Game Of Life", "line"),
+            "available": self._on_off(self.view == GAMEOFLIFE, "line"),
         }
         payload["forecast_type"] = {
             "value": self._str(self.forecast_type),
