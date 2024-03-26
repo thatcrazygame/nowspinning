@@ -94,7 +94,7 @@ def get_gradient_img(
     if type(colors) is RGB and len(colors) == 3:
         one_color = colors
 
-    if colors is None:
+    if colors is None or not (type(colors) is list or type(colors) is RGB):
         one_color = WHITE.rgb
 
     if one_color is not None:
