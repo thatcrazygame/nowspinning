@@ -163,6 +163,10 @@ class MQTTDevice(object):
     def shared_topic_entities(self) -> list[Discoverable]:
         return [s for s in self.entities.values() if s.state_topic == self.shared_topic]
 
+    @property
+    def non_shared_topic_entities(self) -> list[Discoverable]:
+        return [s for s in self.entities.values() if s.state_topic != self.shared_topic]
+
     @async_wait_for_network(pause=5, max_errors=2)
     def set_shared_state(self, state: str | int | float):
         if not self.shared_topic_entities:
@@ -172,14 +176,15 @@ class MQTTDevice(object):
         first._state_helper(state)
 
     def write_all_configs(self) -> None:
-        entitiy: Discoverable
-        for entitiy in self.entities.values():
-            entitiy.write_config()
+        entity: Discoverable
+        for entity in self.entities.values():
+            if type(entity) is not Subscriber:
+                entity.write_config()
 
     def set_all_availability(self, availability: bool) -> None:
-        entitiy: Discoverable
-        for entitiy in self.entities.values():
-            entitiy.set_availability(availability)
+        entity: Discoverable
+        for entity in self.non_shared_topic_entities:
+            entity.set_availability(availability)
 
     def add_binary_sensor(
         self,

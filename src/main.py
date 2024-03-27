@@ -170,7 +170,7 @@ async def mqtt_loop(data: Data):
     mqtt.add_sensor(
         name="VOC",
         unique_id="nowspinning_voc",
-        device_class="aqi",
+        icon="mdi:air-filter",
         # needs units to display as graph in HA
         unit_of_measurement="",
         value_template="{{ value_json.voc.value }}",
@@ -354,7 +354,8 @@ async def mqtt_loop(data: Data):
         await mqtt.set_shared_state(data.get_json())
         await asyncio.sleep(1)
 
-    mqtt.set_all_availability(False)
+    offline_payload = data.get_json().replace("online", "offline")
+    await mqtt.set_shared_state(offline_payload)
 
 
 def init_matrix():
