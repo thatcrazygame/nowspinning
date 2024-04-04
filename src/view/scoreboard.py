@@ -25,15 +25,8 @@ from scrollingtext import ScrollingText
 
 from view.viewbase import View, register
 
-HOME = "home"
-AWAY = "away"
-HOCKEY = "hockey"
-BASEBALL = "baseball"
-FOOTBALL = "football"
-LOGO_SIZE = 36
-LOGO_URL = "https://a.espncdn.com/i/teamlogos"
-
 logger = logging.getLogger(__name__)
+
 
 @register
 class Scoreboard(View):

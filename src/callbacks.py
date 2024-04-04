@@ -36,11 +36,15 @@ def _process_message(message: MQTTMessage, is_json: bool = False):
     return payload
 
 
-def teamtracker_selected_game(
-    client: Client, user_data: _UserData, message: MQTTMessage
-):
+def teamtracker(client: Client, user_data: _UserData, message: MQTTMessage):
+    if "selected_game" not in message.topic and "all_games" not in message.topic:
+        return
+
     payload = _process_message(message, is_json=True)
-    user_data["data"].selected_game = payload
+    if "selected_game" in message.topic:
+        user_data["data"].selected_game = payload
+    if "all_games" in message.topic:
+        user_data["data"].all_games = payload
 
 
 def update_view(client: Client, user_data: _UserData, message: MQTTMessage):

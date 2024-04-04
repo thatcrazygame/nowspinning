@@ -37,6 +37,7 @@ class Data(object):
         self.averages: dict[str, list[float]] = {}
 
         self.selected_game: dict = {}
+        self.all_games: dict = {}
 
         self.game_of_life_commands = asyncio.Queue()
         self.game_of_life_cells: int = 0

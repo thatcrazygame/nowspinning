@@ -6,7 +6,10 @@ from PIL import Image
 import wcag_contrast_ratio as contrast
 
 from constants import (
+    BG,
+    BOTH,
     CONSTRAST_MIN,
+    FG,
     IS_HORIZONTAL,
     IS_VERTICAL,
     LIGHTNESS_BUMP,
@@ -52,19 +55,48 @@ def get_min_constrast_colors(colors: list[RGB]) -> list[RGB]:
     ]
 
 
+def get_min_contrast_fg_bg(fg: RGB, bg: RGB, adjust_first=BOTH) -> tuple[RGB, RGB]:
+    n_fg = normalize_rgb(fg)
+    n_bg = normalize_rgb(bg)
+    fg_l = colorsys.rgb_to_hls(*n_fg)[1]
+    bg_l = colorsys.rgb_to_hls(*n_bg)[1]
+    bg_is_darker = bg_l < fg_l
+
+    adjust = 0.01
+    while not contrast.passes_AA(get_contrast(fg, bg)):
+        n_fg = normalize_rgb(fg)
+        n_bg = normalize_rgb(bg)
+        fg_l = colorsys.rgb_to_hls(*n_fg)[1]
+        bg_l = colorsys.rgb_to_hls(*n_bg)[1]
+        at_max_or_min_lum = (bg_is_darker and (bg_l == 0.0 or fg_l == 1.0)) or (
+            not bg_is_darker and (bg_l == 1.0 or fg_l == 0.0)
+        )
+
+        if adjust_first is FG or adjust_first is BOTH or at_max_or_min_lum:
+            fg = adjust_lightness(fg, adjust if bg_is_darker else adjust * -1)
+        if adjust_first is BG or adjust_first is BOTH or at_max_or_min_lum:
+            bg = adjust_lightness(bg, adjust * -1 if bg_is_darker else adjust)
+
+    return fg, bg
+
+
 def normalize_rgb(color: RGB) -> tuple[float, float, float]:
     return tuple(_normalize(c) for c in color)
 
 
 def get_contrast(color: RGB, background=BLACK.rgb) -> float:
     normalized_color = normalize_rgb(color)
-    return contrast.rgb(background, normalized_color)
+    normalized_background = normalize_rgb(background)
+    return contrast.rgb(normalized_background, normalized_color)
 
 
 def adjust_lightness(color: RGB, amount=LIGHTNESS_BUMP) -> RGB:
     normalized_color = normalize_rgb(color)
     h, l, s = colorsys.rgb_to_hls(*normalized_color)
-    l = min(l + amount, 1.0)
+    if amount > 0:
+        l = min(l + amount, 1.0)
+    else:
+        l = max(l + amount, 0.0)
     r, g, b = (_unnormalize(c) for c in colorsys.hls_to_rgb(h, l, s))
     return r, g, b
 

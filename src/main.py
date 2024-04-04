@@ -251,8 +251,8 @@ async def mqtt_loop(data: Data):
     mqtt.add_subscriber_only(
         name="Game Sub",
         unique_id="nowspinning_game_sub",
-        callback=callbacks.teamtracker_selected_game,
-        sub_topic="teamtracker/selected_game",
+        callback=callbacks.teamtracker,
+        sub_topic="teamtracker/#",
         start_topic="teamtracker/start",
     )
 

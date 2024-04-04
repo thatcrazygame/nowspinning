@@ -29,6 +29,7 @@ INFO_PAYLOAD_LEN = 50
 SONGREC_TIMEOUT_SECS = 30.0 * 60.0
 
 """ VIEW NAMES """
+ALLGAMES = "All Games"
 DASHBOARD = "Dashboard"
 GAMEOFLIFE = "Game of Life"
 MUSIC = "Music"
@@ -44,10 +45,14 @@ LIGHTNESS_BUMP = 0.14
 RGB_MAX = 255.0
 IS_HORIZONTAL = (True, True, True)
 IS_VERTICAL = (False, False, False)
+FG = "FG"
+BG = "BG"
+BOTH = "BOTH"
 
 """ EQ Stream """
 CHUNK = 256  # Samples: 1024,  512, 256, 128
 RATE = 44100  # Equivalent to Human Hearing at 40 kHz
+MIN_HZ = 50
 MAX_HZ = 20000  # Commonly referenced upper limit for "normal" audio range
 MAX_VOL = 200
 BUFFER_FRAMES = 4
@@ -77,6 +82,11 @@ BASEBALL = "baseball"
 FOOTBALL = "football"
 LOGO_SIZE = 36
 LOGO_URL = "https://a.espncdn.com/i/teamlogos"
+
+""" All Games """
+ABBRPADDING = 2
+LEAGUEDEFAULT = "All"
+ROTATETIME = 5.0
 
 
 """ Weather """
