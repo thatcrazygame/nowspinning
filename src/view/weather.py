@@ -2,11 +2,13 @@ import asyncio
 from datetime import datetime
 from math import floor
 
-from PIL import Image
+from PIL import Image, ImageDraw
 from rgbmatrix.graphics import DrawText
 
 from constants import (
+    PANEL_HEIGHT,
     PANEL_WIDTH,
+    ALERT,
     HOURLY,
     DAILY,
     FORECAST_TYPE,
@@ -23,8 +25,10 @@ from constants import (
     LOCALTZ,
 )
 
-from constants.colors import WHITE
+from constants.colors import BLACK, CRIMSON, WHITE
 from constants.fonts import FONT_4x6, FONT_5x8, FONT_8x13, FONT_10x20
+from data import Data
+from scrollingtext import ScrollingText
 from view.viewbase import View, register
 
 
@@ -32,6 +36,28 @@ from view.viewbase import View, register
 class Weather(View):
     def __init__(self) -> None:
         super().__init__()
+
+        self.alert_title_scroll = ScrollingText(
+            font=FONT_5x8,
+            color=WHITE,
+            starting_x=2,
+            y=PANEL_HEIGHT - 8 - FONT_5x8.height,
+            left_bound=0,
+            right_bound=PANEL_WIDTH * 2,
+            num_spaces=3,
+            scroll_speed=2,
+        )
+
+        self.alert_scroll = ScrollingText(
+            font=FONT_5x8,
+            color=WHITE,
+            starting_x=2,
+            y=PANEL_HEIGHT - 6,
+            left_bound=0,
+            right_bound=PANEL_WIDTH * 2,
+            num_spaces=3,
+            scroll_speed=2,
+        )
 
         self.cached_conditions: dict[str, Image.Image] = {}
 
@@ -58,12 +84,23 @@ class Weather(View):
     def get_compass(self, degrees) -> str:
         return COMPASS[round((degrees % TOTAL_DEGREES) / SECTION_DEGREES)]
 
+    def draw_alert_triangle(self, img, alert):
+        if alert["total"] > 0:
+            draw = ImageDraw.Draw(img)
+            triangle = [(21, 31), (31, 31), (26, 23)]
+            draw.polygon(triangle, fill=CRIMSON.rgb)
+            exclamation = [(26, 25), (26, 28)]
+            draw.line(exclamation, fill=BLACK.rgb, width=1)
+            draw.point([26, 30], fill=BLACK.rgb)
+
     def draw_current_weather(self, canvas, weather):
         condition = weather.get("condition")
         condition_img = self.get_condition_img(condition, BIG)
         x = 2
         y = 0
         if condition_img:
+            alert = weather.get("alert")
+            self.draw_alert_triangle(condition_img, alert)
             canvas.SetImage(condition_img, x, y)
 
         temperature = weather.get("temperature")
@@ -113,7 +150,7 @@ class Weather(View):
         self, canvas, x: int, y: int, width: int, forecast: dict, forecast_type: str
     ):
         if forecast_type not in FORECAST_TYPE:
-            f_types = ",".join(list(FORECAST_TYPE))
+            f_types = ",".join(FORECAST_TYPE)
             raise ValueError(
                 f"'{forecast_type}' is not a valid forecast type ({f_types})"
             )
@@ -150,7 +187,7 @@ class Weather(View):
         info_y = img_y + condition_img.height + FONT_4x6.height + 1
         DrawText(canvas, FONT_4x6, info_x, info_y, WHITE, info)
 
-    async def draw(self, canvas, data):
+    async def draw(self, canvas, data: Data):
         self.update_last_drawn()
         weather = data.weather_forecast
 
@@ -160,6 +197,18 @@ class Weather(View):
         self.draw_current_weather(canvas, weather)
 
         forecast_type = data.forecast_type
+        alert = weather.get("alert")
+        if forecast_type == ALERT and alert:
+            if alert["total"] > 0:
+                count = f" ({alert['selected']}/{alert['total']})"
+                alert_txt = alert["spoken_desc"] + count if alert["total"] > 1 else ""
+                self.alert_title_scroll.draw(canvas, alert["title"])
+                self.alert_scroll.draw(canvas, alert_txt)
+            else:
+                self.alert_title_scroll.draw(canvas, "No active alerts")
+                self.alert_scroll.draw(canvas, "")
+            return
+
         forecasts = weather.get(f"forecast_{forecast_type.lower()}")
         # exclude first since that data is already in current weather
         forecasts = forecasts[1 : NUM_FORECASTS + 1]

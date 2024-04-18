@@ -7,6 +7,7 @@ from pyaudio import paContinue, paInt16, PyAudio, Stream
 from constants import (
     CHUNK,
     RATE,
+    MIN_HZ,
     MAX_HZ,
     MAX_VOL,
     BUFFER_FRAMES,
@@ -63,9 +64,11 @@ class EQStream(object):
 
         hz_per_data = int(RATE / len(fft_data))
         max_idx = int(MAX_HZ / hz_per_data)
-        # round up to nearest mutliple of bins
+        min_idx = int(MIN_HZ / hz_per_data)
+        # round to nearest mutliple of bins
         max_idx = num_bins * ceil(max_idx / num_bins)
-        fft_data = fft_data[:max_idx]
+        min_idx = num_bins * floor(min_idx / num_bins)
+        fft_data = fft_data[min_idx:max_idx]
 
         data_per_bin = int(len(fft_data) / num_bins)
 

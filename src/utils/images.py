@@ -1,5 +1,6 @@
 import colorsys
 import logging
+from typing_extensions import Literal
 
 import numpy as np
 from PIL import Image
@@ -15,6 +16,9 @@ from constants import (
     LIGHTNESS_BUMP,
     RGB,
     RGB_MAX,
+    H,
+    S,
+    L,
 )
 from constants.colors import BLACK, WHITE
 
@@ -55,27 +59,39 @@ def get_min_constrast_colors(colors: list[RGB]) -> list[RGB]:
     ]
 
 
+def _rgb_to_hls(color: RGB):
+    normal = normalize_rgb(color)
+    return colorsys.rgb_to_hls(*normal)
+
+
 def get_min_contrast_fg_bg(fg: RGB, bg: RGB, adjust_first=BOTH) -> tuple[RGB, RGB]:
-    n_fg = normalize_rgb(fg)
-    n_bg = normalize_rgb(bg)
-    fg_l = colorsys.rgb_to_hls(*n_fg)[1]
-    bg_l = colorsys.rgb_to_hls(*n_bg)[1]
-    bg_is_darker = bg_l < fg_l
+    f_h, f_l, f_s = _rgb_to_hls(fg)
+    b_h, b_l, b_s = _rgb_to_hls(bg)
+    bg_is_darker = b_l < f_l
+    bg_lower_sat = b_s < f_s
 
     adjust = 0.01
     while not contrast.passes_AA(get_contrast(fg, bg)):
-        n_fg = normalize_rgb(fg)
-        n_bg = normalize_rgb(bg)
-        fg_l = colorsys.rgb_to_hls(*n_fg)[1]
-        bg_l = colorsys.rgb_to_hls(*n_bg)[1]
-        at_max_or_min_lum = (bg_is_darker and (bg_l == 0.0 or fg_l == 1.0)) or (
-            not bg_is_darker and (bg_l == 1.0 or fg_l == 0.0)
+        f_h, f_l, f_s = _rgb_to_hls(fg)
+        b_h, b_l, b_s = _rgb_to_hls(bg)
+
+        at_max_or_min_lum = (bg_is_darker and (b_l == 0.0 or f_l == 1.0)) or (
+            not bg_is_darker and (b_l == 1.0 or f_l == 0.0)
+        )
+
+        at_max_or_min_sat = (bg_lower_sat and (b_s == 0.0 or f_s == 1.0)) or (
+            not bg_lower_sat and (b_s == 1.0 or f_s == 0.0)
         )
 
         if adjust_first is FG or adjust_first is BOTH or at_max_or_min_lum:
             fg = adjust_lightness(fg, adjust if bg_is_darker else adjust * -1)
         if adjust_first is BG or adjust_first is BOTH or at_max_or_min_lum:
             bg = adjust_lightness(bg, adjust * -1 if bg_is_darker else adjust)
+
+        if adjust_first is FG or adjust_first is BOTH or at_max_or_min_sat:
+            fg = adjust_saturation(fg, adjust if bg_is_darker else adjust * -1)
+        if adjust_first is BG or adjust_first is BOTH or at_max_or_min_sat:
+            bg = adjust_saturation(bg, adjust * -1 if bg_is_darker else adjust)
 
     return fg, bg
 
@@ -90,15 +106,29 @@ def get_contrast(color: RGB, background=BLACK.rgb) -> float:
     return contrast.rgb(normalized_background, normalized_color)
 
 
-def adjust_lightness(color: RGB, amount=LIGHTNESS_BUMP) -> RGB:
-    normalized_color = normalize_rgb(color)
-    h, l, s = colorsys.rgb_to_hls(*normalized_color)
+def adjust_hls_part(color: RGB, part, amount) -> RGB:
+    if part not in [H, L, S]:
+        return color
+
+    hls = list(_rgb_to_hls(color))
     if amount > 0:
-        l = min(l + amount, 1.0)
+        hls[part] = min(hls[part] + amount, 1.0)
     else:
-        l = max(l + amount, 0.0)
-    r, g, b = (_unnormalize(c) for c in colorsys.hls_to_rgb(h, l, s))
+        hls[part] = max(hls[part] + amount, 0.0)
+    r, g, b = (_unnormalize(c) for c in colorsys.hls_to_rgb(*hls))
     return r, g, b
+
+
+def adjust_hue(color: RGB, amount) -> RGB:
+    return adjust_hls_part(color, H, amount)
+
+
+def adjust_lightness(color: RGB, amount=LIGHTNESS_BUMP) -> RGB:
+    return adjust_hls_part(color, L, amount)
+
+
+def adjust_saturation(color: RGB, amount) -> RGB:
+    return adjust_hls_part(color, S, amount)
 
 
 def _get_gradient_2d(start, stop, width, height, is_horizontal):

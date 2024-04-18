@@ -48,6 +48,9 @@ IS_VERTICAL = (False, False, False)
 FG = "FG"
 BG = "BG"
 BOTH = "BOTH"
+H = 0
+L = 1
+S = 2
 
 """ EQ Stream """
 CHUNK = 256  # Samples: 1024,  512, 256, 128
@@ -92,8 +95,9 @@ ROTATETIME = 5.0
 """ Weather """
 HOURLY = "Hourly"
 DAILY = "Daily"
-FORECAST_TYPE = {HOURLY, DAILY}
-CONDITION = {
+ALERT = "Alert"
+FORECAST_TYPE = [HOURLY, DAILY, ALERT]
+CONDITION = [
     "clear-night",
     "cloudy",
     "fog",
@@ -110,10 +114,10 @@ CONDITION = {
     "windy",
     "windy-variant",
     "exceptional",
-}
+]
 SMALL = 16
 BIG = 32
-CONDITION_SIZE = {SMALL, BIG}
+CONDITION_SIZE = [SMALL, BIG]
 IMG_PATH = "../img/weather"
 COMPASS = [
     "N",

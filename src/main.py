@@ -342,7 +342,7 @@ async def mqtt_loop(data: Data):
         name="Forecast Type",
         callback=callbacks.update_forecast_type,
         unique_id="nowspinning_forecast_type",
-        options=list(FORECAST_TYPE),
+        options=FORECAST_TYPE,
         value_template="{{ value_json.forecast_type.value }}",
         availability_template="{{ value_json.forecast_type.available }}",
         use_shared_topic=True,
