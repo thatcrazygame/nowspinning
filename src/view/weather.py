@@ -200,8 +200,10 @@ class Weather(View):
         alert = weather.get("alert")
         if forecast_type == ALERT and alert:
             if alert["total"] > 0:
-                count = f" ({alert['selected']}/{alert['total']})"
-                alert_txt = alert["spoken_desc"] + count if alert["total"] > 1 else ""
+                alert_txt = alert["spoken_desc"]
+                if alert["total"] > 1:
+                    count = f" ({alert['selected']}/{alert['total']})"
+                    alert_txt = alert_txt + count
                 self.alert_title_scroll.draw(canvas, alert["title"])
                 self.alert_scroll.draw(canvas, alert_txt)
             else:
