@@ -153,7 +153,9 @@ class AllGames(View):
         num_games = 5
 
         offset = self.offset
-        games = data.all_games.values()
+        league_filter = data.all_games["league_filter"]
+        state_filter = data.all_games["state_filter"]
+        games = data.all_games["games"].values()
         if len(games) > num_games:
             games = deque(games)
             games.rotate(offset)
@@ -163,21 +165,16 @@ class AllGames(View):
 
         games = list(games)
 
-        leagues = set([game["league"] for game in games])
-        l = LEAGUEDEFAULT
-        if len(leagues) == 1:
-            l = leagues.pop()
-
-        if l != self.league:
+        if league_filter != self.league:
             self.offset = 0
             self.last_rotate = perf_counter()
-        self.league = l
+        self.league = league_filter
 
         league_x = ABBRPADDING
         league_y = FONT_5x8.height + ABBRPADDING
         DrawText(canvas, FONT_5x8, league_x, league_y, WHITE, self.league)
 
-        all_states = "No games with current filters  "
+        all_states = f"No games for league: {self.league} state: {state_filter}  "
         if games:
             states = Counter([game["state"] for game in games])
             all_states = " ".join(
