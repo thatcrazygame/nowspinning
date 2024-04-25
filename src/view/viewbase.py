@@ -10,6 +10,9 @@ sys.path.append(root_folder)
 
 
 class View(ABC):
+    name: str = None
+    sort: int = None
+
     def __init__(self) -> None:
         self.last_drawn: float = 0.0
 
@@ -24,10 +27,11 @@ class View(ABC):
 VIEWS: dict[str, View] = {}
 
 
-def register(view_cls):
+def register(view_cls: View):
     name = view_cls.__name__
     try:
-        name = view_cls.name
+        if view_cls.name is not None:
+            name = view_cls.name
     except AttributeError:
         pass
 

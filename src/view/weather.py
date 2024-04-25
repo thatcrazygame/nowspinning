@@ -34,6 +34,8 @@ from view.viewbase import View, register
 
 @register
 class Weather(View):
+    sort = 1
+
     def __init__(self) -> None:
         super().__init__()
 

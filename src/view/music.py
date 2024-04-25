@@ -8,6 +8,8 @@ from view.viewbase import View, register
 
 @register
 class Music(View):
+    sort = 5
+
     def __init__(self) -> None:
         super().__init__()
 

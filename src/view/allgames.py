@@ -17,6 +17,7 @@ from utils.images import get_contrast, get_min_contrast_fg_bg, CONSTRAST_MIN
 @register
 class AllGames(View):
     name = ALLGAMES
+    sort = 3
 
     def __init__(self) -> None:
         super().__init__()

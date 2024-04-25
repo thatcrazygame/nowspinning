@@ -29,6 +29,7 @@ from view.viewbase import View, register
 @register
 class GameOfLife(View):
     name: str = GAMEOFLIFE
+    sort = 6
 
     def __init__(self) -> None:
         super().__init__()

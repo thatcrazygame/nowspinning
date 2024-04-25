@@ -22,6 +22,8 @@ from view.viewbase import View, register
 
 @register
 class Dashboard(View):
+    sort = 2
+
     def __init__(self) -> None:
         super().__init__()
 

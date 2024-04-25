@@ -205,7 +205,7 @@ async def mqtt_loop(data: Data):
         use_shared_topic=True,
     )
 
-    views = [v for v in VIEWS.keys()]
+    views = [view for view in sorted(VIEWS, key=lambda v: VIEWS[v].sort)]
     mqtt.add_select(
         name="View",
         callback=callbacks.update_view,

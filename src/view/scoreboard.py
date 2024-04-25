@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 @register
 class Scoreboard(View):
+    sort = 4
+
     def __init__(self) -> None:
         super().__init__()
 
