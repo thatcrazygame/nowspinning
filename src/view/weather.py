@@ -86,14 +86,18 @@ class Weather(View):
     def get_compass(self, degrees) -> str:
         return COMPASS[round((degrees % TOTAL_DEGREES) / SECTION_DEGREES)]
 
-    def draw_alert_triangle(self, img, alert):
+    def draw_alert_triangle(self, img: Image.Image, alert) -> Image.Image:
         if alert["total"] > 0:
-            draw = ImageDraw.Draw(img)
+            alert_img = img
+            draw = ImageDraw.Draw(alert_img)
             triangle = [(21, 31), (31, 31), (26, 23)]
             draw.polygon(triangle, fill=CRIMSON.rgb)
             exclamation = [(26, 25), (26, 28)]
             draw.line(exclamation, fill=BLACK.rgb, width=1)
             draw.point([26, 30], fill=BLACK.rgb)
+            return alert_img
+        else:
+            return img
 
     def draw_current_weather(self, canvas, weather):
         condition = weather.get("condition")
@@ -102,7 +106,7 @@ class Weather(View):
         y = 0
         if condition_img:
             alert = weather.get("alert")
-            self.draw_alert_triangle(condition_img, alert)
+            condition_img = self.draw_alert_triangle(condition_img, alert)
             canvas.SetImage(condition_img, x, y)
 
         temperature = weather.get("temperature")
