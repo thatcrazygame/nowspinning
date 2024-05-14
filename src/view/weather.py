@@ -88,7 +88,7 @@ class Weather(View):
 
     def draw_alert_triangle(self, img: Image.Image, alert) -> Image.Image:
         if alert["total"] > 0:
-            alert_img = img
+            alert_img = img.copy()
             draw = ImageDraw.Draw(alert_img)
             triangle = [(21, 31), (31, 31), (26, 23)]
             draw.polygon(triangle, fill=CRIMSON.rgb)
@@ -121,7 +121,7 @@ class Weather(View):
 
         x += condition_img.width + 2
         y = FONT_10x20.height - 4
-        temp_width = len(str(temperature)) * FONT_10x20.char_width
+        temp_width = FONT_10x20.str_width(str(temperature))
         DrawText(canvas, FONT_10x20, x, y, WHITE, str(temperature))
 
         daily = weather.get("forecast_daily")
@@ -135,7 +135,7 @@ class Weather(View):
 
         x += temp_width
         y = FONT_5x8.height + 1
-        temp_unit_width = len(temperature_unit) * FONT_5x8.char_width
+        temp_unit_width = FONT_5x8.str_width(temperature_unit)
         DrawText(canvas, FONT_5x8, x, y, WHITE, temperature_unit)
 
         x += temp_unit_width + 10
@@ -181,7 +181,7 @@ class Weather(View):
             label = forecast_dt.strftime("%-I%p")
             info = f"{high}° {humidity}%"
 
-        label_x = x + round(width / 2) - round(len(label) * FONT_5x8.char_width / 2)
+        label_x = x + round(width / 2) - round(FONT_5x8.str_width(label) / 2)
         label_y = y + FONT_5x8.height - 2
         DrawText(canvas, FONT_5x8, label_x, label_y, WHITE, label)
 
@@ -189,7 +189,7 @@ class Weather(View):
         img_y = label_y + 1
         canvas.SetImage(condition_img, img_x, img_y)
 
-        info_x = x + round(width / 2) - round(len(info) * FONT_4x6.char_width / 2) + 1
+        info_x = x + round(width / 2) - round(FONT_4x6.str_width(info) / 2) + 1
         info_y = img_y + condition_img.height + FONT_4x6.height + 1
         DrawText(canvas, FONT_4x6, info_x, info_y, WHITE, info)
 

@@ -11,16 +11,10 @@ sys.path.append(root_folder)
 class MonoFont(Font):
     def __init__(self, font_path: str) -> None:
         super().__init__()
-        self._char_width: int = None
-        self._LoadFont(font_path)
-
-    def _LoadFont(self, font_path: str) -> None:
         super().LoadFont(font_path)
-        self._char_width = self.CharacterWidth(ord(" "))
 
-    @property
-    def char_width(self) -> int:
-        return self._char_width
+    def str_width(self, string: str) -> int:
+        return sum([self.CharacterWidth(ord(char)) for char in string])
 
 
 FONT_4x6 = MonoFont("../fonts/4x6.bdf")

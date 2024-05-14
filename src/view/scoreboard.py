@@ -73,15 +73,6 @@ class Scoreboard(View):
         else:
             return 0
 
-    def get_inside_logos_x(
-        self, homeaway: str, text: str, char_width: int, padding: int = 0
-    ) -> int:
-        if homeaway == HOME:
-            text_width = len(text) * char_width
-            return int(PANEL_WIDTH * 2 - LOGO_SIZE - padding - text_width)
-        else:
-            return int(LOGO_SIZE + padding)
-
     def get_inside_logo_x(self, homeaway: str, width: int, padding: int = 0) -> int:
         if homeaway == HOME:
             return int(PANEL_WIDTH * 2 - LOGO_SIZE - padding - width)
@@ -133,7 +124,7 @@ class Scoreboard(View):
             elif possession_homeaway == "►":
                 clock = f"{clock} {possession_homeaway}"
 
-        clock_width = len(clock) * font.char_width
+        clock_width = font.str_width(clock)
         x = int(PANEL_WIDTH - clock_width / 2)
         y = font.height
         DrawText(canvas, font, x, y, color, clock)
@@ -176,7 +167,7 @@ class Scoreboard(View):
         if not score:
             return
 
-        score_width = len(str(score)) * font.char_width
+        score_width = font.str_width(str(score))
         x = self.get_inside_logo_x(homeaway, score_width, padding=2)
         y = score_y
         DrawText(canvas, font, x, y, color, str(score))
@@ -197,7 +188,7 @@ class Scoreboard(View):
 
     def draw_shots_label(self, canvas, font: MonoFont, color, y=35):
         shots = "shots"
-        shots_width = len(shots) * font.char_width
+        shots_width = font.str_width(shots)
         x = int(PANEL_WIDTH - shots_width / 2)
         DrawText(canvas, font, x, y, color, shots)
 
@@ -205,7 +196,7 @@ class Scoreboard(View):
         if not shots:
             return
 
-        shots_width = len(str(shots)) * font.char_width
+        shots_width = font.str_width(str(shots))
         x = self.get_inside_logo_x(homeaway, shots_width, padding=2)
         y = shots_y
         DrawText(canvas, font, x, y, color, str(shots))
@@ -266,8 +257,7 @@ class Scoreboard(View):
         if not last_play:
             return
 
-        char_width = self.play_scroll._font.char_width
-        play_width = len(last_play) * char_width
+        play_width = self.play_scroll.text_width
         play_x = PANEL_WIDTH - play_width / 2
         self.play_scroll._starting_x = play_x
         self.play_scroll.draw(canvas, last_play)
@@ -286,14 +276,14 @@ class Scoreboard(View):
             down_distance = down_yard[0]
             at_yard = f"@ {down_yard[1]}"
 
-        dd_width = len(down_distance) * font.char_width
+        dd_width = font.str_width(down_distance)
         x = int(PANEL_WIDTH - dd_width / 2)
         DrawText(canvas, font, x, y, color, down_distance)
 
         if not at_yard:
             return
 
-        yard_width = len(at_yard) * font.char_width
+        yard_width = font.str_width(at_yard)
         x = int(PANEL_WIDTH - yard_width / 2)
         y += 10
         DrawText(canvas, font, x, y, color, at_yard)
@@ -304,7 +294,7 @@ class Scoreboard(View):
         if not record:
             return
 
-        record_width = len(record) * font.char_width
+        record_width = font.str_width(record)
         x = 0
         if record_width > LOGO_SIZE:
             x = self.get_outer_x(homeaway, record_width, padding=1)

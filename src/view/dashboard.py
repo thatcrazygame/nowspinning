@@ -33,7 +33,7 @@ class Dashboard(View):
         now = datetime.now()
         now_str = now.strftime("%I:%M %m/%d/%Y")
 
-        x = PANEL_WIDTH - (len(now_str) * FONT_8x13.char_width) / 2
+        x = PANEL_WIDTH - FONT_8x13.str_width(now_str) / 2
         y = FONT_8x13.height - 2
         DrawText(canvas, FONT_8x13, x, y, WHITE, now_str)
 

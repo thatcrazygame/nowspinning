@@ -42,9 +42,13 @@ class ScrollingText(object):
     def _space_width(self) -> int:
         return self._font.CharacterWidth(ord(" ")) * self._num_spaces
 
+    @property
+    def text_width(self) -> int:
+        return self._font.str_width(self.text)
+
     def _is_out_of_bounds(self) -> bool:
         offset = self._scroll_dir * (self.x - self._left_bound)
-        return offset >= self.text_len + self._space_width
+        return offset >= self.text_width + self._space_width
 
     def update_text(self, text: str) -> None:
         if text != self.text:
@@ -75,15 +79,13 @@ class ScrollingText(object):
         if self.text is None or self.text.isspace():
             return
 
-        self.text_len = DrawText(
-            canvas, self._font, self.x, self.y, self._color, self.text
-        )
+        DrawText(canvas, self._font, self.x, self.y, self._color, self.text)
 
-        len_diff = self._right_bound - self._left_bound - self.text_len
+        len_diff = self._right_bound - self._left_bound - self.text_width
         if len_diff >= 0:
             return
 
-        x_2 = self.x - self._scroll_dir * (self.text_len + self._space_width)
+        x_2 = self.x - self._scroll_dir * (self.text_width + self._space_width)
 
         DrawText(canvas, self._font, x_2, self.y, self._color, self.text)
 
