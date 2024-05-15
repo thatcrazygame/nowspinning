@@ -36,12 +36,12 @@ class Scoreboard(View):
         super().__init__()
 
         self.play_scroll = ScrollingText(
-            FONT_8x13,
-            WHITE,
-            0,
-            PANEL_HEIGHT - 2,
-            0,
-            PANEL_WIDTH * 2,
+            font=FONT_8x13,
+            color=WHITE,
+            starting_x=0,
+            y=PANEL_HEIGHT - 2,
+            left_bound=0,
+            right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             scroll_speed=2,
         )
@@ -257,7 +257,7 @@ class Scoreboard(View):
         if not last_play:
             return
 
-        play_width = self.play_scroll.text_width
+        play_width = self.play_scroll._font.str_width(last_play)
         play_x = PANEL_WIDTH - play_width / 2
         self.play_scroll._starting_x = play_x
         self.play_scroll.draw(canvas, last_play)
