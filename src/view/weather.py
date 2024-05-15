@@ -26,7 +26,7 @@ from constants import (
 )
 
 from constants.colors import BLACK, CRIMSON, WHITE
-from constants.fonts import FONT_4x6, FONT_5x8, FONT_8x13, FONT_10x20
+from constants.fonts import FONT_4X6, FONT_5X8, FONT_8X13, FONT_10X20
 from data import Data
 from scrollingtext import ScrollingText
 from view.viewbase import View, register
@@ -40,10 +40,10 @@ class Weather(View):
         super().__init__()
 
         self.alert_title_scroll = ScrollingText(
-            font=FONT_5x8,
+            font=FONT_5X8,
             color=WHITE,
             starting_x=2,
-            y=PANEL_HEIGHT - 8 - FONT_5x8.height,
+            y=PANEL_HEIGHT - 8 - FONT_5X8.height,
             left_bound=0,
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
@@ -51,7 +51,7 @@ class Weather(View):
         )
 
         self.alert_scroll = ScrollingText(
-            font=FONT_5x8,
+            font=FONT_5X8,
             color=WHITE,
             starting_x=2,
             y=PANEL_HEIGHT - 6,
@@ -120,9 +120,9 @@ class Weather(View):
         wind_speed_unit = weather.get("wind_speed_unit")
 
         x += condition_img.width + 2
-        y = FONT_10x20.height - 4
-        temp_width = FONT_10x20.str_width(str(temperature))
-        DrawText(canvas, FONT_10x20, x, y, WHITE, str(temperature))
+        y = FONT_10X20.height - 4
+        temp_width = FONT_10X20.str_width(str(temperature))
+        DrawText(canvas, FONT_10X20, x, y, WHITE, str(temperature))
 
         daily = weather.get("forecast_daily")
         if daily:
@@ -131,26 +131,26 @@ class Weather(View):
             low = today.get("templow")
             high_low = f"{high}° {low}°"
             y = condition_img.height - 2
-            DrawText(canvas, FONT_5x8, x + 1, y, WHITE, high_low)
+            DrawText(canvas, FONT_5X8, x + 1, y, WHITE, high_low)
 
         x += temp_width
-        y = FONT_5x8.height + 1
-        temp_unit_width = FONT_5x8.str_width(temperature_unit)
-        DrawText(canvas, FONT_5x8, x, y, WHITE, temperature_unit)
+        y = FONT_5X8.height + 1
+        temp_unit_width = FONT_5X8.str_width(temperature_unit)
+        DrawText(canvas, FONT_5X8, x, y, WHITE, temperature_unit)
 
         x += temp_unit_width + 10
-        y = FONT_8x13.height - 3
+        y = FONT_8X13.height - 3
         hum = f"{humidity}%"
-        DrawText(canvas, FONT_8x13, x, y, WHITE, hum)
+        DrawText(canvas, FONT_8X13, x, y, WHITE, hum)
 
         wind_compass = self.get_compass(wind_bearing)
         wind = f"{round(wind_speed)} {wind_speed_unit} {wind_compass}"
-        y += FONT_5x8.height + 2
-        DrawText(canvas, FONT_5x8, x, y, WHITE, wind)
+        y += FONT_5X8.height + 2
+        DrawText(canvas, FONT_5X8, x, y, WHITE, wind)
 
         press = f"{round(pressure, 1)} {pressure_unit}"
-        y += FONT_5x8.height + 2
-        DrawText(canvas, FONT_5x8, x, y, WHITE, press)
+        y += FONT_5X8.height + 2
+        DrawText(canvas, FONT_5X8, x, y, WHITE, press)
 
     def draw_forecast(
         self, canvas, x: int, y: int, width: int, forecast: dict, forecast_type: str
@@ -181,17 +181,17 @@ class Weather(View):
             label = forecast_dt.strftime("%-I%p")
             info = f"{high}° {humidity}%"
 
-        label_x = x + round(width / 2) - round(FONT_5x8.str_width(label) / 2)
-        label_y = y + FONT_5x8.height - 2
-        DrawText(canvas, FONT_5x8, label_x, label_y, WHITE, label)
+        label_x = x + round(width / 2) - round(FONT_5X8.str_width(label) / 2)
+        label_y = y + FONT_5X8.height - 2
+        DrawText(canvas, FONT_5X8, label_x, label_y, WHITE, label)
 
         img_x = x + round(width / 2) - (condition_img.width / 2)
         img_y = label_y + 1
         canvas.SetImage(condition_img, img_x, img_y)
 
-        info_x = x + round(width / 2) - round(FONT_4x6.str_width(info) / 2) + 1
-        info_y = img_y + condition_img.height + FONT_4x6.height + 1
-        DrawText(canvas, FONT_4x6, info_x, info_y, WHITE, info)
+        info_x = x + round(width / 2) - round(FONT_4X6.str_width(info) / 2) + 1
+        info_y = img_y + condition_img.height + FONT_4X6.height + 1
+        DrawText(canvas, FONT_4X6, info_x, info_y, WHITE, info)
 
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()

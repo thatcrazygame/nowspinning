@@ -6,7 +6,7 @@ from PIL import Image, ImageColor, ImageDraw
 
 from constants import ABBRPADDING, ALLGAMES, BG, LEAGUEDEFAULT, PANEL_WIDTH, ROTATETIME
 from constants.colors import BLACK, ColorRGB, GRAY, WHITE
-from constants.fonts import FONT_4x6, FONT_5x8
+from constants.fonts import FONT_4X6, FONT_5X8
 from data import Data
 from view.viewbase import View, register
 from rgbmatrix.graphics import DrawText
@@ -27,10 +27,10 @@ class AllGames(View):
         self.league = LEAGUEDEFAULT
 
         self.states_scroll = ScrollingText(
-            font=FONT_5x8,
+            font=FONT_5X8,
             color=WHITE,
             starting_x=ABBRPADDING,
-            y=2 * (FONT_5x8.height + ABBRPADDING),
+            y=2 * (FONT_5X8.height + ABBRPADDING),
             left_bound=ABBRPADDING,
             right_bound=PANEL_WIDTH,
             num_spaces=1,
@@ -48,7 +48,7 @@ class AllGames(View):
 
     def draw_team(self, canvas, x, y, abbr, score, colors):
         bg, txt, outline = self.get_colors(colors)
-        row_height = FONT_4x6.height + (2 * ABBRPADDING)
+        row_height = FONT_4X6.height + (2 * ABBRPADDING)
         top = 0
         left = 0
         bottom = row_height
@@ -71,10 +71,10 @@ class AllGames(View):
 
         canvas.SetImage(img, x, y)
 
-        y = y + FONT_4x6.height + ABBRPADDING
+        y = y + FONT_4X6.height + ABBRPADDING
         DrawText(
             canvas,
-            FONT_4x6,
+            FONT_4X6,
             x + ABBRPADDING,
             y,
             ColorRGB(*txt),
@@ -82,7 +82,7 @@ class AllGames(View):
         )
         DrawText(
             canvas,
-            FONT_4x6,
+            FONT_4X6,
             x + ABBRPADDING + middle,
             y,
             WHITE,
@@ -90,7 +90,7 @@ class AllGames(View):
         )
 
     def draw_game(self, canvas, x, y, game):
-        row_height = FONT_4x6.height + (2 * ABBRPADDING)
+        row_height = FONT_4X6.height + (2 * ABBRPADDING)
         top = 0
         left = 0
         bottom = row_height * 2
@@ -123,8 +123,8 @@ class AllGames(View):
             clock = "Delayed"
 
         clock_x = x + ABBRPADDING
-        clock_y = y + FONT_4x6.height + ABBRPADDING
-        DrawText(canvas, FONT_4x6, clock_x, clock_y, WHITE, clock)
+        clock_y = y + FONT_4X6.height + ABBRPADDING
+        DrawText(canvas, FONT_4X6, clock_x, clock_y, WHITE, clock)
 
         y += row_height
         self.draw_team(
@@ -172,8 +172,8 @@ class AllGames(View):
         self.league = league_filter
 
         league_x = ABBRPADDING
-        league_y = FONT_5x8.height + ABBRPADDING
-        DrawText(canvas, FONT_5x8, league_x, league_y, WHITE, self.league)
+        league_y = FONT_5X8.height + ABBRPADDING
+        DrawText(canvas, FONT_5X8, league_x, league_y, WHITE, self.league)
 
         all_states = f"No games for league: {self.league} state: {state_filter}  "
         if games:

@@ -1,6 +1,6 @@
 from constants import PANEL_HEIGHT, PANEL_WIDTH, NUM_BARS, BAR_HEIGHT
 from constants.colors import WHITE
-from constants.fonts import FONT_8x13
+from constants.fonts import FONT_8X13
 from data import Data
 from scrollingtext import ScrollingText
 from view.viewbase import View, register
@@ -16,15 +16,15 @@ class Music(View):
         margin = 2
         linespace = 1
 
-        offset = FONT_8x13.height + margin
+        offset = FONT_8X13.height + margin
         x = PANEL_WIDTH + margin
         y = offset
 
         title_y = y
-        artist_y = y + FONT_8x13.height + linespace
+        artist_y = y + FONT_8X13.height + linespace
 
         self.title_scroll = ScrollingText(
-            font=FONT_8x13,
+            font=FONT_8X13,
             color=WHITE,
             starting_x=x,
             y=title_y,
@@ -35,7 +35,7 @@ class Music(View):
         )
 
         self.artist_scroll = ScrollingText(
-            font=FONT_8x13,
+            font=FONT_8X13,
             color=WHITE,
             starting_x=x,
             y=artist_y,

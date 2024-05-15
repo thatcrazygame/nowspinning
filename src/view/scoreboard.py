@@ -24,7 +24,7 @@ from constants import (
     IN,
 )
 from constants.colors import BLACK, WHITE, GRAY
-from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
+from constants.fonts import FONT_5X8, FONT_8X13, FONT_10X20, MonoFont
 from data import Data
 from scrollingtext import ScrollingText
 
@@ -41,7 +41,7 @@ class Scoreboard(View):
         super().__init__()
 
         self.play_scroll = ScrollingText(
-            font=FONT_8x13,
+            font=FONT_8X13,
             color=WHITE,
             starting_x=0,
             y=PANEL_HEIGHT - 2,
@@ -329,21 +329,21 @@ class Scoreboard(View):
         self.draw_clock(
             canvas,
             clock,
-            FONT_5x8,
+            FONT_5X8,
             WHITE,
             show_possession,
             possession_homeaway,
         )
 
-        logo_y = FONT_5x8.height + 1
+        logo_y = FONT_5X8.height + 1
         self.draw_logos(canvas, data, logo_y)
 
         if game_state in [PRE, POST]:
             team_record = game.get("team_record")
             oppo_record = game.get("opponent_record")
-            y = logo_y + LOGO_SIZE + FONT_5x8.height + 2
-            self.draw_record(canvas, team_homeaway, team_record, FONT_5x8, WHITE, y)
-            self.draw_record(canvas, oppo_homeaway, oppo_record, FONT_5x8, WHITE, y)
+            y = logo_y + LOGO_SIZE + FONT_5X8.height + 2
+            self.draw_record(canvas, team_homeaway, team_record, FONT_5X8, WHITE, y)
+            self.draw_record(canvas, oppo_homeaway, oppo_record, FONT_5X8, WHITE, y)
 
         if game_state not in [IN, POST]:
             return
@@ -363,12 +363,12 @@ class Scoreboard(View):
 
         team_score = game.get("team_score")
         self.draw_score(
-            canvas, team_score, team_homeaway, FONT_10x20, team_color, score_y
+            canvas, team_score, team_homeaway, FONT_10X20, team_color, score_y
         )
 
         oppo_score = game.get("opponent_score")
         self.draw_score(
-            canvas, oppo_score, oppo_homeaway, FONT_10x20, oppo_color, score_y
+            canvas, oppo_score, oppo_homeaway, FONT_10X20, oppo_color, score_y
         )
 
         if game_state != IN:
@@ -382,18 +382,18 @@ class Scoreboard(View):
             oppo_shots = game.get("opponent_shots_on_target")
 
             if team_shots and oppo_shots:
-                self.draw_shots_label(canvas, FONT_5x8, WHITE)
+                self.draw_shots_label(canvas, FONT_5X8, WHITE)
 
-            self.draw_shots(canvas, team_shots, team_homeaway, FONT_5x8, WHITE)
-            self.draw_shots(canvas, oppo_shots, oppo_homeaway, FONT_5x8, WHITE)
+            self.draw_shots(canvas, team_shots, team_homeaway, FONT_5X8, WHITE)
+            self.draw_shots(canvas, oppo_shots, oppo_homeaway, FONT_5X8, WHITE)
 
         if sport == BASEBALL:
             self.draw_bases(canvas, game)
-            self.draw_count(canvas, game, FONT_5x8, WHITE)
+            self.draw_count(canvas, game, FONT_5X8, WHITE)
 
         if sport == FOOTBALL:
             down_distance_text = game.get("down_distance_text")
-            self.draw_down_distance_yard(canvas, down_distance_text, FONT_5x8, WHITE)
+            self.draw_down_distance_yard(canvas, down_distance_text, FONT_5X8, WHITE)
 
             team_timeouts = game.get("team_timeouts")
             oppo_timeouts = game.get("opponent_timeouts")

@@ -20,7 +20,7 @@ from constants import (
     ADD_NOISE,
     RESET,
 )
-from constants.fonts import FONT_4x6
+from constants.fonts import FONT_4X6
 from constants.colors import BLACK, ROYALBLUE, WHITE
 from data import Data
 from view.viewbase import View, register
@@ -90,7 +90,7 @@ class GameOfLife(View):
 
     def draw_gens_counter(self, canvas):
         gens_str = f"gen: {self.generation}"
-        font = FONT_4x6
+        font = FONT_4X6
         char_width = 4
         padding = 2
         width = len(gens_str) * char_width + padding * 2

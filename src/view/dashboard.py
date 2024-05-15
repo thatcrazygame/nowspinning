@@ -12,7 +12,7 @@ from constants.colors import (
     LIGHTGRAY,
     DARKSLATEGRAY,
 )
-from constants.fonts import FONT_4x6, FONT_8x13
+from constants.fonts import FONT_4X6, FONT_8X13
 from data import Data
 from rgbmatrix.graphics import DrawText
 
@@ -33,9 +33,9 @@ class Dashboard(View):
         now = datetime.now()
         now_str = now.strftime("%I:%M %m/%d/%Y")
 
-        x = PANEL_WIDTH - FONT_8x13.str_width(now_str) / 2
-        y = FONT_8x13.height - 2
-        DrawText(canvas, FONT_8x13, x, y, WHITE, now_str)
+        x = PANEL_WIDTH - FONT_8X13.str_width(now_str) / 2
+        y = FONT_8X13.height - 2
+        DrawText(canvas, FONT_8X13, x, y, WHITE, now_str)
 
         tmpr_avgs = []
         hum_avgs = []
@@ -96,5 +96,5 @@ class Dashboard(View):
         for i, graph in enumerate(graphs):
             graph.background = background
             graph_y = PANEL_HEIGHT - graph.height * (len(graphs) - i)
-            graph.draw(canvas, FONT_4x6, graph_x, graph_y, WHITE)
+            graph.draw(canvas, FONT_4X6, graph_x, graph_y, WHITE)
             background = graph.fill_color
