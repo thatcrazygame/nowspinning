@@ -17,7 +17,11 @@ from constants import (
     LOGO_URL,
     PANEL_HEIGHT,
     PANEL_WIDTH,
-    GameState,
+    GAME_STATE,
+    NOT_FOUND,
+    POST,
+    PRE,
+    IN,
 )
 from constants.colors import BLACK, WHITE, GRAY
 from constants.fonts import FONT_5x8, FONT_8x13, FONT_10x20, MonoFont
@@ -302,7 +306,9 @@ class Scoreboard(View):
         if not game:
             return
 
-        game_state = GameState[game["state"].upper()]
+        game_state = game["state"].upper()
+        if game_state not in GAME_STATE:
+            game_state = NOT_FOUND
 
         sport = game.get("sport")
         team_homeaway = game.get("team_homeaway") or HOME
@@ -332,20 +338,20 @@ class Scoreboard(View):
         logo_y = FONT_5x8.height + 1
         self.draw_logos(canvas, data, logo_y)
 
-        if game_state in [GameState.PRE, GameState.POST]:
+        if game_state in [PRE, POST]:
             team_record = game.get("team_record")
             oppo_record = game.get("opponent_record")
             y = logo_y + LOGO_SIZE + FONT_5x8.height + 2
             self.draw_record(canvas, team_homeaway, team_record, FONT_5x8, WHITE, y)
             self.draw_record(canvas, oppo_homeaway, oppo_record, FONT_5x8, WHITE, y)
 
-        if game_state not in [GameState.IN, GameState.POST]:
+        if game_state not in [IN, POST]:
             return
 
         score_y = 24
         team_color = WHITE
         oppo_color = WHITE
-        if game_state is GameState.POST:
+        if game_state == POST:
             score_y = 32
             team_winner = game.get("team_winner")
             if team_winner is not None and not team_winner:
@@ -365,7 +371,7 @@ class Scoreboard(View):
             canvas, oppo_score, oppo_homeaway, FONT_10x20, oppo_color, score_y
         )
 
-        if game_state is not GameState.IN:
+        if game_state != IN:
             return
 
         last_play = game.get("last_play")

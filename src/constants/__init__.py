@@ -1,17 +1,6 @@
-from enum import Enum
 import numpy as np
 from constants.colors import BLACK, WHITE
 from zoneinfo import ZoneInfo
-
-
-class GameState(Enum):
-    # values represent priority, not chronological order
-    UNAVAILABLE = -1
-    NOT_FOUND = 0
-    BYE = 1
-    POST = 2
-    PRE = 3
-    IN = 4
 
 
 """ Scrolling Text """
@@ -87,6 +76,13 @@ BASEBALL = "baseball"
 FOOTBALL = "football"
 LOGO_SIZE = 36
 LOGO_URL = "https://a.espncdn.com/i/teamlogos"
+UNAVAILABLE = "UNAVAILABLE"
+NOT_FOUND = "NOT_FOUND"
+BYE = "BYE"
+POST = "POST"
+PRE = "PRE"
+IN = "IN"
+GAME_STATE = [UNAVAILABLE, NOT_FOUND, BYE, POST, PRE, IN]
 
 """ All Games """
 ABBRPADDING = 2

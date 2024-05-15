@@ -2,7 +2,7 @@ import json
 import logging
 from typing import TypedDict, Dict
 
-from constants import DAILY, FORECAST_TYPE, INFO_PAYLOAD_LEN, GameState
+from constants import DAILY, FORECAST_TYPE, INFO_PAYLOAD_LEN
 
 # from customdiscoverable import Select
 from data import Data
