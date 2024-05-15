@@ -7,6 +7,7 @@ from rgbmatrix.graphics import DrawLine, DrawText
 import requests
 
 from constants import (
+    ALIGN_CENTER,
     HOME,
     AWAY,
     HOCKEY,
@@ -44,6 +45,7 @@ class Scoreboard(View):
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             scroll_speed=2,
+            align=ALIGN_CENTER,
         )
 
         self.cached_bases: dict[str, Image.Image] = {}
@@ -253,15 +255,6 @@ class Scoreboard(View):
             canvas.SetImage(out, x, y)
             x += out.width + out_space
 
-    def draw_last_play(self, canvas, last_play):
-        if not last_play:
-            return
-
-        play_width = self.play_scroll._font.str_width(last_play)
-        play_x = PANEL_WIDTH - play_width / 2
-        self.play_scroll._starting_x = play_x
-        self.play_scroll.draw(canvas, last_play)
-
     def draw_down_distance_yard(
         self, canvas, down_distance: str, font: MonoFont, color, y: int = 37
     ):
@@ -376,7 +369,7 @@ class Scoreboard(View):
             return
 
         last_play = game.get("last_play")
-        self.draw_last_play(canvas, last_play)
+        self.play_scroll.draw(canvas, last_play)
 
         if sport == HOCKEY:
             team_shots = game.get("team_shots_on_target")

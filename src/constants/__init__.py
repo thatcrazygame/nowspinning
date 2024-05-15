@@ -14,10 +14,12 @@ class GameState(Enum):
     IN = 4
 
 
-class Direction(Enum):
-    LEFT = -1
-    RIGHT = 1
-
+""" Scrolling Text """
+DIR_LEFT = -1
+DIR_RIGHT = 1
+ALIGN_LEFT = "ALIGN_LEFT"
+ALIGN_RIGHT = "ALIGN_RIGHT"
+ALIGN_CENTER = "ALIGN_CENTER"
 
 """ Device and Default settings """
 PANEL_WIDTH = 64
