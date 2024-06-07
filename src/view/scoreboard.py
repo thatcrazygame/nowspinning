@@ -341,9 +341,15 @@ class Scoreboard(View):
         if game_state in [PRE, POST]:
             team_record = game.get("team_record")
             oppo_record = game.get("opponent_record")
+            series_summary = game.get("series_summary")
+
             y = logo_y + LOGO_SIZE + FONT_5X8.height + 2
-            self.draw_record(canvas, team_homeaway, team_record, FONT_5X8, WHITE, y)
-            self.draw_record(canvas, oppo_homeaway, oppo_record, FONT_5X8, WHITE, y)
+            if series_summary:
+                x = PANEL_WIDTH - floor(FONT_5X8.str_width(series_summary) / 2)
+                DrawText(canvas, FONT_5X8, x, y, WHITE, series_summary)
+            else:
+                self.draw_record(canvas, team_homeaway, team_record, FONT_5X8, WHITE, y)
+                self.draw_record(canvas, oppo_homeaway, oppo_record, FONT_5X8, WHITE, y)
 
         if game_state not in [IN, POST]:
             return
