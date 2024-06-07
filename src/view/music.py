@@ -50,9 +50,7 @@ class Music(View):
 
         title = data.title
         artists = data.artists
-        if title is not None:
-            self.title_scroll.draw(canvas, title)
-
+        self.title_scroll.draw(canvas, title)
         self.artist_scroll.draw(canvas, artists)
 
         if data.album_art is not None:

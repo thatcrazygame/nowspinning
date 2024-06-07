@@ -100,8 +100,7 @@ class ScrollingText(object):
         self._pause_time = None
 
     def draw(self, canvas, text: str = None) -> None:
-        if text:
-            self.text = text
+        self.text = text
 
         if self.text is None or self.text.isspace():
             return
