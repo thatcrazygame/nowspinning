@@ -400,7 +400,7 @@ async def loops(data: Data):
     bus, player, properties = await init_mpris()
     matrix = init_matrix()
 
-    await data.refresh_music_data(player, PANEL_WIDTH, PANEL_HEIGHT)
+    # await data.refresh_music_data(player, PANEL_WIDTH, PANEL_HEIGHT)
 
     async def on_prop_change(
         interface_name, changed_properties, invalidated_properties
