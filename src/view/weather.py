@@ -43,8 +43,8 @@ class Weather(View):
             font=FONT_5X8,
             color=WHITE,
             starting_x=2,
-            y=PANEL_HEIGHT - 8 - FONT_5X8.height,
-            left_bound=0,
+            y=PANEL_HEIGHT - 14 - FONT_5X8.height,
+            left_bound=2,
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             scroll_speed=2,
@@ -54,8 +54,8 @@ class Weather(View):
             font=FONT_5X8,
             color=WHITE,
             starting_x=2,
-            y=PANEL_HEIGHT - 6,
-            left_bound=0,
+            y=PANEL_HEIGHT - 2,
+            left_bound=2,
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             scroll_speed=2,
@@ -193,6 +193,25 @@ class Weather(View):
         info_y = img_y + condition_img.height + FONT_4X6.height + 1
         DrawText(canvas, FONT_4X6, info_x, info_y, WHITE, info)
 
+    def draw_alert(self, canvas, alert):
+        if alert["total"] > 0:
+            self.alert_title_scroll.draw(canvas, alert["title"])
+
+            expire_date = datetime.fromisoformat(alert["event_expires"])
+            expire_x = 2
+            expire_y = PANEL_HEIGHT - 4 - FONT_5X8.height
+            expire_txt = f"Expires: {expire_date.strftime('%x %I:%M %p')}"
+            if alert["total"] > 1:
+                count = f"({alert['selected']}/{alert['total']})"
+                expire_txt = f"{expire_txt} {count}"
+
+            DrawText(canvas, FONT_4X6, expire_x, expire_y, WHITE, expire_txt)
+
+            self.alert_scroll.draw(canvas, alert["spoken_desc"])
+        else:
+            self.alert_title_scroll.draw(canvas, "No active alerts")
+            self.alert_scroll.draw(canvas, "")
+
     async def draw(self, canvas, data: Data):
         self.update_last_drawn()
         weather = data.weather_forecast
@@ -205,16 +224,7 @@ class Weather(View):
         forecast_type = data.forecast_type
         alert = weather.get("alert")
         if forecast_type == ALERT and alert:
-            if alert["total"] > 0:
-                alert_txt = alert["spoken_desc"]
-                if alert["total"] > 1:
-                    count = f" ({alert['selected']}/{alert['total']})"
-                    alert_txt = alert_txt + count
-                self.alert_title_scroll.draw(canvas, alert["title"])
-                self.alert_scroll.draw(canvas, alert_txt)
-            else:
-                self.alert_title_scroll.draw(canvas, "No active alerts")
-                self.alert_scroll.draw(canvas, "")
+            self.draw_alert(canvas, alert)
             return
 
         forecasts = weather.get(f"forecast_{forecast_type.lower()}")
