@@ -1,5 +1,5 @@
 import numpy as np
-from constants.colors import BLACK, WHITE
+from constants.colors import BLACK, CRIMSON, PITTSGOLD, ROYALBLUE, WHITE
 from zoneinfo import ZoneInfo
 
 
@@ -88,7 +88,11 @@ GAME_STATE = [UNAVAILABLE, NOT_FOUND, BYE, POST, PRE, IN]
 ABBRPADDING = 2
 LEAGUEDEFAULT = "All"
 ROTATETIME = 5.0
-
+LEAGUE_COLORS = {
+    "NHL": PITTSGOLD,
+    "NFL": CRIMSON,
+    "MLB": ROYALBLUE,
+}
 
 """ Weather """
 HOURLY = "Hourly"

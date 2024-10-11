@@ -4,7 +4,15 @@ from time import perf_counter
 
 from PIL import Image, ImageColor, ImageDraw
 
-from constants import ABBRPADDING, ALLGAMES, BG, LEAGUEDEFAULT, PANEL_WIDTH, ROTATETIME
+from constants import (
+    ABBRPADDING,
+    ALLGAMES,
+    BG,
+    LEAGUEDEFAULT,
+    LEAGUE_COLORS,
+    PANEL_WIDTH,
+    ROTATETIME,
+)
 from constants.colors import BLACK, ColorRGB, GRAY, WHITE
 from constants.fonts import FONT_4X6, FONT_5X8
 from data import Data
@@ -30,7 +38,7 @@ class AllGames(View):
             font=FONT_5X8,
             color=WHITE,
             starting_x=ABBRPADDING,
-            y=2 * (FONT_5X8.height + ABBRPADDING),
+            y=(2 * FONT_5X8.height) + ABBRPADDING,
             left_bound=ABBRPADDING,
             right_bound=PANEL_WIDTH,
             num_spaces=1,
@@ -101,11 +109,22 @@ class AllGames(View):
         background = Image.new("RGB", (PANEL_WIDTH, row_height * 2), BLACK.rgb)
         background_draw = ImageDraw.Draw(background)
 
+        league_color = WHITE
+        if game.get("league") in LEAGUE_COLORS:
+            league_color = LEAGUE_COLORS[game.get("league")]
+
+        background_draw.polygon(
+            xy=[(right, top), (right, top + 6), (right - 6, top)],
+            fill=league_color.rgb,
+            outline=league_color.rgb,
+        )
+
         background_draw.rectangle(
             xy=[(left, top), (right - 1, bottom - 1)],
             fill=None,
             outline=GRAY.rgb,
         )
+
         canvas.SetImage(background, x, y)
 
         clock = (
@@ -172,7 +191,7 @@ class AllGames(View):
         self.league = league_filter
 
         league_x = ABBRPADDING
-        league_y = FONT_5X8.height + ABBRPADDING
+        league_y = FONT_5X8.height
         DrawText(canvas, FONT_5X8, league_x, league_y, WHITE, self.league)
 
         all_states = f"No games for league: {self.league} state: {state_filter}  "
@@ -185,9 +204,9 @@ class AllGames(View):
         self.states_scroll.draw(canvas, all_states)
 
         x = 0
-        y = 23
+        y = 21
         for i, game in enumerate(games[:num_games]):
             if i == 2:
                 x = PANEL_WIDTH
-                y = 3
+                y = 1
             y += self.draw_game(canvas, x, y, game)

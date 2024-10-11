@@ -44,7 +44,7 @@ class Scoreboard(View):
             font=FONT_8X13,
             color=WHITE,
             starting_x=0,
-            y=PANEL_HEIGHT - 2,
+            y=PANEL_HEIGHT - 3,
             left_bound=0,
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
