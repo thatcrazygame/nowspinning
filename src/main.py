@@ -37,9 +37,10 @@ from view import View, VIEWS
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
 
-# SCD-30 has tempremental I2C with clock stretching, datasheet recommends
-# starting at 50KHz
-I2C = I2C(SCL, SDA, frequency=50000)
+# SCD-30 has tempremental I2C with clock stretching
+# datasheet recommends starting at 50KHz
+# updated in /boot/config.txt
+I2C = I2C(SCL, SDA)
 
 logger = logging.getLogger(__name__)
 load_dotenv()

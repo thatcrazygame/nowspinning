@@ -6,9 +6,6 @@ from typing import Any, Callable, Generic, Optional, TypeVar
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import MQTTMessageInfo
-from pydantic import BaseModel, dataclasses, root_validator
-from pydantic.generics import GenericModel
-
 import ha_mqtt_discoverable as hamd
 
 logger = logging.getLogger(__name__)
