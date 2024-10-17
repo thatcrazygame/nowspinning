@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 from math import floor
 
@@ -213,7 +212,6 @@ class Weather(View):
             self.alert_scroll.draw(canvas, "")
 
     async def draw(self, canvas, data: Data):
-        self.update_last_drawn()
         weather = data.weather_forecast
 
         if not weather:
@@ -236,5 +234,3 @@ class Weather(View):
         for forecast in forecasts:
             self.draw_forecast(canvas, x, y, f_width, forecast, forecast_type)
             x += f_width
-
-        await asyncio.sleep(0.25)

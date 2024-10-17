@@ -46,8 +46,6 @@ class Music(View):
         )
 
     async def draw(self, canvas, data: Data):
-        self.update_last_drawn()
-
         title = data.title
         artists = data.artists
         self.title_scroll.draw(canvas, title)

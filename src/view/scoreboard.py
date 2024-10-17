@@ -301,8 +301,6 @@ class Scoreboard(View):
         DrawText(canvas, font, x, y, color, record)
 
     async def draw(self, canvas, data: Data):
-        self.update_last_drawn()
-
         game = data.selected_game
         if not game:
             return

@@ -100,7 +100,6 @@ class GameOfLife(View):
         DrawText(canvas, font, padding, font.height, ROYALBLUE, gens_str)
 
     async def draw(self, canvas, data: Data):
-        self.update_last_drawn()
         await self.handle_commands(data.game_of_life_commands)
 
         img = Image.fromarray(np.uint8(self.get_display_grid()))

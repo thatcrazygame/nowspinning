@@ -75,10 +75,8 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
                     f"Max errors ({max_unexpected_errors}) reached. The previous error will not be logged again until resolved or restarted."
                 )
 
-            asyncio.sleep(1)
-
         canvas = matrix.SwapOnVSync(canvas)
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0)
 
 
 async def air_loop(data: Data):

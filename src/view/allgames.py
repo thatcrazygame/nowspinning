@@ -1,4 +1,3 @@
-import asyncio
 from collections import deque, Counter
 from time import perf_counter
 
@@ -168,8 +167,6 @@ class AllGames(View):
         return bottom
 
     async def draw(self, canvas, data: Data):
-        self.update_last_drawn()
-
         num_games = 5
 
         offset = self.offset

@@ -28,8 +28,6 @@ class Dashboard(View):
         super().__init__()
 
     async def draw(self, canvas, data: Data):
-        self.update_last_drawn()
-
         now = datetime.now()
         now_str = now.strftime("%I:%M %m/%d/%Y")
 
