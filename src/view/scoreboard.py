@@ -2,6 +2,7 @@ from io import BytesIO
 import logging
 from math import floor
 
+import asyncio
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import DrawLine, DrawText
 import requests
@@ -55,12 +56,12 @@ class Scoreboard(View):
         self.cached_bases: dict[str, Image.Image] = {}
         self.cached_logos: dict[str, Image.Image] = {}
 
-    def get_logo(self, url: str, size: tuple) -> Image.Image:
+    async def get_logo(self, url: str, size: tuple) -> Image.Image:
         url = url.lower()
         logo_img = self.cached_logos.get(url)
         if not logo_img:
             background = Image.new("RGBA", size, BLACK.rgb)
-            response = requests.get(url)
+            response = await asyncio.to_thread(requests.get, url)
             if response.status_code == requests.codes.ok:
                 img = Image.open(BytesIO(response.content))
                 img.thumbnail(size, Image.Resampling.LANCZOS)
@@ -135,7 +136,7 @@ class Scoreboard(View):
         y = font.height
         DrawText(canvas, font, x, y, color, clock)
 
-    def draw_logos(self, canvas, data: Data, logo_y: int):
+    async def draw_logos(self, canvas, data: Data, logo_y: int):
         game = data.selected_game
         league = game.get("league")
         team_abbr = game.get("team_abbr")
@@ -147,7 +148,7 @@ class Scoreboard(View):
         team_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{team_abbr}.png"
         logo_size = (LOGO_SIZE, LOGO_SIZE)
 
-        team_img = self.get_logo(team_url, logo_size)
+        team_img = await self.get_logo(team_url, logo_size)
         if not team_img:
             return
 
@@ -156,14 +157,14 @@ class Scoreboard(View):
 
         if oppo_abbr:
             oppo_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{oppo_abbr}.png"
-            oppo_img = self.get_logo(oppo_url, logo_size)
+            oppo_img = await self.get_logo(oppo_url, logo_size)
             if not oppo_img:
                 return
             oppo_img_x = self.get_logo_x(oppo_homeaway)
             canvas.SetImage(oppo_img, oppo_img_x, logo_y)
         else:
             league_url = game.get("league_logo")
-            league_img = self.get_logo(league_url, logo_size)
+            league_img = await self.get_logo(league_url, logo_size)
             if not league_img:
                 return
             league_img_x = self.get_logo_x(AWAY)
@@ -336,7 +337,7 @@ class Scoreboard(View):
         )
 
         logo_y = FONT_5X8.height + 1
-        self.draw_logos(canvas, data, logo_y)
+        await self.draw_logos(canvas, data, logo_y)
 
         if game_state in [PRE, POST]:
             team_record = game.get("team_record")
