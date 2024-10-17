@@ -14,6 +14,9 @@ class MonoFont(Font):
         super().LoadFont(font_path)
 
     def str_width(self, string: str) -> int:
+        if string is None:
+            return 0
+
         return sum([self.CharacterWidth(ord(char)) for char in string])
 
 
