@@ -46,7 +46,7 @@ class Weather(View):
             left_bound=2,
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
-            scroll_speed=2,
+            speed=0.02,
         )
 
         self.alert_scroll = ScrollingText(
@@ -57,7 +57,7 @@ class Weather(View):
             left_bound=2,
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
-            scroll_speed=2,
+            speed=0.02,
         )
 
         self.cached_conditions: dict[str, Image.Image] = {}

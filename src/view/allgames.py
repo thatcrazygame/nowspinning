@@ -41,7 +41,7 @@ class AllGames(View):
             left_bound=ABBRPADDING,
             right_bound=PANEL_WIDTH,
             num_spaces=1,
-            scroll_speed=1,
+            speed=0.02,
         )
 
     def get_colors(self, team_colors: list[str]):

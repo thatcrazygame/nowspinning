@@ -49,8 +49,8 @@ class Scoreboard(View):
             left_bound=0,
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
-            scroll_speed=2,
             align=ALIGN_CENTER,
+            speed=0.02,
         )
 
         self.cached_bases: dict[str, Image.Image] = {}

@@ -32,6 +32,7 @@ class Music(View):
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             pause_dur=2.0,
+            speed=0.04,
         )
 
         self.artist_scroll = ScrollingText(
@@ -43,6 +44,7 @@ class Music(View):
             right_bound=PANEL_WIDTH * 2,
             num_spaces=3,
             pause_dur=2.0,
+            speed=0.04,
         )
 
     async def draw(self, canvas, data: Data):

@@ -16,8 +16,9 @@ class ScrollingText(object):
         y: int,
         left_bound: int,
         right_bound: int,
-        scroll_speed: int = 1,
+        scroll_amount: int = 1,
         scroll_dir: int = DIR_LEFT,
+        speed: float = 0.0,
         text: str = "",
         num_spaces: int = 1,
         pause_dur: float = 0.0,
@@ -26,7 +27,9 @@ class ScrollingText(object):
         self._font = font
         self._color = color
         self._scroll_dir = scroll_dir
-        self._scroll_speed = scroll_speed
+        self._scroll_amount = scroll_amount
+        self._speed = speed
+        self._last_scrolled = perf_counter()
         self._left_bound = left_bound
         self._right_bound = right_bound
         self._num_spaces = num_spaces
@@ -114,8 +117,9 @@ class ScrollingText(object):
 
         DrawText(canvas, self._font, x_2, self.y, self._color, self.text)
 
-        if not self.is_paused:
-            self.x += self._scroll_dir * self._scroll_speed
+        if not self.is_paused and perf_counter() - self._last_scrolled >= self._speed:
+            self.x += self._scroll_dir * self._scroll_amount
+            self._last_scrolled = perf_counter()
 
         if self.is_out_of_bounds:
             self.x = self._left_bound
