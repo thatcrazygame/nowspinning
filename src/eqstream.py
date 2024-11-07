@@ -5,6 +5,8 @@ from PIL import ImageDraw
 from pyaudio import paContinue, paInt16, PyAudio, Stream
 
 from constants import (
+    BIN_SIZES,
+    BIN_WEIGHTS,
     CHUNK,
     RATE,
     MIN_HZ,
@@ -14,6 +16,10 @@ from constants import (
 )
 from constants.colors import BLACK
 from utils.images import get_gradient_img
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class EQStream(object):
@@ -70,22 +76,18 @@ class EQStream(object):
         min_idx = num_bins * floor(min_idx / num_bins)
         fft_data = fft_data[min_idx:max_idx]
 
-        data_per_bin = int(len(fft_data) / num_bins)
+        bins = []
+        for i, size in enumerate(BIN_SIZES):
+            j = sum(BIN_SIZES[:i])
+            vol = np.mean(fft_data[j : j + size])
+            bins.insert(i, vol)
 
-        bins = [
-            sum(fft_data[bin : bin + data_per_bin])
-            for bin in range(0, len(fft_data), data_per_bin)
-        ]
+        for i, bin in enumerate(bins):
+            bins[i] = bin * BIN_WEIGHTS[i]
 
-        if self.max_val is not None:
-            self.max_val = max(self.max_val, max(bins))
-        else:
-            self.max_val = max(bins)
-
-        # Convert to numpy array:
         bins = np.array(bins)
         # Normalize and round
-        min_val = 0  # bins.min()
+        min_val = bins.min() / 2
         max_val = max(MAX_VOL, bins.max())
         bins = np.interp(bins, (min_val, max_val), (0, max_height))
         bins = np.round(bins)

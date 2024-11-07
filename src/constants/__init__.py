@@ -44,12 +44,31 @@ L = 1
 S = 2
 
 """ EQ Stream """
+BIN_SIZES = [1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 4, 8, 8, 16]
+BIN_WEIGHTS = [
+    0.6,
+    0.7,
+    0.8,
+    0.85,
+    0.9,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.05,
+    1.1,
+    1.1,
+    1.1,
+    1.2,
+    1.4,
+]
 CHUNK = 256  # Samples: 1024,  512, 256, 128
 RATE = 44100  # Equivalent to Human Hearing at 40 kHz
 MIN_HZ = 50
 MAX_HZ = 20000  # Commonly referenced upper limit for "normal" audio range
-MAX_VOL = 200
-BUFFER_FRAMES = 4
+MAX_VOL = 40
+BUFFER_FRAMES = 1
 IS_HORIZONTAL = (True, True, True)
 IS_VERTICAL = (False, False, False)
 NUM_BARS = 16
