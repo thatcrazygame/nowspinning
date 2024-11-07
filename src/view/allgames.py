@@ -129,6 +129,7 @@ class AllGames(View):
         clock = (
             game.get("clock")
             .replace(" EDT", "")
+            .replace(" EST", "")
             .replace("- ", "")
             .replace(" PM", "PM")
             .replace(" AM", "AM")
