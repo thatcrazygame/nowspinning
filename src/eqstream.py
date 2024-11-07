@@ -5,8 +5,7 @@ from PIL import ImageDraw
 from pyaudio import paContinue, paInt16, PyAudio, Stream
 
 from constants import (
-    BIN_SIZES,
-    BIN_WEIGHTS,
+    BIN_DIMENSIONS,
     CHUNK,
     RATE,
     MIN_HZ,
@@ -77,13 +76,12 @@ class EQStream(object):
         fft_data = fft_data[min_idx:max_idx]
 
         bins = []
-        for i, size in enumerate(BIN_SIZES):
-            j = sum(BIN_SIZES[:i])
-            vol = np.mean(fft_data[j : j + size])
-            bins.insert(i, vol)
-
-        for i, bin in enumerate(bins):
-            bins[i] = bin * BIN_WEIGHTS[i]
+        pos = 0
+        for dim in BIN_DIMENSIONS:
+            size, weight = dim
+            vol = np.mean(fft_data[pos : pos + size]) * weight
+            pos += size
+            bins.append(vol)
 
         bins = np.array(bins)
         # Normalize and round
