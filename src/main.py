@@ -127,7 +127,7 @@ async def mqtt_loop(data: Data):
         name="nowspinning",
         identifiers=mac,
         manufacturer="Raspberry Pi Foundation",
-        model="Raspberry Pi 3B+",
+        model="Raspberry Pi 4B",
     )
 
     mqtt = MQTTDevice(
