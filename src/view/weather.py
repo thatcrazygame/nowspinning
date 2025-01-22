@@ -156,7 +156,7 @@ class Weather(View):
         wind = f"{round(wind_speed)} {wind_speed_unit} {wind_compass}"
         wind_width = FONT_5X8.str_width(wind)
 
-        x = (PANEL_WIDTH * 2) - (max(press_width, wind_width) + 2)
+        x = (PANEL_WIDTH * 2) - 51
         y = FONT_8X13.height - 3
 
         sec_type: SecondaryInfo = POP
