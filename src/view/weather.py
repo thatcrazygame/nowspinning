@@ -11,6 +11,7 @@ from constants import (
     HOURLY,
     DAILY,
     FORECAST_TYPE,
+    SECONDARY_TYPE,
     CONDITION,
     SMALL,
     BIG,
@@ -25,7 +26,8 @@ from constants import (
 )
 
 from constants.colors import BLACK, CRIMSON, WHITE
-from constants.fonts import FONT_4X6, FONT_5X8, FONT_8X13, FONT_10X20
+from constants.fonts import FONT_4X6, FONT_5X8, FONT_8X13, FONT_9X18, FONT_10X20
+from constants.secondaryinfo import POP, RH, SECONDARY_DEFAULT, SecondaryInfo
 from data import Data
 from scrollingtext import ScrollingText
 from view.viewbase import View, register
@@ -98,7 +100,7 @@ class Weather(View):
         else:
             return img
 
-    def draw_current_weather(self, canvas, weather):
+    def draw_current_weather(self, canvas, weather, secondary_type):
         condition = weather.get("condition")
         condition_img = self.get_condition_img(condition, BIG)
         x = 2
@@ -108,9 +110,10 @@ class Weather(View):
             condition_img = self.draw_alert_triangle(condition_img, alert)
             canvas.SetImage(condition_img, x, y)
 
-        temperature = weather.get("temperature")
+        temperature = str(weather.get("temperature"))
         temperature_unit = weather.get("temperature_unit")
         humidity = weather.get("humidity")
+        pop = ""
         cloud_coverage = weather.get("cloud_coverage")
         pressure = weather.get("pressure")
         pressure_unit = weather.get("pressure_unit")
@@ -118,10 +121,19 @@ class Weather(View):
         wind_speed = weather.get("wind_speed")
         wind_speed_unit = weather.get("wind_speed_unit")
 
+        temp_font = FONT_10X20
+        if len(temperature) == 3:
+            temp_font = FONT_9X18
+
         x += condition_img.width + 2
-        y = FONT_10X20.height - 4
-        temp_width = FONT_10X20.str_width(str(temperature))
-        DrawText(canvas, FONT_10X20, x, y, WHITE, str(temperature))
+        y = temp_font.height - 4
+        temp_width = temp_font.str_width(str(temperature))
+        DrawText(canvas, temp_font, x, y, WHITE, str(temperature))
+
+        x += temp_width
+        y = FONT_5X8.height + 1
+        FONT_5X8.str_width(temperature_unit)
+        DrawText(canvas, FONT_5X8, x, y, WHITE, temperature_unit)
 
         daily = weather.get("forecast_daily")
         if daily:
@@ -130,29 +142,59 @@ class Weather(View):
             low = today.get("templow")
             high_low = f"{high}° {low}°"
             y = condition_img.height - 2
-            DrawText(canvas, FONT_5X8, x + 1, y, WHITE, high_low)
+            DrawText(canvas, FONT_5X8, condition_img.width + 3, y, WHITE, high_low)
 
-        x += temp_width
-        y = FONT_5X8.height + 1
-        temp_unit_width = FONT_5X8.str_width(temperature_unit)
-        DrawText(canvas, FONT_5X8, x, y, WHITE, temperature_unit)
+        hourly = weather.get("forecast_hourly")
+        if hourly:
+            now = hourly[0]
+            pop = now.get("precipitation_probability")
 
-        x += temp_unit_width + 10
-        y = FONT_8X13.height - 3
-        hum = f"{humidity}%"
-        DrawText(canvas, FONT_8X13, x, y, WHITE, hum)
+        press = f"{round(pressure, 1)} {pressure_unit}"
+        press_width = FONT_5X8.str_width(press)
 
         wind_compass = self.get_compass(wind_bearing)
         wind = f"{round(wind_speed)} {wind_speed_unit} {wind_compass}"
+        wind_width = FONT_5X8.str_width(wind)
+
+        x = (PANEL_WIDTH * 2) - (max(press_width, wind_width) + 2)
+        y = FONT_8X13.height - 3
+
+        sec_type: SecondaryInfo = POP
+        secondary_val = pop
+
+        if secondary_type != SECONDARY_DEFAULT.name:
+            sec_type = SECONDARY_TYPE[secondary_type]
+            if sec_type == RH:
+                secondary_val = humidity
+            elif sec_type == POP:
+                secondary_val = pop
+
+        secondary_info = f"{secondary_val}{sec_type.unit}"
+        secondary_abbr = sec_type.abbr
+
+        DrawText(canvas, FONT_8X13, x, y, WHITE, secondary_info)
+        secondary_width = FONT_8X13.str_width(secondary_info)
+        DrawText(canvas, FONT_5X8, x + secondary_width + 2, y, WHITE, secondary_abbr)
+
         y += FONT_5X8.height + 2
         DrawText(canvas, FONT_5X8, x, y, WHITE, wind)
 
-        press = f"{round(pressure, 1)} {pressure_unit}"
         y += FONT_5X8.height + 2
         DrawText(canvas, FONT_5X8, x, y, WHITE, press)
 
+    def info_str(self, value, unit: str) -> str:
+        val = str(value)
+        return f"{val}{unit if len(val) < 3 else ''}"
+
     def draw_forecast(
-        self, canvas, x: int, y: int, width: int, forecast: dict, forecast_type: str
+        self,
+        canvas,
+        x: int,
+        y: int,
+        width: int,
+        forecast: dict,
+        forecast_type: str,
+        secondary_type: str,
     ):
         if forecast_type not in FORECAST_TYPE:
             f_types = ",".join(FORECAST_TYPE)
@@ -170,15 +212,35 @@ class Weather(View):
         high = forecast.get("temperature")
         low = forecast.get("templow")
         humidity = forecast.get("humidity")
+        pop = forecast.get("precipitation_probability")
 
         label = ""
         info = ""
+        primary = self.info_str(high, "°")
+        secondary = ""
+        secondary_val = ""
+        secondary_unit = ""
+
         if forecast_type == DAILY:
             label = forecast_dt.strftime("%a")
-            info = f"{high}° {low}°"
+            secondary_val = low
+            secondary_unit = "°"
         elif forecast_type == HOURLY:
             label = forecast_dt.strftime("%-I%p")
-            info = f"{high}° {humidity}%"
+            secondary_val = pop
+            secondary_unit = POP.unit
+
+        sec_type: SecondaryInfo = SECONDARY_TYPE[secondary_type]
+        if sec_type != SECONDARY_DEFAULT:
+            if sec_type == RH:
+                secondary_val = humidity
+            elif sec_type == POP:
+                secondary_val = pop
+            secondary_unit = sec_type.unit
+
+        secondary = self.info_str(secondary_val, secondary_unit)
+
+        info = f"{primary} {secondary}"
 
         label_x = x + round(width / 2) - round(FONT_5X8.str_width(label) / 2)
         label_y = y + FONT_5X8.height - 2
@@ -217,9 +279,11 @@ class Weather(View):
         if not weather:
             return
 
-        self.draw_current_weather(canvas, weather)
-
         forecast_type = data.forecast_type
+        secondary_type = data.secondary_type
+
+        self.draw_current_weather(canvas, weather, secondary_type)
+
         alert = weather.get("alert")
         if forecast_type == ALERT and alert:
             self.draw_alert(canvas, alert)
@@ -232,5 +296,7 @@ class Weather(View):
         y = 34
         f_width = floor(PANEL_WIDTH * 2.0 / NUM_FORECASTS)
         for forecast in forecasts:
-            self.draw_forecast(canvas, x, y, f_width, forecast, forecast_type)
+            self.draw_forecast(
+                canvas, x, y, f_width, forecast, forecast_type, secondary_type
+            )
             x += f_width

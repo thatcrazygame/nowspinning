@@ -8,7 +8,15 @@ from time import perf_counter
 from dbus_next.errors import DBusError
 from PIL import Image, ImageChops
 
-from constants import DEFAULT_VIEW, GAMEOFLIFE, HOURLY, DAILY, SONGREC_TIMEOUT_SECS
+from constants import (
+    DEFAULT_VIEW,
+    GAMEOFLIFE,
+    HOURLY,
+    DAILY,
+    SONGREC_TIMEOUT_SECS,
+    SECONDARY_TYPE,
+)
+from constants.secondaryinfo import SECONDARY_DEFAULT
 from eqstream import EQStream
 from utils.images import get_dominant_colors, get_min_constrast_colors
 
@@ -47,6 +55,7 @@ class Data(object):
 
         self.weather_forecast: dict = None
         self.forecast_type: str = DAILY
+        self.secondary_type: str = SECONDARY_DEFAULT.name
 
     def reset_music(self):
         logger.info("Reset music")
@@ -137,6 +146,10 @@ class Data(object):
         }
         payload["forecast_type"] = {
             "value": self._str(self.forecast_type),
+            "available": "online",
+        }
+        payload["secondary_type"] = {
+            "value": self._str(self.secondary_type),
             "available": "online",
         }
 

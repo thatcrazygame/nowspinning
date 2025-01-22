@@ -1,5 +1,6 @@
 import numpy as np
 from constants.colors import BLACK, CRIMSON, PITTSGOLD, ROYALBLUE, WHITE
+from constants.secondaryinfo import SECONDARY_DEFAULT, RH, SecondaryInfo, POP
 from zoneinfo import ZoneInfo
 
 
@@ -117,6 +118,11 @@ HOURLY = "Hourly"
 DAILY = "Daily"
 ALERT = "Alert"
 FORECAST_TYPE = [HOURLY, DAILY, ALERT]
+SECONDARY_TYPE: dict[str, SecondaryInfo] = {}
+SECONDARY_TYPE[SECONDARY_DEFAULT.name] = SECONDARY_DEFAULT
+SECONDARY_TYPE[POP.name] = POP
+SECONDARY_TYPE[RH.name] = RH
+
 CONDITION = [
     "clear-night",
     "cloudy",

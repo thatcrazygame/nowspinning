@@ -26,6 +26,7 @@ from constants import (
     METERS_ABOVE_SEA_LEVEL,
     TEMPERATURE_OFFSET,
     FORECAST_TYPE,
+    SECONDARY_TYPE,
     PANEL_WIDTH,
     PANEL_HEIGHT,
 )
@@ -344,6 +345,17 @@ async def mqtt_loop(data: Data):
         options=FORECAST_TYPE,
         value_template="{{ value_json.forecast_type.value }}",
         availability_template="{{ value_json.forecast_type.available }}",
+        use_shared_topic=True,
+    )
+
+    secondary_opts = list(SECONDARY_TYPE.keys())
+    mqtt.add_select(
+        name="Secondary Info",
+        callback=callbacks.update_secondary_type,
+        unique_id="nowspinning_secondary_info",
+        options=secondary_opts,
+        value_template="{{ value_json.secondary_type.value }}",
+        availability_template="{{ value_json.secondary_type.available }}",
         use_shared_topic=True,
     )
 

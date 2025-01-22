@@ -2,7 +2,13 @@ import json
 import logging
 from typing import TypedDict, Dict
 
-from constants import DAILY, FORECAST_TYPE, INFO_PAYLOAD_LEN
+from constants import (
+    DAILY,
+    FORECAST_TYPE,
+    INFO_PAYLOAD_LEN,
+    SECONDARY_DEFAULT,
+    SECONDARY_TYPE,
+)
 
 # from customdiscoverable import Select
 from data import Data
@@ -95,6 +101,13 @@ def update_forecast_type(client: Client, user_data: _UserData, message: MQTTMess
     if f_type not in FORECAST_TYPE:
         f_type = DAILY
     user_data["data"].forecast_type = f_type
+
+
+def update_secondary_type(client: Client, user_data: _UserData, message: MQTTMessage):
+    s_type = _process_message(message)
+    if s_type not in SECONDARY_TYPE:
+        s_type = SECONDARY_DEFAULT.name
+    user_data["data"].secondary_type = s_type
 
 
 def songrec_reset_button(client: Client, user_data: _UserData, message: MQTTMessage):
