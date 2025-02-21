@@ -171,12 +171,19 @@ class AllGames(View):
         return bottom
 
     async def draw(self, canvas, data: Data):
-        num_games = 6
+        if not data.all_games:
+            return
 
+        league_filter = data.all_games.get("league_filter")
+        state_filter = data.all_games.get("state_filter")
+        games = data.all_games.get("games")
+        if not (league_filter and state_filter and games):
+            return
+
+        num_games = 6
         offset = self.offset
-        league_filter = data.all_games["league_filter"]
-        state_filter = data.all_games["state_filter"]
-        games = data.all_games["games"].values()
+
+        games = games.values()
         if len(games) > num_games:
             games = deque(games)
             games.rotate(offset)
