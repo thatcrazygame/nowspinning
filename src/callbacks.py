@@ -56,6 +56,7 @@ def teamtracker(client: Client, user_data: _UserData, message: MQTTMessage):
 def update_view(client: Client, user_data: _UserData, message: MQTTMessage):
     view = _process_message(message)
     user_data["data"].view = view
+    user_data["entities"]["View"].set_selection(view)
 
 
 def music_switch(client: Client, user_data: _UserData, message: MQTTMessage):
