@@ -35,11 +35,13 @@ class AllGames(View):
         self.last_rotate = perf_counter()
         self.league = LEAGUEDEFAULT
 
+        self.background = Image.open("../img/sports-bg.jpg")
+
         self.filter_scroll = ScrollingText(
             font=FONT_5X8,
             color=WHITE,
             starting_x=2,
-            y=PANEL_HEIGHT - 3,
+            y=PANEL_HEIGHT - 4,
             left_bound=2,
             right_bound=PANEL_WIDTH * 2,
             speed=0.02,
@@ -171,13 +173,15 @@ class AllGames(View):
         return bottom
 
     async def draw(self, canvas, data: Data):
+        canvas.SetImage(self.background, 0, 0)
+
         if not data.all_games:
             return
 
         league_filter = data.all_games.get("league_filter")
         state_filter = data.all_games.get("state_filter")
         games = data.all_games.get("games")
-        if not (league_filter and state_filter and games):
+        if not league_filter or not state_filter or games is None:
             return
 
         num_games = 6
