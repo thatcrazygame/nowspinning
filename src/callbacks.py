@@ -62,6 +62,10 @@ def update_view(client: Client, user_data: _UserData, message: MQTTMessage):
 def music_switch(client: Client, user_data: _UserData, message: MQTTMessage):
     state = _process_message(message)
     user_data["data"].switch_to_music = state == "ON"
+    if state == "ON":
+        user_data["entities"]["Switch to Music"].on()
+    elif state == "OFF":
+        user_data["entities"]["Switch to Music"].off()
 
 
 def averages(client: Client, user_data: _UserData, message: MQTTMessage):
@@ -82,11 +86,20 @@ def game_of_life_gens_switch(
 ):
     state = _process_message(message)
     user_data["data"].game_of_life_show_gens = state == "ON"
+    if state == "ON":
+        user_data["entities"]["Game of Life Show Gens"].on()
+    elif state == "OFF":
+        user_data["entities"]["Game of Life Show Gens"].off()
 
 
 def game_of_life_spt(client: Client, user_data: _UserData, message: MQTTMessage):
     seconds = _process_message(message)
-    user_data["data"].game_of_life_seconds_per_tick = float(seconds)
+    try:
+        seconds = float(seconds)
+    except ValueError:
+        seconds = 0.2
+    user_data["data"].game_of_life_seconds_per_tick = seconds
+    user_data["entities"]["Game of Life Seconds Per Tick"].set_value(seconds)
 
 
 def weather(client: Client, user_data: _UserData, message: MQTTMessage):
@@ -102,6 +115,7 @@ def update_forecast_type(client: Client, user_data: _UserData, message: MQTTMess
     if f_type not in FORECAST_TYPE:
         f_type = DAILY
     user_data["data"].forecast_type = f_type
+    user_data["entities"]["Forecast Type"].set_selection(f_type)
 
 
 def update_secondary_type(client: Client, user_data: _UserData, message: MQTTMessage):
@@ -109,6 +123,7 @@ def update_secondary_type(client: Client, user_data: _UserData, message: MQTTMes
     if s_type not in SECONDARY_TYPE:
         s_type = SECONDARY_DEFAULT.name
     user_data["data"].secondary_type = s_type
+    user_data["entities"]["Secondary Info"].set_selection(s_type)
 
 
 def songrec_reset_button(client: Client, user_data: _UserData, message: MQTTMessage):
