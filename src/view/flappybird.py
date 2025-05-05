@@ -22,6 +22,7 @@ FLAP = 80.0
 GRAVITY = 370.0
 
 INIT_BIRD_Y = 20
+FLAP_FRAME_TIME = 0.100
 
 NUM_TUBES = 4
 TUBE_SPEED = 20.0
@@ -71,7 +72,7 @@ class Sprite(object):
     def img(self, value):
         self._img = value
 
-    def update(self, frame_diff: float):
+    def update(self, frame_diff: float, game_state: str = None):
         pass
 
     def draw(self):
@@ -85,18 +86,24 @@ class Sprite(object):
 
 class Bird(Sprite):
     def __init__(self, screen_buffer: Image.Image, x: float = 0, y: float = 0) -> None:
-        self.radius = 3
-        self.size = (self.radius * 2) + 1
+        self.radius = 4
+        self.sprite_frame = 0
+        self.sprite_coords = [
+            (383, 161, 394, 169),
+            (396, 161, 407, 169),
+            (409, 161, 420, 169),
+            (396, 161, 407, 169),
+        ]
+        self.sprites: List[Image.Image] = [
+            Sprite.get_sprite(coords) for coords in self.sprite_coords
+        ]
+        self.frame_time = perf_counter()
         super().__init__(screen_buffer, x, y)
-        self.img = Image.new("RGBA", (self.size, self.size), (0, 0, 0, 0))
-        img_draw = ImageDraw.Draw(self.img)
-        img_draw.circle(
-            xy=(self.radius, self.radius),
-            radius=self.radius,
-            fill=CANARY.rgb,
-            outline=None,
-            width=0,
-        )
+
+    @property
+    def img(self):
+        self._img = self.sprites[self.sprite_frame]
+        return self._img
 
     @property
     def y(self):
@@ -104,7 +111,7 @@ class Bird(Sprite):
 
     @y.setter
     def y(self, value):
-        ground = float(PANEL_HEIGHT - self.size)
+        ground = float(PANEL_HEIGHT - self.img.height)
         sky = 0.0
         if value >= ground:
             self._y = ground
@@ -117,15 +124,19 @@ class Bird(Sprite):
 
     @property
     def on_ground(self) -> bool:
-        ground = float(PANEL_HEIGHT - self.size)
+        ground = float(PANEL_HEIGHT - self.img.height)
         return self.y == ground
 
     def flap(self) -> None:
         self.y_velocity = FLAP
 
-    def update(self, frame_diff: float):
+    def update(self, frame_diff: float, game_state: str):
         self.y_velocity = self.y_velocity - (GRAVITY * frame_diff)
         self.y = self.y - (self.y_velocity * frame_diff)
+        flap_frame_diff = perf_counter() - self.frame_time
+        if flap_frame_diff > FLAP_FRAME_TIME and game_state == PLAYING:
+            self.sprite_frame = (self.sprite_frame + 1) % len(self.sprites)
+            self.frame_time = perf_counter()
 
 
 class Tube(Sprite):
@@ -154,9 +165,8 @@ class Tube(Sprite):
     def img(self):
         if self._img is None:
             self._img = Image.new("RGBA", (TUBE_WIDTH, PANEL_HEIGHT), (0, 0, 0, 0))
-
-        self._img.paste(Tube.top, (0, self.top_level - Tube.top.height), Tube.top)
-        self._img.paste(Tube.bottom, (0, self.bottom_level), Tube.bottom)
+            self._img.paste(Tube.top, (0, self.top_level - Tube.top.height), Tube.top)
+            self._img.paste(Tube.bottom, (0, self.bottom_level), Tube.bottom)
 
         return self._img
 
@@ -232,8 +242,10 @@ class Digit(Sprite):
     def img(self) -> Image.Image:
         if self.num is None:
             return None
-        coords = Digit.digits[self.size][self.num]
-        self._img = Sprite.get_sprite(coords)
+
+        if self._img is None:
+            coords = Digit.digits[self.size][self.num]
+            self._img = Sprite.get_sprite(coords)
 
         return self._img
 
@@ -372,7 +384,7 @@ class FlappyBird(View):
 
     def update_sprites(self, frame_diff):
         if self.game_state in [PLAYING, GAME_OVER]:
-            self.bird.update(frame_diff)
+            self.bird.update(frame_diff, self.game_state)
 
         if self.game_state == PLAYING:
             old_x = self.front_tube_x
@@ -462,12 +474,3 @@ class FlappyBird(View):
             self.last_frame = perf_counter()
 
         canvas.SetImage(self.screen_buffer.convert("RGB"), 0, 0)
-
-        # DrawText(
-        #     canvas,
-        #     FONT_4X6,
-        #     PANEL_WIDTH + 4,
-        #     50,
-        #     WHITE,
-        #     f"{'Game Over' if self.game_state == GAME_OVER else ''}",
-        # )
