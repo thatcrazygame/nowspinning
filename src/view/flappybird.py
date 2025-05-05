@@ -20,12 +20,14 @@ logger = logging.getLogger(__name__)
 FRAME_TIME = 1.0 / 90.0
 FLAP = 80.0
 GRAVITY = 370.0
+GROUND_HEIGHT = 7
 
-INIT_BIRD_Y = 20
+INIT_BIRD_X = 7
+INIT_BIRD_Y = 10
 FLAP_FRAME_TIME = 0.100
 
 NUM_TUBES = 4
-TUBE_SPEED = 20.0
+X_SPEED = 20.0
 TUBE_GAP = 26
 TUBE_WIDTH = 12
 TUBE_SPACING = 48
@@ -33,6 +35,7 @@ NUM_LEVELS = 7
 LEVEL_STEP = 4
 MIN_TUBE_HEIGHT = 2
 SCORE_X_THRESHOLD = -2
+
 
 BACKGROUND = (0, 139, 157, 255)
 # BACKGROUND = (0, 0, 0, 0)
@@ -98,6 +101,7 @@ class Bird(Sprite):
             Sprite.get_sprite(coords) for coords in self.sprite_coords
         ]
         self.frame_time = perf_counter()
+        self.ground = float(PANEL_HEIGHT - GROUND_HEIGHT - self.img.height)
         super().__init__(screen_buffer, x, y)
 
     @property
@@ -111,10 +115,9 @@ class Bird(Sprite):
 
     @y.setter
     def y(self, value):
-        ground = float(PANEL_HEIGHT - self.img.height)
         sky = 0.0
-        if value >= ground:
-            self._y = ground
+        if value >= self.ground:
+            self._y = self.ground
             self.y_velocity = 0.0
         elif value < sky:
             self._y = sky
@@ -124,8 +127,7 @@ class Bird(Sprite):
 
     @property
     def on_ground(self) -> bool:
-        ground = float(PANEL_HEIGHT - self.img.height)
-        return self.y == ground
+        return self.y == self.ground
 
     def flap(self) -> None:
         self.y_velocity = FLAP
@@ -314,6 +316,35 @@ class GameOver(Title):
         return self._img
 
 
+class EndlessScroll(Sprite):
+    def __init__(
+        self,
+        screen_buffer,
+        x,
+        y,
+        coords: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        speed_mult: float = 1.0,
+    ):
+        super().__init__(screen_buffer, x, y)
+        self.coords = coords
+        self.speed_mult = speed_mult
+
+    @property
+    def img(self) -> Image.Image:
+        if self._img is None:
+            sprite = Sprite.get_sprite(self.coords)
+            img = Image.new("RGBA", (sprite.width * 2, sprite.height), (0, 0, 0, 0))
+            img.paste(sprite, (0, 0), sprite)
+            img.paste(sprite, (sprite.width, 0), sprite)
+            self._img = img
+        return self._img
+
+    def update(self, frame_diff, game_state=None):
+        self.x -= X_SPEED * self.speed_mult * frame_diff
+        if self.x <= -1 * self.img.width / 2:
+            self.x = 0
+
+
 @register
 class FlappyBird(View):
     name: str = FLAPPYBIRD
@@ -326,14 +357,25 @@ class FlappyBird(View):
         self.screen_buffer = Image.new("RGBA", size, BACKGROUND)
         self._game_state = READY
 
-        self.bird = Bird(self.screen_buffer, 10, INIT_BIRD_Y)
+        self.bird = Bird(self.screen_buffer, INIT_BIRD_X, INIT_BIRD_Y)
         self.tubes: List[Tube] = []
-
         self.score = Score(self.screen_buffer, PANEL_WIDTH / 2, 5, 0, MEDIUM)
         self.get_ready = GetReady(self.screen_buffer, 0, 0)
         self.get_ready.center()
         self.game_over = GameOver(self.screen_buffer, 0, 0)
         self.game_over.center()
+        self.ground = EndlessScroll(
+            self.screen_buffer, x=0, y=0, coords=(304, 245, 448, 252)
+        )
+        self.ground.y = PANEL_HEIGHT - self.ground.img.height
+        self.skyline = EndlessScroll(
+            self.screen_buffer, x=0, y=0, coords=(337, 205, 475, 225), speed_mult=0.8
+        )
+        self.skyline.y = self.ground.y - self.skyline.img.height
+        self.clouds = EndlessScroll(
+            self.screen_buffer, x=0, y=0, coords=(149, 261, 429, 298), speed_mult=0.6
+        )
+        self.clouds.y = self.skyline.y - self.clouds.img.height
 
         self.new_game()
 
@@ -388,7 +430,7 @@ class FlappyBird(View):
 
         if self.game_state == PLAYING:
             old_x = self.front_tube_x
-            self.front_tube_x -= TUBE_SPEED * frame_diff
+            self.front_tube_x -= X_SPEED * frame_diff
             new_x = self.front_tube_x
             if old_x > SCORE_X_THRESHOLD and new_x <= SCORE_X_THRESHOLD:
                 self.score.num += 1
@@ -402,12 +444,23 @@ class FlappyBird(View):
                 new_tube = Tube(self.screen_buffer, PANEL_WIDTH * 2)
                 self.tubes.append(new_tube)
 
+            self.ground.update(frame_diff)
+            self.skyline.update(frame_diff)
+            self.clouds.update(frame_diff)
+
     def draw_sprites(self):
+        self.skyline.draw()
+        self.clouds.draw()
+
         for tube in self.tubes:
             tube.draw()
 
         self.bird.draw()
-        self.score.draw()
+        self.ground.draw()
+
+        if self.game_state in [PLAYING, PAUSED, GAME_OVER]:
+            self.score.draw()
+
         if self.game_state in [READY, PAUSED]:
             self.get_ready.draw()
         elif self.game_state == GAME_OVER:
