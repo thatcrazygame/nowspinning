@@ -135,3 +135,8 @@ def songrec_reset_button(client: Client, user_data: _UserData, message: MQTTMess
 def music_timeout_number(client: Client, user_data: _UserData, message: MQTTMessage):
     seconds = _process_message(message)
     user_data["data"].music_timeout = seconds
+
+
+def flappy_bird_commands(client: Client, user_data: _UserData, message: MQTTMessage):
+    payload = _process_message(message)
+    user_data["data"].flappy_bird_commands.put_nowait(payload)

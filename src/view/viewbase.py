@@ -7,6 +7,10 @@ file_path = os.path.abspath(__file__)
 root_folder = os.path.abspath(os.path.dirname(os.path.dirname(file_path)))
 sys.path.append(root_folder)
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class View(ABC):
     name: str = None
@@ -15,6 +19,12 @@ class View(ABC):
     @abstractmethod
     async def draw(self, canvas, data):
         pass
+
+    def load(self):
+        logger.debug(f"{self.__class__.__name__} Load")
+
+    def unload(self):
+        logger.debug(f"{self.__class__.__name__} Unload")
 
 
 VIEWS: dict[str, View] = {}

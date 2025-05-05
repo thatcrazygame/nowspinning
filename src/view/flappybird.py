@@ -1,0 +1,473 @@
+import asyncio
+import math
+import logging
+from time import perf_counter
+from typing import List, Tuple
+
+import numpy as np
+from PIL import Image, ImageDraw
+from rgbmatrix.graphics import DrawText
+
+from constants import FLAPPYBIRD, PANEL_HEIGHT, PANEL_WIDTH
+from constants.colors import BLACK, CANARY, WHITE, TUBEGREEN
+from constants.fonts import FONT_4X6, FONT_5X8
+from data import Data
+from view.viewbase import View, register
+
+logger = logging.getLogger(__name__)
+
+
+FRAME_TIME = 1.0 / 90.0
+FLAP = 80.0
+GRAVITY = 370.0
+
+INIT_BIRD_Y = 20
+
+NUM_TUBES = 4
+TUBE_SPEED = 20.0
+TUBE_GAP = 26
+TUBE_WIDTH = 12
+TUBE_SPACING = 48
+NUM_LEVELS = 7
+LEVEL_STEP = 4
+MIN_TUBE_HEIGHT = 2
+SCORE_X_THRESHOLD = -2
+
+BACKGROUND = (0, 139, 157, 255)
+# BACKGROUND = (0, 0, 0, 0)
+
+SMALL = "SMALL"
+MEDIUM = "MEDIUM"
+LARGE = "LARGE"
+
+READY = "READY"
+PLAYING = "PLAYING"
+PAUSED = "PAUSED"
+GAME_OVER = "GAME OVER"
+
+
+class Sprite(object):
+    sprite_sheet = Image.open("../img/flappy_sprites.png")
+
+    @classmethod
+    def get_sprite(cls, coords: Tuple[int, int, int, int]) -> Image.Image:
+        img = Sprite.sprite_sheet.crop(coords)
+        return img
+
+    def __init__(self, screen_buffer: Image.Image, x: float = 0, y: float = 0) -> None:
+        self.sprite_sheet: Image.Image = None
+        self.screen_buffer: Image.Image = screen_buffer
+        self._img: Image.Image = None
+        self.x: float = x
+        self.y: float = y
+        self.x_velocity: float = 0.0
+        self.y_velocity: float = 0.0
+
+    @property
+    def img(self) -> Image.Image:
+        return self._img
+
+    @img.setter
+    def img(self, value):
+        self._img = value
+
+    def update(self, frame_diff: float):
+        pass
+
+    def draw(self):
+        if self.img is None:
+            return
+
+        self.screen_buffer.paste(
+            self.img, (int(round(self.x)), int(round(self.y))), self.img
+        )
+
+
+class Bird(Sprite):
+    def __init__(self, screen_buffer: Image.Image, x: float = 0, y: float = 0) -> None:
+        self.radius = 3
+        self.size = (self.radius * 2) + 1
+        super().__init__(screen_buffer, x, y)
+        self.img = Image.new("RGBA", (self.size, self.size), (0, 0, 0, 0))
+        img_draw = ImageDraw.Draw(self.img)
+        img_draw.circle(
+            xy=(self.radius, self.radius),
+            radius=self.radius,
+            fill=CANARY.rgb,
+            outline=None,
+            width=0,
+        )
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        ground = float(PANEL_HEIGHT - self.size)
+        sky = 0.0
+        if value >= ground:
+            self._y = ground
+            self.y_velocity = 0.0
+        elif value < sky:
+            self._y = sky
+            self.y_velocity = 0.0
+        else:
+            self._y = value
+
+    @property
+    def on_ground(self) -> bool:
+        ground = float(PANEL_HEIGHT - self.size)
+        return self.y == ground
+
+    def flap(self) -> None:
+        self.y_velocity = FLAP
+
+    def update(self, frame_diff: float):
+        self.y_velocity = self.y_velocity - (GRAVITY * frame_diff)
+        self.y = self.y - (self.y_velocity * frame_diff)
+
+
+class Tube(Sprite):
+    top: Image.Image = None
+    bottom: Image.Image = None
+
+    @classmethod
+    def __init_tubes(cls):
+        cls.top = Sprite.get_sprite((368, 161, 380, 201))
+        cls.bottom = Sprite.get_sprite((354, 161, 366, 201))
+
+    def __init__(self, screen_buffer: Image.Image, x: float) -> None:
+        if not Tube.top or not Tube.bottom:
+            Tube.__init_tubes()
+
+        self.height = PANEL_HEIGHT
+        self.width = TUBE_WIDTH
+        self.level = self.random_level()
+        super().__init__(screen_buffer, x, 0)
+        self.x_velocity = -50.0
+
+    def random_level(self) -> int:
+        return np.random.randint(0, NUM_LEVELS)
+
+    @property
+    def img(self):
+        if self._img is None:
+            self._img = Image.new("RGBA", (TUBE_WIDTH, PANEL_HEIGHT), (0, 0, 0, 0))
+
+        self._img.paste(Tube.top, (0, self.top_level - Tube.top.height), Tube.top)
+        self._img.paste(Tube.bottom, (0, self.bottom_level), Tube.bottom)
+
+        return self._img
+
+    @property
+    def level(self):
+        return self._level
+
+    @level.setter
+    def level(self, value):
+        self._level = value
+        self.top_level = MIN_TUBE_HEIGHT + (self._level * LEVEL_STEP)
+        self.bottom_level = self.top_level + TUBE_GAP
+
+
+class Digit(Sprite):
+    digits = {}
+
+    @classmethod
+    def __init_digits(cls):
+        cls.digits[SMALL] = [
+            (137, 323, 143, 329),
+            (137, 332, 143, 338),
+            (137, 349, 143, 355),
+            (137, 358, 143, 364),
+            (137, 375, 143, 381),
+            (137, 384, 143, 390),
+            (137, 401, 143, 407),
+            (137, 410, 143, 416),
+            (137, 427, 143, 433),
+            (137, 436, 143, 442),
+        ]
+        cls.digits[MEDIUM] = [
+            (136, 306, 144, 316),
+            (138, 477, 144, 487),
+            (136, 489, 144, 499),
+            (130, 501, 138, 511),
+            (501, 0, 509, 10),
+            (501, 12, 509, 22),
+            (504, 26, 512, 36),
+            (504, 42, 512, 52),
+            (292, 242, 300, 252),
+            (310, 206, 318, 216),
+        ]
+        cls.digits[LARGE] = [
+            (495, 60, 507, 77),
+            (323, 206, 331, 223),
+            (291, 160, 303, 177),
+            (305, 160, 317, 177),
+            (319, 160, 331, 177),
+            (333, 160, 345, 177),
+            (291, 184, 303, 201),
+            (305, 184, 317, 201),
+            (319, 184, 331, 201),
+            (333, 184, 345, 201),
+        ]
+
+    def __init__(
+        self, screen_buffer: Image.Image, x: float, y: float, d: int, size: str = MEDIUM
+    ) -> None:
+        super().__init__(screen_buffer, x, y)
+        if not Digit.digits:
+            Digit.__init_digits()
+
+        if size not in Digit.digits:
+            self.size = MEDIUM
+        else:
+            self.size = size
+
+        self._num: int = None
+        self.num = d
+
+    @property
+    def img(self) -> Image.Image:
+        if self.num is None:
+            return None
+        coords = Digit.digits[self.size][self.num]
+        self._img = Sprite.get_sprite(coords)
+
+        return self._img
+
+    @property
+    def num(self):
+        return self._num
+
+    @num.setter
+    def num(self, value):
+        try:
+            value = int(value)
+        except ValueError:
+            value = None
+
+        if value is not None and self._num is not None and value != self._num:
+            self._img = None
+
+        self._num = value
+
+
+class Score(Digit):
+    @property
+    def img(self) -> Image.Image:
+        if self.num is None:
+            return None
+
+        if self._img is None:
+            digits = [
+                Digit(self.screen_buffer, 0, 0, d, self.size) for d in str(self.num)
+            ]
+
+            height = max([d.img.height for d in digits])
+            width = sum([d.img.width for d in digits])
+
+            img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            x = 0
+            y = 0
+            for digit in digits:
+                img.paste(digit.img, (x, y), digit.img)
+                x += digit.img.width
+
+            self._img = img
+
+        return self._img
+
+
+class Title(Sprite):
+    def center(self):
+        self.x = int(PANEL_WIDTH - (self.img.width / 2))
+        self.y = int((PANEL_HEIGHT / 2) - (self.img.height / 2))
+
+
+class GetReady(Title):
+    @property
+    def img(self) -> Image.Image:
+        coords = (295, 59, 387, 84)
+        self._img = Sprite.get_sprite(coords)
+        return self._img
+
+
+class GameOver(Title):
+    @property
+    def img(self) -> Image.Image:
+        coords = (395, 59, 491, 80)
+        self._img = Sprite.get_sprite(coords)
+        return self._img
+
+
+@register
+class FlappyBird(View):
+    name: str = FLAPPYBIRD
+    sort = 7
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.last_frame = perf_counter()
+        size = (PANEL_WIDTH * 2, PANEL_HEIGHT)
+        self.screen_buffer = Image.new("RGBA", size, BACKGROUND)
+        self._game_state = READY
+
+        self.bird = Bird(self.screen_buffer, 10, INIT_BIRD_Y)
+        self.tubes: List[Tube] = []
+
+        self.score = Score(self.screen_buffer, PANEL_WIDTH / 2, 5, 0, MEDIUM)
+        self.get_ready = GetReady(self.screen_buffer, 0, 0)
+        self.get_ready.center()
+        self.game_over = GameOver(self.screen_buffer, 0, 0)
+        self.game_over.center()
+
+        self.new_game()
+
+    def new_game(self):
+        self.game_state = READY
+        self.score.num = 0
+        self.front_tube_x = PANEL_WIDTH
+        self.tubes = []
+        for i in range(NUM_TUBES):
+            tube_x = self.front_tube_x + (i * TUBE_SPACING)
+            tube = Tube(self.screen_buffer, tube_x)
+            self.tubes.append(tube)
+        self.bird.y = INIT_BIRD_Y
+
+    @property
+    def game_state(self):
+        return self._game_state
+
+    @game_state.setter
+    def game_state(self, value):
+        if value not in [READY, PLAYING, PAUSED, GAME_OVER]:
+            value = PAUSED
+        self._game_state_time = perf_counter()
+        self._game_state = value
+
+    @property
+    def game_state_time(self):
+        return self._game_state_time
+
+    @property
+    def time_since_game_state(self):
+        return perf_counter() - self.game_state_time
+
+    async def handle_commands(self, commands: asyncio.Queue):
+        while not commands.empty():
+            command = await commands.get()
+            if command == "FLAP":
+                if self.game_state in [READY, PAUSED]:
+                    self.game_state = PLAYING
+                elif self.game_state == GAME_OVER and self.time_since_game_state > 1.0:
+                    self.new_game()
+                elif self.game_state == PLAYING:
+                    self.bird.flap()
+
+    def clear_buffer(self):
+        draw = ImageDraw.Draw(self.screen_buffer)
+        draw.rectangle((0, 0, PANEL_WIDTH * 2, PANEL_HEIGHT), fill=BACKGROUND)
+
+    def update_sprites(self, frame_diff):
+        if self.game_state in [PLAYING, GAME_OVER]:
+            self.bird.update(frame_diff)
+
+        if self.game_state == PLAYING:
+            old_x = self.front_tube_x
+            self.front_tube_x -= TUBE_SPEED * frame_diff
+            new_x = self.front_tube_x
+            if old_x > SCORE_X_THRESHOLD and new_x <= SCORE_X_THRESHOLD:
+                self.score.num += 1
+
+            for i, tube in enumerate(self.tubes):
+                tube.x = self.front_tube_x + (i * TUBE_SPACING)
+
+            if self.front_tube_x < -1 * TUBE_SPACING:
+                self.front_tube_x += TUBE_SPACING
+                del self.tubes[0]
+                new_tube = Tube(self.screen_buffer, PANEL_WIDTH * 2)
+                self.tubes.append(new_tube)
+
+    def draw_sprites(self):
+        for tube in self.tubes:
+            tube.draw()
+
+        self.bird.draw()
+        self.score.draw()
+        if self.game_state in [READY, PAUSED]:
+            self.get_ready.draw()
+        elif self.game_state == GAME_OVER:
+            self.game_over.draw()
+
+    def check_overlap(self, R, Xc, Yc, X1, Y1, X2, Y2) -> bool:
+        # Find the nearest point on the rectangle to the center of the circle
+        Xn = max(X1, min(Xc, X2))
+        Yn = max(Y1, min(Yc, Y2))
+
+        # Find the distance between the nearest point and the center of the circle
+        # Distance between 2 points, (x1, y1) & (x2, y2) in 2D Euclidean space
+        # is ((x1-x2)**2 + (y1-y2)**2)**0.5
+        Dx = Xn - Xc
+        Dy = Yn - Yc
+        return (Dx**2 + Dy**2) <= R**2
+
+    def collision_check(self) -> bool:
+        collision = False
+        r = self.bird.radius
+        circle = (
+            r,
+            self.bird.x + r,
+            self.bird.y + r,
+        )
+        self.message = ""
+
+        for tube in self.tubes[:2]:
+            front = tube.x
+            back = tube.x + tube.width
+            top = (front, 0, back, tube.top_level)
+            bottom = (front, tube.bottom_level, back, PANEL_HEIGHT)
+
+            top_overlap = self.check_overlap(*circle, *top)
+            bottom_overlap = self.check_overlap(*circle, *bottom)
+
+            if top_overlap or bottom_overlap:
+                collision = True
+
+        return collision or self.bird.on_ground
+
+    def unload(self):
+        super().unload()
+        if self.game_state == PLAYING:
+            self.game_state = PAUSED
+
+    def load(self):
+        super().load()
+        if self.game_state == GAME_OVER:
+            self.new_game()
+
+    async def draw(self, canvas, data: Data):
+        await self.handle_commands(data.flappy_bird_commands)
+
+        frame_diff = perf_counter() - self.last_frame
+
+        if frame_diff >= FRAME_TIME:
+            self.update_sprites(frame_diff)
+            self.clear_buffer()
+            self.draw_sprites()
+            if self.game_state == PLAYING:
+                if self.collision_check():
+                    self.game_state = GAME_OVER
+            self.last_frame = perf_counter()
+
+        canvas.SetImage(self.screen_buffer.convert("RGB"), 0, 0)
+
+        # DrawText(
+        #     canvas,
+        #     FONT_4X6,
+        #     PANEL_WIDTH + 4,
+        #     50,
+        #     WHITE,
+        #     f"{'Game Over' if self.game_state == GAME_OVER else ''}",
+        # )

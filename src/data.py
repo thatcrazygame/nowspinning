@@ -57,6 +57,8 @@ class Data(object):
         self.forecast_type: str = DAILY
         self.secondary_type: str = SECONDARY_DEFAULT.name
 
+        self.flappy_bird_commands = asyncio.Queue()
+
     def reset_music(self):
         logger.info("Reset music")
         self._artists: list[str] = None

@@ -55,15 +55,22 @@ async def matrix_loop(matrix: RGBMatrix, data: Data):
     logger.info(f"Init views: {','.join(view_names)}")
     max_unexpected_errors = 5
     unexpected_errors = 0
+    current_view: View = None
     while data.is_running:
         canvas.Clear()
 
         if data.view not in VIEWS:
             data.view = DEFAULT_VIEW
 
-        view: View = VIEWS[data.view]
+        data_view = VIEWS[data.view]
+        if current_view is not data_view:
+            if current_view is not None:
+                current_view.unload()
+            data_view.load()
+
+        current_view = data_view
         try:
-            await view.draw(canvas, data)
+            await current_view.draw(canvas, data)
             unexpected_errors = 0  # reset if we got here
         except Exception as e:
             if unexpected_errors >= max_unexpected_errors:
@@ -357,6 +364,14 @@ async def mqtt_loop(data: Data):
         value_template="{{ value_json.secondary_type.value }}",
         availability_template="{{ value_json.secondary_type.available }}",
         use_shared_topic=True,
+    )
+
+    mqtt.add_subscriber_only(
+        name="Flappy Bird Commands",
+        unique_id="nowspinning_flappy_bird_commands",
+        callback=callbacks.flappy_bird_commands,
+        sub_topic="flappy-bird/commands",
+        start_topic="flappy-bird/start",
     )
 
     await mqtt.connect_client()

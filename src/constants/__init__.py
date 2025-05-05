@@ -23,6 +23,7 @@ SONGREC_TIMEOUT_SECS = 30.0 * 60.0
 """ VIEW NAMES """
 ALLGAMES = "All Games"
 DASHBOARD = "Dashboard"
+FLAPPYBIRD = "Flappy Bird"
 GAMEOFLIFE = "Game of Life"
 MUSIC = "Music"
 OFF = "Off"
