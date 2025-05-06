@@ -2,43 +2,41 @@ import asyncio
 import math
 import logging
 from time import perf_counter
-from typing import List, Tuple
+from typing import Dict, List, Tuple, TypeAlias
 
 import numpy as np
 from PIL import Image, ImageDraw
 from rgbmatrix.graphics import DrawText
 
 from constants import FLAPPYBIRD, PANEL_HEIGHT, PANEL_WIDTH
-from constants.colors import BLACK, CANARY, WHITE, TUBEGREEN
-from constants.fonts import FONT_4X6, FONT_5X8
 from data import Data
 from view.viewbase import View, register
 
 logger = logging.getLogger(__name__)
 
+Coords: TypeAlias = Tuple[int, int, int, int]
 
 FRAME_TIME = 1.0 / 90.0
-FLAP = 80.0
-GRAVITY = 370.0
+FLAP = 75.0
+GRAVITY = 350.0
 GROUND_HEIGHT = 7
 
 INIT_BIRD_X = 7
-INIT_BIRD_Y = 10
+INIT_BIRD_Y = 6
 FLAP_FRAME_TIME = 0.100
 
-NUM_TUBES = 4
-X_SPEED = 20.0
+NUM_TUBES = 5
+X_SPEED = 30.0
 TUBE_GAP = 26
 TUBE_WIDTH = 12
-TUBE_SPACING = 48
+TUBE_SPACING = 40
 NUM_LEVELS = 7
 LEVEL_STEP = 4
 MIN_TUBE_HEIGHT = 2
 SCORE_X_THRESHOLD = -2
 
 
-BACKGROUND = (0, 139, 157, 255)
-# BACKGROUND = (0, 0, 0, 0)
+BACKGROUND: Coords = (0, 139, 157, 255)
 
 SMALL = "SMALL"
 MEDIUM = "MEDIUM"
@@ -54,7 +52,7 @@ class Sprite(object):
     sprite_sheet = Image.open("../img/flappy_sprites.png")
 
     @classmethod
-    def get_sprite(cls, coords: Tuple[int, int, int, int]) -> Image.Image:
+    def get_sprite(cls, coords: Coords) -> Image.Image:
         img = Sprite.sprite_sheet.crop(coords)
         return img
 
@@ -91,7 +89,7 @@ class Bird(Sprite):
     def __init__(self, screen_buffer: Image.Image, x: float = 0, y: float = 0) -> None:
         self.radius = 4
         self.sprite_frame = 0
-        self.sprite_coords = [
+        self.sprite_coords: List[Coords] = [
             (383, 161, 394, 169),
             (396, 161, 407, 169),
             (409, 161, 420, 169),
@@ -184,7 +182,7 @@ class Tube(Sprite):
 
 
 class Digit(Sprite):
-    digits = {}
+    digits: Dict[str, List[Coords]] = {}
 
     @classmethod
     def __init_digits(cls):
@@ -226,7 +224,7 @@ class Digit(Sprite):
         ]
 
     def __init__(
-        self, screen_buffer: Image.Image, x: float, y: float, d: int, size: str = MEDIUM
+        self, screen_buffer: Image.Image, x=0, y=0, d: int = 0, size: str = MEDIUM
     ) -> None:
         super().__init__(screen_buffer, x, y)
         if not Digit.digits:
@@ -276,7 +274,7 @@ class Score(Digit):
 
         if self._img is None:
             digits = [
-                Digit(self.screen_buffer, 0, 0, d, self.size) for d in str(self.num)
+                Digit(self.screen_buffer, d=d, size=self.size) for d in str(self.num)
             ]
 
             height = max([d.img.height for d in digits])
@@ -293,36 +291,33 @@ class Score(Digit):
 
         return self._img
 
+    def center_x(self):
+        self.x = (PANEL_WIDTH / 2) - int(self.img.width / 2)
+
 
 class Title(Sprite):
+    def __init__(self, screen_buffer, x=0, y=0, coords: Coords = (0, 0, 0, 0)):
+        super().__init__(screen_buffer, x, y)
+        self.coords = coords
+
+    @property
+    def img(self) -> Image.Image:
+        if self._img is None:
+            self._img = Sprite.get_sprite(self.coords)
+        return self._img
+
     def center(self):
         self.x = int(PANEL_WIDTH - (self.img.width / 2))
         self.y = int((PANEL_HEIGHT / 2) - (self.img.height / 2))
-
-
-class GetReady(Title):
-    @property
-    def img(self) -> Image.Image:
-        coords = (295, 59, 387, 84)
-        self._img = Sprite.get_sprite(coords)
-        return self._img
-
-
-class GameOver(Title):
-    @property
-    def img(self) -> Image.Image:
-        coords = (395, 59, 491, 80)
-        self._img = Sprite.get_sprite(coords)
-        return self._img
 
 
 class EndlessScroll(Sprite):
     def __init__(
         self,
         screen_buffer,
-        x,
-        y,
-        coords: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        x=0,
+        y=0,
+        coords: Coords = (0, 0, 0, 0),
         speed_mult: float = 1.0,
     ):
         super().__init__(screen_buffer, x, y)
@@ -359,21 +354,24 @@ class FlappyBird(View):
 
         self.bird = Bird(self.screen_buffer, INIT_BIRD_X, INIT_BIRD_Y)
         self.tubes: List[Tube] = []
-        self.score = Score(self.screen_buffer, PANEL_WIDTH / 2, 5, 0, MEDIUM)
-        self.get_ready = GetReady(self.screen_buffer, 0, 0)
+
+        self.score = Score(self.screen_buffer, x=PANEL_WIDTH / 2, y=5, d=0, size=MEDIUM)
+
+        self.get_ready = Title(self.screen_buffer, coords=(295, 59, 387, 84))
         self.get_ready.center()
-        self.game_over = GameOver(self.screen_buffer, 0, 0)
+        self.game_over = Title(self.screen_buffer, coords=(395, 59, 491, 80))
         self.game_over.center()
-        self.ground = EndlessScroll(
-            self.screen_buffer, x=0, y=0, coords=(304, 245, 448, 252)
-        )
+
+        self.ground = EndlessScroll(self.screen_buffer, coords=(304, 245, 448, 252))
         self.ground.y = PANEL_HEIGHT - self.ground.img.height
+
         self.skyline = EndlessScroll(
-            self.screen_buffer, x=0, y=0, coords=(337, 205, 475, 225), speed_mult=0.8
+            self.screen_buffer, coords=(337, 205, 475, 225), speed_mult=0.8
         )
         self.skyline.y = self.ground.y - self.skyline.img.height
+
         self.clouds = EndlessScroll(
-            self.screen_buffer, x=0, y=0, coords=(149, 261, 429, 298), speed_mult=0.6
+            self.screen_buffer, coords=(149, 261, 429, 298), speed_mult=0.6
         )
         self.clouds.y = self.skyline.y - self.clouds.img.height
 
@@ -432,6 +430,8 @@ class FlappyBird(View):
             old_x = self.front_tube_x
             self.front_tube_x -= X_SPEED * frame_diff
             new_x = self.front_tube_x
+
+            self.score.center_x()
             if old_x > SCORE_X_THRESHOLD and new_x <= SCORE_X_THRESHOLD:
                 self.score.num += 1
 
