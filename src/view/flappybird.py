@@ -101,6 +101,7 @@ MIN_TUBE_HEIGHT = 2
 SCORE_X_THRESHOLD = -2
 
 BACKGROUND: PILColor = (0, 139, 157, 255)
+BLANK: PILColor = (0, 0, 0, 0)
 
 
 class Sprite(object):
@@ -111,9 +112,9 @@ class Sprite(object):
         img = Sprite.sprite_sheet.crop(coords)
         return img
 
-    def __init__(self, screen_buffer: Image.Image, x: float = 0, y: float = 0) -> None:
+    def __init__(self, container: Image.Image, x: float = 0, y: float = 0) -> None:
         self.sprite_sheet: Image.Image = None
-        self.screen_buffer: Image.Image = screen_buffer
+        self.container: Image.Image = container
         self._img: Image.Image = None
         self.x: float = x
         self.y: float = y
@@ -135,13 +136,17 @@ class Sprite(object):
         if self.img is None:
             return
 
-        self.screen_buffer.paste(
+        self.container.paste(
             self.img, (int(round(self.x)), int(round(self.y))), self.img
         )
 
+    def clear(self):
+        mask = Image.new("L", (self.img.width, self.img.height), 0)
+        self.img.putalpha(mask)
+
 
 class Bird(Sprite):
-    def __init__(self, screen_buffer: Image.Image, x: float = 0, y: float = 0) -> None:
+    def __init__(self, container: Image.Image, x: float = 0, y: float = 0) -> None:
         self.radius = 4
         self.sprite_frame = 0
         self.sprites: List[Image.Image] = [
@@ -149,7 +154,7 @@ class Bird(Sprite):
         ]
         self.frame_time = perf_counter()
         self.ground = float(PANEL_HEIGHT - GROUND_HEIGHT - self.img.height)
-        super().__init__(screen_buffer, x, y)
+        super().__init__(container, x, y)
 
     @property
     def img(self):
@@ -197,14 +202,12 @@ class Tube(Sprite):
         cls.top = Sprite.get_sprite(SPRITES["TopTube"])
         cls.bottom = Sprite.get_sprite(SPRITES["BottomTube"])
 
-    def __init__(self, screen_buffer: Image.Image, x: float) -> None:
+    def __init__(self, container: Image.Image, x: float) -> None:
         if not Tube.top or not Tube.bottom:
             Tube.__init_tubes()
 
-        self.height = PANEL_HEIGHT
-        self.width = TUBE_WIDTH
         self.level = self.random_level()
-        super().__init__(screen_buffer, x, 0)
+        super().__init__(container, x, 0)
         self.x_velocity = -50.0
 
     def random_level(self) -> int:
@@ -213,7 +216,7 @@ class Tube(Sprite):
     @property
     def img(self):
         if self._img is None:
-            self._img = Image.new("RGBA", (TUBE_WIDTH, PANEL_HEIGHT), (0, 0, 0, 0))
+            self._img = Image.new("RGBA", (TUBE_WIDTH, PANEL_HEIGHT), BLANK)
             self._img.paste(Tube.top, (0, self.top_level - Tube.top.height), Tube.top)
             self._img.paste(Tube.bottom, (0, self.bottom_level), Tube.bottom)
 
@@ -230,11 +233,41 @@ class Tube(Sprite):
         self.bottom_level = self.top_level + TUBE_GAP
 
 
+class TubeMaze(Sprite):
+    def __init__(self, container, x=0, y=0):
+        super().__init__(container, x, y)
+        self.tubes: List[Tube] = []
+        self.img = Image.new("RGBA", (NUM_TUBES * TUBE_SPACING, PANEL_HEIGHT), BLANK)
+        self.new_tubes()
+
+    def new_tubes(self):
+        self.clear()
+        self.x = PANEL_WIDTH
+        self.tubes = [Tube(self.img, i * TUBE_SPACING) for i in range(NUM_TUBES)]
+
+    def update(self, frame_diff, game_state=None):
+        self.x -= X_SPEED * frame_diff
+
+        if self.x < -1 * TUBE_SPACING:
+            self.clear()
+            del self.tubes[0]
+            self.x += TUBE_SPACING
+            new_tube = Tube(self.img, PANEL_WIDTH * 2)
+            self.tubes.append(new_tube)
+
+        for i, tube in enumerate(self.tubes):
+            tube.x = i * TUBE_SPACING
+
+    def draw(self):
+        for tube in self.tubes:
+            tube.draw()
+
+        super().draw()
+
+
 class Digit(Sprite):
-    def __init__(
-        self, screen_buffer: Image.Image, x=0, y=0, d: int = 0, size: str = MEDIUM
-    ) -> None:
-        super().__init__(screen_buffer, x, y)
+    def __init__(self, container, x=0, y=0, d: int = 0, size: str = MEDIUM) -> None:
+        super().__init__(container, x, y)
         if size not in DIGIT_SPRITES:
             self.size = MEDIUM
         else:
@@ -278,14 +311,12 @@ class Score(Digit):
             return None
 
         if self._img is None:
-            digits = [
-                Digit(self.screen_buffer, d=d, size=self.size) for d in str(self.num)
-            ]
+            digits = [Digit(self.container, d=d, size=self.size) for d in str(self.num)]
 
             height = max([d.img.height for d in digits])
             width = sum([d.img.width for d in digits])
 
-            img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            img = Image.new("RGBA", (width, height), BLANK)
             x = 0
             y = 0
             for digit in digits:
@@ -301,8 +332,8 @@ class Score(Digit):
 
 
 class Title(Sprite):
-    def __init__(self, screen_buffer, x=0, y=0, coords: Coords = (0, 0, 0, 0)):
-        super().__init__(screen_buffer, x, y)
+    def __init__(self, container, x=0, y=0, coords: Coords = (0, 0, 0, 0)):
+        super().__init__(container, x, y)
         self.coords = coords
         self.center()
 
@@ -320,13 +351,13 @@ class Title(Sprite):
 class EndlessScroll(Sprite):
     def __init__(
         self,
-        screen_buffer,
+        container,
         x=0,
         y=0,
         coords: Coords = (0, 0, 0, 0),
         speed_mult: float = 1.0,
     ):
-        super().__init__(screen_buffer, x, y)
+        super().__init__(container, x, y)
         self.coords = coords
         self.speed_mult = speed_mult
 
@@ -334,7 +365,7 @@ class EndlessScroll(Sprite):
     def img(self) -> Image.Image:
         if self._img is None:
             sprite = Sprite.get_sprite(self.coords)
-            img = Image.new("RGBA", (sprite.width * 2, sprite.height), (0, 0, 0, 0))
+            img = Image.new("RGBA", (sprite.width * 2, sprite.height), BLANK)
             img.paste(sprite, (0, 0), sprite)
             img.paste(sprite, (sprite.width, 0), sprite)
             self._img = img
@@ -359,10 +390,8 @@ class FlappyBird(View):
         self._game_state = READY
 
         self.bird = Bird(self.screen_buffer, INIT_BIRD_X, INIT_BIRD_Y)
-        self.tubes: List[Tube] = []
-
+        self.tube_maze = TubeMaze(self.screen_buffer, PANEL_WIDTH, 0)
         self.score = Score(self.screen_buffer, x=PANEL_WIDTH / 2, y=5, d=0, size=MEDIUM)
-
         self.get_ready = Title(self.screen_buffer, coords=SPRITES["GetReady"])
         self.game_over = Title(self.screen_buffer, coords=SPRITES["GameOver"])
 
@@ -384,13 +413,8 @@ class FlappyBird(View):
     def new_game(self):
         self.game_state = READY
         self.score.num = 0
-        self.front_tube_x = PANEL_WIDTH
-        self.tubes = []
-        for i in range(NUM_TUBES):
-            tube_x = self.front_tube_x + (i * TUBE_SPACING)
-            tube = Tube(self.screen_buffer, tube_x)
-            self.tubes.append(tube)
         self.bird.y = INIT_BIRD_Y
+        self.tube_maze.new_tubes()
 
     @property
     def game_state(self):
@@ -431,22 +455,13 @@ class FlappyBird(View):
             self.bird.update(frame_diff, self.game_state)
 
         if self.game_state == PLAYING:
-            old_x = self.front_tube_x
-            self.front_tube_x -= X_SPEED * frame_diff
-            new_x = self.front_tube_x
+            old_x = self.tube_maze.x
+            self.tube_maze.update(frame_diff)
+            new_x = self.tube_maze.x
 
-            self.score.center_x()
             if old_x > SCORE_X_THRESHOLD and new_x <= SCORE_X_THRESHOLD:
                 self.score.num += 1
-
-            for i, tube in enumerate(self.tubes):
-                tube.x = self.front_tube_x + (i * TUBE_SPACING)
-
-            if self.front_tube_x < -1 * TUBE_SPACING:
-                self.front_tube_x += TUBE_SPACING
-                del self.tubes[0]
-                new_tube = Tube(self.screen_buffer, PANEL_WIDTH * 2)
-                self.tubes.append(new_tube)
+            self.score.center_x()
 
             self.ground.update(frame_diff)
             self.skyline.update(frame_diff)
@@ -455,10 +470,7 @@ class FlappyBird(View):
     def draw_sprites(self):
         self.skyline.draw()
         self.clouds.draw()
-
-        for tube in self.tubes:
-            tube.draw()
-
+        self.tube_maze.draw()
         self.bird.draw()
         self.ground.draw()
 
@@ -492,9 +504,9 @@ class FlappyBird(View):
         )
         self.message = ""
 
-        for tube in self.tubes[:2]:
-            front = tube.x
-            back = tube.x + tube.width
+        for tube in self.tube_maze.tubes[:2]:
+            front = self.tube_maze.x + tube.x
+            back = front + tube.img.width
             top = (front, 0, back, tube.top_level)
             bottom = (front, tube.bottom_level, back, PANEL_HEIGHT)
 
