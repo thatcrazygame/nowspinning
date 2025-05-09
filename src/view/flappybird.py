@@ -2,7 +2,7 @@ import asyncio
 import math
 import logging
 from time import perf_counter
-from typing import Dict, List, Tuple, TypeAlias
+from typing import Dict, List, TypeAlias
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -14,7 +14,72 @@ from view.viewbase import View, register
 
 logger = logging.getLogger(__name__)
 
-Coords: TypeAlias = Tuple[int, int, int, int]
+Coords: TypeAlias = tuple[int, int, int, int]
+PILColor: TypeAlias = float | tuple[float, ...] | str
+
+SMALL = "SMALL"
+MEDIUM = "MEDIUM"
+LARGE = "LARGE"
+
+READY = "READY"
+PLAYING = "PLAYING"
+PAUSED = "PAUSED"
+GAME_OVER = "GAME OVER"
+
+SPRITESHEET = "../img/flappy_sprites.png"
+SPRITES: Dict[str, Coords] = {
+    "TopTube": (368, 161, 380, 201),
+    "BottomTube": (354, 161, 366, 201),
+    "GetReady": (295, 59, 387, 84),
+    "GameOver": (395, 59, 491, 80),
+    "Ground": (304, 245, 448, 252),
+    "Skyline": (337, 205, 475, 225),
+    "Clouds": (149, 261, 429, 298),
+}
+BIRD_FRAMES: List[Coords] = [
+    (383, 161, 394, 169),
+    (396, 161, 407, 169),
+    (409, 161, 420, 169),
+    (396, 161, 407, 169),
+]
+DIGIT_SPRITES: Dict[str, List[Coords]] = {
+    SMALL: [
+        (137, 323, 143, 329),
+        (137, 332, 143, 338),
+        (137, 349, 143, 355),
+        (137, 358, 143, 364),
+        (137, 375, 143, 381),
+        (137, 384, 143, 390),
+        (137, 401, 143, 407),
+        (137, 410, 143, 416),
+        (137, 427, 143, 433),
+        (137, 436, 143, 442),
+    ],
+    MEDIUM: [
+        (136, 306, 144, 316),
+        (138, 477, 144, 487),
+        (136, 489, 144, 499),
+        (130, 501, 138, 511),
+        (501, 0, 509, 10),
+        (501, 12, 509, 22),
+        (504, 26, 512, 36),
+        (504, 42, 512, 52),
+        (292, 242, 300, 252),
+        (310, 206, 318, 216),
+    ],
+    LARGE: [
+        (495, 60, 507, 77),
+        (323, 206, 331, 223),
+        (291, 160, 303, 177),
+        (305, 160, 317, 177),
+        (319, 160, 331, 177),
+        (333, 160, 345, 177),
+        (291, 184, 303, 201),
+        (305, 184, 317, 201),
+        (319, 184, 331, 201),
+        (333, 184, 345, 201),
+    ],
+}
 
 FRAME_TIME = 1.0 / 90.0
 FLAP = 75.0
@@ -35,21 +100,11 @@ LEVEL_STEP = 4
 MIN_TUBE_HEIGHT = 2
 SCORE_X_THRESHOLD = -2
 
-
-BACKGROUND: Coords = (0, 139, 157, 255)
-
-SMALL = "SMALL"
-MEDIUM = "MEDIUM"
-LARGE = "LARGE"
-
-READY = "READY"
-PLAYING = "PLAYING"
-PAUSED = "PAUSED"
-GAME_OVER = "GAME OVER"
+BACKGROUND: PILColor = (0, 139, 157, 255)
 
 
 class Sprite(object):
-    sprite_sheet = Image.open("../img/flappy_sprites.png")
+    sprite_sheet = Image.open(SPRITESHEET)
 
     @classmethod
     def get_sprite(cls, coords: Coords) -> Image.Image:
@@ -89,14 +144,8 @@ class Bird(Sprite):
     def __init__(self, screen_buffer: Image.Image, x: float = 0, y: float = 0) -> None:
         self.radius = 4
         self.sprite_frame = 0
-        self.sprite_coords: List[Coords] = [
-            (383, 161, 394, 169),
-            (396, 161, 407, 169),
-            (409, 161, 420, 169),
-            (396, 161, 407, 169),
-        ]
         self.sprites: List[Image.Image] = [
-            Sprite.get_sprite(coords) for coords in self.sprite_coords
+            Sprite.get_sprite(coords) for coords in BIRD_FRAMES
         ]
         self.frame_time = perf_counter()
         self.ground = float(PANEL_HEIGHT - GROUND_HEIGHT - self.img.height)
@@ -145,8 +194,8 @@ class Tube(Sprite):
 
     @classmethod
     def __init_tubes(cls):
-        cls.top = Sprite.get_sprite((368, 161, 380, 201))
-        cls.bottom = Sprite.get_sprite((354, 161, 366, 201))
+        cls.top = Sprite.get_sprite(SPRITES["TopTube"])
+        cls.bottom = Sprite.get_sprite(SPRITES["BottomTube"])
 
     def __init__(self, screen_buffer: Image.Image, x: float) -> None:
         if not Tube.top or not Tube.bottom:
@@ -182,55 +231,11 @@ class Tube(Sprite):
 
 
 class Digit(Sprite):
-    digits: Dict[str, List[Coords]] = {}
-
-    @classmethod
-    def __init_digits(cls):
-        cls.digits[SMALL] = [
-            (137, 323, 143, 329),
-            (137, 332, 143, 338),
-            (137, 349, 143, 355),
-            (137, 358, 143, 364),
-            (137, 375, 143, 381),
-            (137, 384, 143, 390),
-            (137, 401, 143, 407),
-            (137, 410, 143, 416),
-            (137, 427, 143, 433),
-            (137, 436, 143, 442),
-        ]
-        cls.digits[MEDIUM] = [
-            (136, 306, 144, 316),
-            (138, 477, 144, 487),
-            (136, 489, 144, 499),
-            (130, 501, 138, 511),
-            (501, 0, 509, 10),
-            (501, 12, 509, 22),
-            (504, 26, 512, 36),
-            (504, 42, 512, 52),
-            (292, 242, 300, 252),
-            (310, 206, 318, 216),
-        ]
-        cls.digits[LARGE] = [
-            (495, 60, 507, 77),
-            (323, 206, 331, 223),
-            (291, 160, 303, 177),
-            (305, 160, 317, 177),
-            (319, 160, 331, 177),
-            (333, 160, 345, 177),
-            (291, 184, 303, 201),
-            (305, 184, 317, 201),
-            (319, 184, 331, 201),
-            (333, 184, 345, 201),
-        ]
-
     def __init__(
         self, screen_buffer: Image.Image, x=0, y=0, d: int = 0, size: str = MEDIUM
     ) -> None:
         super().__init__(screen_buffer, x, y)
-        if not Digit.digits:
-            Digit.__init_digits()
-
-        if size not in Digit.digits:
+        if size not in DIGIT_SPRITES:
             self.size = MEDIUM
         else:
             self.size = size
@@ -244,7 +249,7 @@ class Digit(Sprite):
             return None
 
         if self._img is None:
-            coords = Digit.digits[self.size][self.num]
+            coords = DIGIT_SPRITES[self.size][self.num]
             self._img = Sprite.get_sprite(coords)
 
         return self._img
@@ -299,6 +304,7 @@ class Title(Sprite):
     def __init__(self, screen_buffer, x=0, y=0, coords: Coords = (0, 0, 0, 0)):
         super().__init__(screen_buffer, x, y)
         self.coords = coords
+        self.center()
 
     @property
     def img(self) -> Image.Image:
@@ -357,21 +363,19 @@ class FlappyBird(View):
 
         self.score = Score(self.screen_buffer, x=PANEL_WIDTH / 2, y=5, d=0, size=MEDIUM)
 
-        self.get_ready = Title(self.screen_buffer, coords=(295, 59, 387, 84))
-        self.get_ready.center()
-        self.game_over = Title(self.screen_buffer, coords=(395, 59, 491, 80))
-        self.game_over.center()
+        self.get_ready = Title(self.screen_buffer, coords=SPRITES["GetReady"])
+        self.game_over = Title(self.screen_buffer, coords=SPRITES["GameOver"])
 
-        self.ground = EndlessScroll(self.screen_buffer, coords=(304, 245, 448, 252))
+        self.ground = EndlessScroll(self.screen_buffer, coords=SPRITES["Ground"])
         self.ground.y = PANEL_HEIGHT - self.ground.img.height
 
         self.skyline = EndlessScroll(
-            self.screen_buffer, coords=(337, 205, 475, 225), speed_mult=0.8
+            self.screen_buffer, coords=SPRITES["Skyline"], speed_mult=0.8
         )
         self.skyline.y = self.ground.y - self.skyline.img.height
 
         self.clouds = EndlessScroll(
-            self.screen_buffer, coords=(149, 261, 429, 298), speed_mult=0.6
+            self.screen_buffer, coords=SPRITES["Clouds"], speed_mult=0.6
         )
         self.clouds.y = self.skyline.y - self.clouds.img.height
 
