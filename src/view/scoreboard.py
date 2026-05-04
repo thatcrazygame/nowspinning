@@ -12,10 +12,11 @@ from constants import (
     HOME,
     AWAY,
     HOCKEY,
+    HA_LOGO_URL,
     BASEBALL,
     FOOTBALL,
     LOGO_SIZE,
-    LOGO_URL,
+    ESPN_LOGO_URL,
     PANEL_HEIGHT,
     PANEL_WIDTH,
     GAME_STATE,
@@ -27,7 +28,9 @@ from constants import (
 from constants.colors import BLACK, WHITE, GRAY
 from constants.fonts import FONT_5X8, FONT_8X13, FONT_10X20, MonoFont
 from data import Data
+from datetime import datetime
 from scrollingtext import ScrollingText
+from zoneinfo import ZoneInfo
 
 from view.viewbase import View, register
 
@@ -57,13 +60,20 @@ class Scoreboard(View):
         self.cached_logos: dict[str, Image.Image] = {}
 
     async def get_logo(self, url: str, size: tuple) -> Image.Image:
+        if url is None:
+            return None
+
         url = url.lower()
+        if url.startswith(ESPN_LOGO_URL) and "/500/" in url:
+            url.replace("/500/", "/500-dark/")
+
         logo_img = self.cached_logos.get(url)
         if not logo_img:
             background = Image.new("RGBA", size, BLACK.rgb)
             response = await asyncio.to_thread(requests.get, url)
             if response.status_code == requests.codes.ok:
                 img = Image.open(BytesIO(response.content))
+                img = img.convert("RGBA")
                 img.thumbnail(size, Image.Resampling.LANCZOS)
                 img = Image.alpha_composite(background, img)
                 img = img.convert("RGB")
@@ -139,13 +149,26 @@ class Scoreboard(View):
     async def draw_logos(self, canvas, data: Data, logo_y: int):
         game = data.selected_game
         league = game.get("league")
+        if league == "XXX":
+            league = game.get("league_path")
+
         team_abbr = game.get("team_abbr")
         oppo_abbr = game.get("opponent_abbr")
+
         team_homeaway = game.get("team_homeaway") or HOME
         oppo_homeaway = game.get("opponent_homeaway") or AWAY
+
+        team_url = game.get("team_logo")
+        if not team_url and team_abbr:
+            team_url = f"{HA_LOGO_URL}/{league}/{team_abbr}.png".lower()
+
+        oppo_url = game.get("opponent_logo")
+        if not oppo_url and oppo_abbr:
+            team_url = f"{HA_LOGO_URL}/{league}/{oppo_abbr}.png".lower()
+
         if not team_abbr and not league:
             return
-        team_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{team_abbr}.png"
+
         logo_size = (LOGO_SIZE, LOGO_SIZE)
 
         team_img = await self.get_logo(team_url, logo_size)
@@ -155,8 +178,7 @@ class Scoreboard(View):
         team_img_x = self.get_logo_x(team_homeaway)
         canvas.SetImage(team_img, team_img_x, logo_y)
 
-        if oppo_abbr:
-            oppo_url = f"{LOGO_URL}/{league}/500-dark/scoreboard/{oppo_abbr}.png"
+        if game.get("state") != NOT_FOUND:
             oppo_img = await self.get_logo(oppo_url, logo_size)
             if not oppo_img:
                 return
@@ -164,9 +186,14 @@ class Scoreboard(View):
             canvas.SetImage(oppo_img, oppo_img_x, logo_y)
         else:
             league_url = game.get("league_logo")
+            fallback_url = f"{HA_LOGO_URL}/leagues/{league}.png".lower()
+            if not league_url or league == "PWHL":
+                league_url = fallback_url
             league_img = await self.get_logo(league_url, logo_size)
+
             if not league_img:
                 return
+
             league_img_x = self.get_logo_x(AWAY)
             canvas.SetImage(league_img, league_img_x, logo_y)
 
@@ -314,6 +341,12 @@ class Scoreboard(View):
         oppo_homeaway = game.get("opponent_homeaway") or AWAY
 
         clock = game.get("clock") or "No Game Available"
+        if game_state == PRE:
+            game_date = game.get("date")
+            game_date = game_date.replace("Z", "+00:00")
+            game_date = datetime.fromisoformat(game_date)
+            game_date = game_date.astimezone(ZoneInfo("America/New_York"))
+            clock = game_date.strftime("%m/%d - %-I:%M%p")
 
         show_possession = False
         possession_homeaway = None
