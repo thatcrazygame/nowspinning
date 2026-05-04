@@ -177,9 +177,9 @@ async def mqtt_loop(data: Data):
     mqtt.add_sensor(
         name="VOC",
         unique_id="nowspinning_voc",
-        icon="mdi:air-filter",
+        icon="mdi:scatter-plot-outline",
         # needs units to display as graph in HA
-        unit_of_measurement="",
+        unit_of_measurement="VOC",
         value_template="{{ value_json.voc.value }}",
         availability_template="{{ value_json.voc.available }}",
         use_shared_topic=True,
