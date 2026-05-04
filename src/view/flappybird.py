@@ -81,24 +81,25 @@ DIGIT_SPRITES: Dict[str, List[Coords]] = {
     ],
 }
 
-FRAME_TIME = 1.0 / 90.0
+MAX_FPS = 90
+FRAME_TIME = 1.0 / MAX_FPS
 FLAP = 75.0
 GRAVITY = 350.0
 GROUND_HEIGHT = 7
+X_SPEED = 30.0
 
 INIT_BIRD_X = 7
 INIT_BIRD_Y = 6
 FLAP_FRAME_TIME = 0.100
 
 NUM_TUBES = 5
-X_SPEED = 30.0
 TUBE_GAP = 26
 TUBE_WIDTH = 12
 TUBE_SPACING = 40
 NUM_LEVELS = 7
 LEVEL_STEP = 4
 MIN_TUBE_HEIGHT = 2
-SCORE_X_THRESHOLD = -2
+SCORE_X_THRESHOLD = -3
 
 BACKGROUND: PILColor = (0, 139, 157, 255)
 BLANK: PILColor = (0, 0, 0, 0)
@@ -248,7 +249,7 @@ class TubeMaze(Sprite):
     def update(self, frame_diff, game_state=None):
         self.x -= X_SPEED * frame_diff
 
-        if self.x < -1 * TUBE_SPACING:
+        if self.x <= -1 * TUBE_SPACING:
             self.clear()
             del self.tubes[0]
             self.x += TUBE_SPACING
