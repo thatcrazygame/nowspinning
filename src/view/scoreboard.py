@@ -187,7 +187,7 @@ class Scoreboard(View):
         else:
             league_url = game.get("league_logo")
             fallback_url = f"{HA_LOGO_URL}/leagues/{league}.png".lower()
-            if not league_url or league == "PWHL":
+            if not league_url or league in ["AHL", "PWHL"]:
                 league_url = fallback_url
             league_img = await self.get_logo(league_url, logo_size)
 
