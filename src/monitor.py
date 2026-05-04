@@ -22,7 +22,7 @@ CMDS = {
     "Songrec-Service-Restart": "systemctl --user restart songrec",
     "Songrec-Service-Stop": "systemctl --user stop songrec",
     "Pi-Backup": "sudo /usr/local/bin/image-backup /media/backup/backup.img",
-    "Pi-Restart": "sudo reboot",
+    "Pi-Reboot": "sudo reboot",
     "Pi-Shutdown": "sudo shutdown -h now",
 }
 
