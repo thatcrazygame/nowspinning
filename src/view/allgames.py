@@ -12,16 +12,18 @@ from constants import (
     NOT_FOUND,
     PANEL_HEIGHT,
     PANEL_WIDTH,
+    PRE,
     ROTATETIME,
 )
 from constants.colors import BLACK, ColorRGB, GRAY, WHITE
 from constants.fonts import FONT_4X6, FONT_5X8
 from data import Data
+from datetime import datetime
 from view.viewbase import View, register
 from rgbmatrix.graphics import DrawText
 from scrollingtext import ScrollingText
 from utils.images import get_contrast, get_min_contrast_fg_bg, CONSTRAST_MIN
-
+from zoneinfo import ZoneInfo
 
 @register
 class AllGames(View):
@@ -131,8 +133,18 @@ class AllGames(View):
 
         canvas.SetImage(background, x, y)
 
+
+        clock = game.get("clock")
+
+        if game.get("state") == PRE:
+            game_date = game.get("date")
+            game_date = game_date.replace("Z", "+00:00")
+            game_date = datetime.fromisoformat(game_date)
+            game_date = game_date.astimezone(ZoneInfo("America/New_York"))
+            clock = game_date.strftime("%m/%d - %-I:%M%p")
+
         clock = (
-            game.get("clock")
+            clock
             .replace(" EDT", "")
             .replace(" EST", "")
             .replace("- ", "")

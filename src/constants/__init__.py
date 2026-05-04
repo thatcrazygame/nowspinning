@@ -1,5 +1,5 @@
 import numpy as np
-from constants.colors import BLACK, CRIMSON, PITTSGOLD, ROYALBLUE, WHITE
+from constants.colors import BLACK, CRIMSON, PITTSGOLD, PWHLPURPLE, ROYALBLUE, WHITE
 from constants.secondaryinfo import SECONDARY_DEFAULT, RH, SecondaryInfo, POP
 from zoneinfo import ZoneInfo
 
@@ -112,6 +112,7 @@ LEAGUE_COLORS = {
     "NHL": PITTSGOLD,
     "NFL": CRIMSON,
     "MLB": ROYALBLUE,
+    "PWHL": PWHLPURPLE,
 }
 
 """ Weather """
