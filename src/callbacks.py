@@ -56,7 +56,7 @@ def teamtracker(client: Client, user_data: _UserData, message: MQTTMessage):
 def update_view(client: Client, user_data: _UserData, message: MQTTMessage):
     view = _process_message(message)
     user_data["data"].view = view
-    user_data["entities"]["View"].set_selection(view)
+    user_data["entities"]["View"]._state_helper(user_data["data"].get_json())
 
 
 def music_switch(client: Client, user_data: _UserData, message: MQTTMessage):
@@ -99,7 +99,10 @@ def game_of_life_spt(client: Client, user_data: _UserData, message: MQTTMessage)
     except ValueError:
         seconds = 0.2
     user_data["data"].game_of_life_seconds_per_tick = seconds
-    user_data["entities"]["Game of Life Seconds Per Tick"].set_value(seconds)
+
+    user_data["entities"]["Game of Life Seconds Per Tick"]._state_helper(
+        user_data["data"].get_json()
+    )
 
 
 def weather(client: Client, user_data: _UserData, message: MQTTMessage):
@@ -115,7 +118,7 @@ def update_forecast_type(client: Client, user_data: _UserData, message: MQTTMess
     if f_type not in FORECAST_TYPE:
         f_type = DAILY
     user_data["data"].forecast_type = f_type
-    user_data["entities"]["Forecast Type"].set_selection(f_type)
+    user_data["entities"]["Forecast Type"]._state_helper(user_data["data"].get_json())
 
 
 def update_secondary_type(client: Client, user_data: _UserData, message: MQTTMessage):
@@ -123,7 +126,7 @@ def update_secondary_type(client: Client, user_data: _UserData, message: MQTTMes
     if s_type not in SECONDARY_TYPE:
         s_type = SECONDARY_DEFAULT.name
     user_data["data"].secondary_type = s_type
-    user_data["entities"]["Secondary Info"].set_selection(s_type)
+    user_data["entities"]["Secondary Info"]._state_helper(user_data["data"].get_json())
 
 
 def songrec_reset_button(client: Client, user_data: _UserData, message: MQTTMessage):

@@ -88,6 +88,9 @@ ALIVE_RGB = np.array(list(WHITE.rgb))
 DEAD_RGB = np.array(list(BLACK.rgb))
 ADD_NOISE = "ADD_NOISE"
 RESET = "RESET"
+PAUSE = "PAUSE"
+MENU = "MENU"
+NEXT = "NEXT"
 
 """ Sports """
 HOME = "home"

@@ -19,8 +19,13 @@ from constants import (
     DEAD_RGB,
     ADD_NOISE,
     RESET,
+    PAUSE,
+    MENU,
+    NEXT,
+    PANEL_HEIGHT,
+    PANEL_WIDTH,
 )
-from constants.fonts import FONT_4X6
+from constants.fonts import FONT_4X6, FONT_8X13
 from constants.colors import BLACK, ROYALBLUE, WHITE
 from data import Data
 from view.viewbase import View, register
@@ -36,6 +41,8 @@ class GameOfLife(View):
         self.generation: int = 0
         self.grid_data = self.new_random_grid()
         self.last_tick = perf_counter()
+        self.paused = False
+        self.show_menu = False
 
     @property
     def alive_cells(self) -> int:
@@ -77,6 +84,14 @@ class GameOfLife(View):
                 new_grid = (noise == ALIVE) | (self.grid_data == ALIVE)
                 new_grid = np.asarray(new_grid.astype(int))
                 self.grid_data = new_grid
+            elif command == PAUSE:
+                self.paused = not self.paused
+                self.show_menu = False
+            elif command == MENU:
+                self.paused = True
+                self.show_menu = True
+            elif command == NEXT and self.paused:
+                self.tick()
 
     def tick(self):
         self.generation += 1
@@ -99,6 +114,13 @@ class GameOfLife(View):
         canvas.SetImage(img)
         DrawText(canvas, font, padding, font.height, ROYALBLUE, gens_str)
 
+    def draw_menu(self, canvas):
+        img = Image.new("RGB", (PANEL_WIDTH * 2, PANEL_HEIGHT), BLACK.rgb)
+        canvas.SetImage(img)
+        DrawText(canvas, FONT_8X13, 2, 15, WHITE, "Hold: Reset")
+        DrawText(canvas, FONT_8X13, 2, 35, WHITE, "Double Click: Show Gens")
+        DrawText(canvas, FONT_8X13, 2, 50, WHITE, "Wait 5 seconds: Close Menu")
+
     async def draw(self, canvas, data: Data):
         await self.handle_commands(data.game_of_life_commands)
 
@@ -108,8 +130,13 @@ class GameOfLife(View):
         if data.game_of_life_show_gens:
             self.draw_gens_counter(canvas)
 
+        if self.show_menu:
+            self.draw_menu(canvas)
+
         data.game_of_life_generations = self.generation
         data.game_of_life_cells = self.alive_cells
 
-        if perf_counter() - self.last_tick >= data.game_of_life_seconds_per_tick:
+        time_since_tick = perf_counter() - self.last_tick
+        time_to_tick = time_since_tick >= data.game_of_life_seconds_per_tick
+        if time_to_tick and not self.paused:
             self.tick()
