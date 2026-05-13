@@ -227,7 +227,7 @@ class Scoreboard(View):
         DrawText(canvas, font, x, y, color, shots)
 
     def draw_shots(self, canvas, shots, homeaway, font: MonoFont, color, shots_y=45):
-        if not shots:
+        if shots is None:
             return
 
         shots_width = font.str_width(str(shots))
@@ -413,13 +413,16 @@ class Scoreboard(View):
             return
 
         last_play = game.get("last_play")
+        if last_play is None or last_play == "":
+            last_play = game.get("event_name")
+
         self.play_scroll.draw(canvas, last_play)
 
         if sport == HOCKEY:
             team_shots = game.get("team_shots_on_target")
             oppo_shots = game.get("opponent_shots_on_target")
 
-            if team_shots and oppo_shots:
+            if team_shots is not None and oppo_shots is not None:
                 self.draw_shots_label(canvas, FONT_5X8, WHITE)
 
             self.draw_shots(canvas, team_shots, team_homeaway, FONT_5X8, WHITE)
