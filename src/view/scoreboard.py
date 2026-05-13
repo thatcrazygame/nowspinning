@@ -65,7 +65,7 @@ class Scoreboard(View):
 
         url = url.lower()
         if url.startswith(ESPN_LOGO_URL) and "/500/" in url:
-            url.replace("/500/", "/500-dark/")
+            url = url.replace("/500/", "/500-dark/")
 
         logo_img = self.cached_logos.get(url)
         if not logo_img:
@@ -164,7 +164,7 @@ class Scoreboard(View):
 
         oppo_url = game.get("opponent_logo")
         if not oppo_url and oppo_abbr:
-            team_url = f"{HA_LOGO_URL}/{league}/{oppo_abbr}.png".lower()
+            oppo_url = f"{HA_LOGO_URL}/{league}/{oppo_abbr}.png".lower()
 
         if not team_abbr and not league:
             return
